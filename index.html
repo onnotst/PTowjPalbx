@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>WsYcA3u</title>
+    <link rel="shortcut icon" href="favicon.ico" />
+    <style>
+        .item .no-logo {
+            width: 20%;
+            border: 1px solid #e4ecf3;
+            box-shadow: 8px 8px 4px #888888;
+            border-radius: 6px;
+            padding: 10px;
+            min-width: 120px;
+            max-width: 200px;
+            max-height: 20px;
+            margin: 0 0.8% 1.8% 0.8%;
+            float: left;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            transition: all .3s;
+            color: cadetblue;
+        }
+        .wp-block-pullquote{
+            margin:0 0 1em;
+            padding:1em 0;
+            text-align:center;
+            overflow-wrap:break-word;
+            box-sizing:border-box;
+            border-style:none;
+            border-width:0px;
+            border-radius:65px;
+            color: #888888;
+            font-size: small;
+        }
+        .normal-text{
+            margin:0 0 1em;padding:0em 0;overflow-wrap:break-word;box-sizing:border-box;border-style:none;color: cadetblue;
+        }
+        .normal-text-txt-small{ font-size: small; }
+        .normal-text-txt{ font-size: x-large; }
+        .normal-text-title{ font-size: xx-large; }
+        .hidelight{ background-color: yellow; }
+        .hight1light{ background-color: #e9e9e9; }
+        .hight2light{ background-color: #94e2ce; }
+        .hight3light{ background-color: #bfb4f9; }
+        .hight4light{ background-color: #9bff44; }
+        .hight5light{ background-color: #7bcc36; }
+        .hight6light { background-color: #a0d2eb; }
+        .hight7light { background-color: #ffc2d1; }
+        .hight8light { background-color: #ffb347; }
+        .hight9light { background-color: #4169e1; color: white; }
+        .hight10light { background-color: #ffd700; }
+        #j001 { margin-top: 10px; margin-bottom: 0px; }
+        #j002 { margin-top: 10px; margin-bottom: 0px; }
+        .container {
+            width: 80%;
+            margin: 20px auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        .xxxx-div {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 32px 0;
+            width: 100%;
+        }
+        .xxxx-a {
+            display: inline-block;
+            background-color: #10b981;
+            margin: 20px;
+            color: white;
+            font-weight: 600;
+            padding: 12px 32px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 1.125rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease-in-out;
+            text-align: center;
+        }
+        .xxxx-a:hover {
+            background-color: #059669;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+    </style>
+</head>
+<body>
+    
+    <h1 style="text-align:center;">一个简单的站点导航</h1>
+
+    <div id="content-container">
+        <!-- 内容将通过JavaScript动态加载 -->
+    </div>
+    
+    <!-- 居中且高亮的链接 -->
+    <div class="xxxx-div">
+        <a href="edit.php" class="xxxx-a">编辑文件</a>
+        <a href="editpro.php" class="xxxx-a">编辑配置</a>
+        <a href="editsort.php" class="xxxx-a">编辑顺序</a>
+        <a href="editcolor.php" class="xxxx-a">编辑颜色</a>
+    </div>
+
+	<script>
+		// ===== 新增：检测 PHP 环境 =====
+		function checkPHPEndpoint(url) {
+			return fetch(url, { method: 'HEAD' })
+				.then(res => res.ok)
+				.catch(() => false);
+		}
+
+		Promise.all([
+			checkPHPEndpoint('edit.php'),
+			checkPHPEndpoint('editpro.php'),
+			checkPHPEndpoint('editsort.php'),
+			checkPHPEndpoint('editcolor.php')
+		]).then(results => {
+			const hasPHP = results.some(Boolean);
+			if (!hasPHP) {
+				const div = document.querySelector('.xxxx-div');
+				if (div) div.style.display = 'none';
+			}
+		});
+		// ==============================
+
+		// 原有逻辑不变
+		fetch('config.json')
+			.then(response => response.json())
+			.then(data => {
+				const container = document.getElementById('content-container');
+				
+				data.sections.sort((a, b) => a.order - b.order);
+				
+				data.sections.forEach(section => {
+					if (section.type === 'quote') {
+						container.innerHTML += `
+							<div id="${section.id}">
+								<figure class="wp-block-pullquote">
+									<blockquote>
+										<p>${section.content}</p>
+									</blockquote>
+								</figure>
+							</div>
+						`;
+					} else if (section.type === 'links') {
+						section.links.sort((a, b) => a.order - b.order);
+						
+						let linksHTML = '';
+						section.links.forEach(link => {
+							linksHTML += `
+								<a target='_blank' href='${link.url}'>
+									<div class='item'>
+										<div class='no-logo ${link.color}'>${link.name}</div>
+									</div>
+								</a>
+							`;
+						});
+						
+						container.innerHTML += `
+							<div id="${section.id}">
+								<figure class="wp-block-pullquote">
+									<blockquote>
+										${linksHTML}
+									</blockquote>
+								</figure>
+							</div>
+							<div style="clear: both;"></div>
+						`;
+					}
+				});
+			})
+			.catch(error => {
+				console.error('加载配置文件失败:', error);
+				document.getElementById('content-container').innerHTML = 
+					'<p style="text-align:center;color:red;">加载内容失败，请检查配置文件</p>';
+			});
+	</script>
+</body>
+</html>
