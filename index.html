@@ -105,78 +105,71 @@
     </div>
 
 	<script>
-		// ===== 新增：检测 PHP 环境 =====
-		function checkPHPEndpoint(url) {
-			return fetch(url, { method: 'HEAD' })
-				.then(res => res.ok)
-				.catch(() => false);
-		}
-
-		Promise.all([
-			checkPHPEndpoint('edit.php'),
-			checkPHPEndpoint('editpro.php'),
-			checkPHPEndpoint('editsort.php'),
-			checkPHPEndpoint('editcolor.php')
-		]).then(results => {
-			const hasPHP = results.some(Boolean);
-			if (!hasPHP) {
-				const div = document.querySelector('.xxxx-div');
-				if (div) div.style.display = 'none';
-			}
-		});
-		// ==============================
-
-		// 原有逻辑不变
-		fetch('config.json')
-			.then(response => response.json())
-			.then(data => {
-				const container = document.getElementById('content-container');
-				
-				data.sections.sort((a, b) => a.order - b.order);
-				
-				data.sections.forEach(section => {
-					if (section.type === 'quote') {
-						container.innerHTML += `
-							<div id="${section.id}">
-								<figure class="wp-block-pullquote">
-									<blockquote>
-										<p>${section.content}</p>
-									</blockquote>
-								</figure>
-							</div>
-						`;
-					} else if (section.type === 'links') {
-						section.links.sort((a, b) => a.order - b.order);
-						
-						let linksHTML = '';
-						section.links.forEach(link => {
-							linksHTML += `
-								<a target='_blank' href='${link.url}'>
-									<div class='item'>
-										<div class='no-logo ${link.color}'>${link.name}</div>
-									</div>
-								</a>
-							`;
-						});
-						
-						container.innerHTML += `
-							<div id="${section.id}">
-								<figure class="wp-block-pullquote">
-									<blockquote>
-										${linksHTML}
-									</blockquote>
-								</figure>
-							</div>
-							<div style="clear: both;"></div>
-						`;
-					}
-				});
-			})
-			.catch(error => {
-				console.error('加载配置文件失败:', error);
-				document.getElementById('content-container').innerHTML = 
-					'<p style="text-align:center;color:red;">加载内容失败，请检查配置文件</p>';
-			});
+	    // 检测 PHP 是否真正执行
+	    fetch('php-check.php')
+	        .then(res => res.text())
+	        .then(text => {
+	            if (text.trim() !== 'ok') {
+	                const div = document.querySelector('.xxxx-div');
+	                if (div) div.style.display = 'none';
+	            }
+	        })
+	        .catch(() => {
+	            const div = document.querySelector('.xxxx-div');
+	            if (div) div.style.display = 'none';
+	        });
+	
+	    // 原有渲染逻辑不变
+	    fetch('config.json')
+	        .then(response => response.json())
+	        .then(data => {
+	            const container = document.getElementById('content-container');
+	            
+	            data.sections.sort((a, b) => a.order - b.order);
+	            
+	            data.sections.forEach(section => {
+	                if (section.type === 'quote') {
+	                    container.innerHTML += `
+	                        <div id="${section.id}">
+	                            <figure class="wp-block-pullquote">
+	                                <blockquote>
+	                                    <p>${section.content}</p>
+	                                </blockquote>
+	                            </figure>
+	                        </div>
+	                    `;
+	                } else if (section.type === 'links') {
+	                    section.links.sort((a, b) => a.order - b.order);
+	                    
+	                    let linksHTML = '';
+	                    section.links.forEach(link => {
+	                        linksHTML += `
+	                            <a target='_blank' href='${link.url}'>
+	                                <div class='item'>
+	                                    <div class='no-logo ${link.color}'>${link.name}</div>
+	                                </div>
+	                            </a>
+	                        `;
+	                    });
+	                    
+	                    container.innerHTML += `
+	                        <div id="${section.id}">
+	                            <figure class="wp-block-pullquote">
+	                                <blockquote>
+	                                    ${linksHTML}
+	                                </blockquote>
+	                            </figure>
+	                        </div>
+	                        <div style="clear: both;"></div>
+	                    `;
+	                }
+	            });
+	        })
+	        .catch(error => {
+	            console.error('加载配置文件失败:', error);
+	            document.getElementById('content-container').innerHTML = 
+	                '<p style="text-align:center;color:red;">加载内容失败，请检查配置文件</p>';
+	        });
 	</script>
 </body>
 </html>
