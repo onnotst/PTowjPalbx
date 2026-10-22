@@ -61,7 +61,7 @@
             border-radius: 10px;
         }
         .xxxx-div {
-            display: flex;
+            display: none;
             justify-content: center;
             align-items: center;
             padding: 32px 0;
@@ -106,18 +106,14 @@
 
 	<script>
 	    // 检测 PHP 是否真正执行
-	    fetch('php-check.php')
-	        .then(res => res.text())
-	        .then(text => {
-	            if (text.trim() !== 'ok') {
-	                const div = document.querySelector('.xxxx-div');
-	                if (div) div.style.display = 'none';
-	            }
-	        })
-	        .catch(() => {
-	            const div = document.querySelector('.xxxx-div');
-	            if (div) div.style.display = 'none';
-	        });
+		fetch('php-check.php')
+		    .then(res => res.text())
+		    .then(text => {
+		        if (text.trim() === 'ok') {
+		            document.querySelector('.xxxx-div').style.display = 'flex';
+		        }
+		    })
+		    .catch(() => {}); // 不显示，保持隐藏
 	
 	    // 原有渲染逻辑不变
 	    fetch('config.json')
