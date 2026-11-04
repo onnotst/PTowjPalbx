@@ -19,7 +19,7 @@
                 },
                 {
                     "name": "执迷随记",
-                    "url": "https://nav.mblue.ltd/my/notev1/",
+                    "url": "https://redirect.mblue.ltd/note",
                     "color": "hight10light",
                     "order": 2
                 },
@@ -82,13 +82,13 @@
                 },
                 {
                     "name": "落日流星",
-                    "url": "https://nav.mblue.ltd/my/history/death/people/index.html",
+                    "url": "https://nav.mblue.ltd/my/remains/people/xxx/index.html",
                     "color": "hight1light",
                     "order": 4
                 },
                 {
                     "name": "落日词条",
-                    "url": "https://nav.mblue.ltd/my/history/death/things/index.html",
+                    "url": "https://nav.mblue.ltd/my/remains/things/index.html",
                     "color": "hight1light",
                     "order": 5
                 },
@@ -105,38 +105,38 @@
                     "order": 7
                 },
                 {
-                    "name": "脚本-收藏",
+                    "name": "脚本收藏",
                     "url": "https://nav.mblue.ltd/my/bash/index.php",
                     "color": "hight6light",
                     "order": 8
                 },
                 {
-                    "name": "文件-粘贴板",
-                    "url": "https://nav.mblue.ltd/my/clipboardv2/",
+                    "name": "粘贴板",
+                    "url": "https://nav.mblue.ltd/my/fileupload/upclipboard/temporary/index.php",
                     "color": "hight6light",
                     "order": 9
                 },
                 {
-                    "name": "笔记-随记",
-                    "url": "https://nav.mblue.ltd/my/notev1/",
+                    "name": "笔记随记",
+                    "url": "https://nav.mblue.ltd/my/archive/record-text/note-way-1/index.php",
                     "color": "hight2light",
                     "order": 10
                 },
                 {
-                    "name": "笔记-文章",
-                    "url": "https://nav.mblue.ltd/my/notev2/",
+                    "name": "笔记文章",
+                    "url": "https://nav.mblue.ltd/my/archive/record-text/note-way-2/index.php",
                     "color": "hight2light",
                     "order": 11
                 },
                 {
-                    "name": "笔记-图文",
-                    "url": "https://nav.mblue.ltd/my/clipboardv3/",
+                    "name": "笔记图文",
+                    "url": "https://nav.mblue.ltd/my/archive/record-image/index.php",
                     "color": "hight10light",
                     "order": 12
                 },
                 {
-                    "name": "笔记-语音",
-                    "url": "https://nav.mblue.ltd/my/audio/",
+                    "name": "笔记语音",
+                    "url": "https://nav.mblue.ltd/my/fileupload/upaudio/index.php",
                     "color": "hight10light",
                     "order": 13
                 },
@@ -199,18 +199,6 @@
                     "url": "https://ki.mblue.ltd/",
                     "color": "hight1light",
                     "order": 23
-                },
-                {
-                    "name": "执迷待定",
-                    "url": "https://emlog.mblue.ltd/",
-                    "color": "hight1light",
-                    "order": 24
-                },
-                {
-                    "name": "执迷观测编写",
-                    "url": "https://mblue.ltd/xjKHwBvUCU4F.php",
-                    "color": "hight6light",
-                    "order": 25
                 }
             ],
             "order": 4
@@ -462,27 +450,6 @@
                 }
             ],
             "order": 6
-        },
-        {
-            "id": "j001",
-            "type": "quote",
-            "content": "不知有多少生命正在我们周围呈现着盎然的生机，生生不息，代代相传。",
-            "content111111": "曾经，我们为了掌握一项新技术而废寝忘食，为了优化一个网站的性能而绞尽脑汁。然而，随着时间的推移，技术不断更新换代，新的框架和工具层出不穷。曾经视为珍宝的知识和经验，在如今的技术洪流中，渐渐变得不再那么重要。",
-            "order": 7
-        },
-        {
-            "id": "j002",
-            "type": "links",
-            "title": "其他链接",
-            "links": [
-                {
-                    "name": "WHERE",
-                    "url": "https://where.mblue.ltd/",
-                    "color": "hight1light",
-                    "order": 1
-                }
-            ],
-            "order": 8
         },
         {
             "id": "j001",
