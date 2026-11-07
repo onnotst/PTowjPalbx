@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>Client Info · 硬件指纹</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root{
+  --bg:#0e0f13; --card:#171922; --line:#262a36;
+  --txt:#e6e6e6; --sub:#8b90a0; --accent:#3a98ff; --green:#2bb673;
+}
+* {box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Courier New",monospace;
+  background:var(--bg); color:var(--txt); padding:24px;
+}
+.wrap{max-width:960px;margin:0 auto}
+h1{font-size:20px;margin-bottom:4px;font-weight:700}
+.desc{color:var(--sub);font-size:13px;margin-bottom:18px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+.card h3{font-size:13px;color:var(--accent);margin-bottom:10px;letter-spacing:.5px}
+.row{display:flex;justify-content:space-between;font-size:13px;padding:4px 0;border-bottom:1px dashed #222632}
+.row:last-child{border:0}
+.k{color:var(--sub)}
+.v{color:var(--txt);text-align:right;word-break:break-all}
+pre{background:#000;color:#0f0;padding:14px;border-radius:10px;overflow:auto;font-size:12px;margin-top:18px}
+.bar{height:6px;background:var(--line);border-radius:4px;overflow:hidden;margin-top:8px}
+.bar>i{display:block;height:100%;background:var(--green)}
+button{background:var(--accent);color:#fff;border:0;padding:8px 14px;border-radius:6px;cursor:pointer;font-size:13px}
+.toolbar{margin:10px 0 20px;display:flex;gap:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🔍 客户端硬件信息采集</h1>
+  <div class="desc">纯前端 · 无后端 · 浏览器暴露的所有可用信号</div>
+
+  <div class="toolbar">
+    <button onclick="refresh()">刷新</button>
+    <button onclick="copyJSON()">复制 JSON</button>
+  </div>
+
+  <div class="grid" id="ui"></div>
+  <pre id="json"></pre>
+</div>
+
+<script>
+function $(k,v){return `<div class="row"><span class="k">${k}</span><span class="v">${v??'—'}</span></div>`}
+
+async function getInfo(){
+  const nav = navigator;
+  const scr = screen;
+
+  // WebGL
+  let gpuVendor='—', gpuRenderer='—';
+  try{
+    const c=document.createElement('canvas');
+    const gl=c.getContext('webgl')||c.getContext('experimental-webgl');
+    const ext=gl.getExtension('WEBGL_debug_renderer_info');
+    gpuVendor=gl.getParameter(ext.UNMASKED_VENDOR_WEBGL);
+    gpuRenderer=gl.getParameter(ext.UNMASKED_RENDERER_WEBGL);
+  }catch(e){}
+
+  // Battery
+  let battery='—';
+  try{
+    if(nav.getBattery){
+      const b=await nav.getBattery();
+      battery=`${(b.level*100).toFixed(0)}% ${b.charging?'充电中':'未充电'}`;
+    }
+  }catch(e){}
+
+  // Network
+  const conn=nav.connection||{};
+  // UA client hints
+  let uaHi={};
+  try{
+    if(nav.userAgentData&&nav.userAgentData.getHighEntropyValues){
+      uaHi=await nav.userAgentData.getHighEntropyValues(
+        ["architecture","model","platformVersion","fullVersionList"]
+      );
+    }
+  }catch(e){}
+
+  // Storage quota
+  let quota='—';
+  try{
+    const q=await navigator.storage.estimate();
+    quota=`${((q.quota||0)/1073741824).toFixed(1)} GB (可用估算)`;
+  }catch(e){}
+
+  // Audio
+  let audio='—';
+  try{
+    const ac=new (window.AudioContext||window.webkitAudioContext)();
+    audio=`${ac.sampleRate}Hz / ${ac.destination.channelCount}ch`;
+    ac.close();
+  }catch(e){}
+
+  return {
+    time:{
+      timestamp:Math.floor(Date.now()/1000),
+      iso:new Date().toISOString(),
+      timezone:Intl.DateTimeFormat().resolvedOptions().timeZone,
+      offset:new Date().getTimezoneOffset()
+    },
+    client:{
+      user_agent:nav.userAgent,
+      platform:nav.platform,
+      vendor:nav.vendor,
+      language:nav.language,
+      languages:nav.languages,
+      cookie_enabled:nav.cookieEnabled,
+      do_not_track:nav.doNotTrack,
+      online:nav.onLine
+    },
+    ua_client_hints:uaHi,
+    hardware:{
+      cpu_logical_cores:nav.hardwareConcurrency||null,
+      device_memory_gb:nav.deviceMemory||null,
+      max_touch_points:nav.maxTouchPoints||0,
+      touch_device:nav.maxTouchPoints>0
+    },
+    gpu:{
+      webgl_vendor:gpuVendor,
+      webgl_renderer:gpuRenderer
+    },
+    audio:{ context:audio },
+    screen:{
+      width:scr.width,
+      height:scr.height,
+      avail_width:scr.availWidth,
+      avail_height:scr.availHeight,
+      color_depth:scr.colorDepth,
+      pixel_ratio:window.devicePixelRatio,
+      orientation:scr.orientation?scr.orientation.type:'—'
+    },
+    viewport:{
+      inner_width:window.innerWidth,
+      inner_height:window.innerHeight
+    },
+    network:{
+      effective_type:conn.effectiveType||null,
+      downlink_mbps:conn.downlink||null,
+      rtt_ms:conn.rtt||null,
+      save_data:conn.saveData||false,
+      online:nav.onLine
+    },
+    battery,
+    storage_quota:quota,
+    features:{
+      webgl:!!gpuRenderer,
+      webgpu:!!nav.gpu,
+      webrtc:!!window.RTCPeerConnection,
+      clipboard:!!nav.clipboard,
+      bluetooth:!!nav.bluetooth,
+      usb:!!nav.usb,
+      webauthn:!!nav.credentials&&!!PublicKeyCredential,
+      geolocation:!!nav.geolocation
+    }
+  };
+}
+
+let CURRENT={};
+
+async function refresh(){
+  const ui=document.getElementById('ui');
+  ui.innerHTML='<div class="card">采集中…</div>';
+  const d=await getInfo();
+  CURRENT=d;
+
+  ui.innerHTML=`
+  <div class="card">
+    <h3>⏱ 时间 / 环境</h3>
+    ${$(('本地时间',d.time.iso))}
+    ${$(('时间戳',d.time.timestamp))}
+    ${$(('时区',d.time.timezone))}
+    ${$(('UTC偏移',d.time.offset+' min'))}
+  </div>
+
+  <div class="card">
+    <h3>💻 硬件</h3>
+    ${$(('CPU逻辑核数',d.hardware.cpu_logical_cores))}
+    ${$(('设备内存(近似)',d.hardware.device_memory_gb?d.hardware.device_memory_gb+' GB':'—'))}
+    ${$(('触摸点',d.hardware.max_touch_points))}
+    ${$(('电池',d.battery))}
+    ${$(('存储配额',d.storage_quota))}
+  </div>
+
+  <div class="card">
+    <h3>🎮 GPU / 音频</h3>
+    ${$(('WebGL厂商',d.gpu.webgl_vendor))}
+    ${$(('WebGL渲染器',d.gpu.webgl_renderer))}
+    ${$(('音频',d.audio.context))}
+  </div>
+
+  <div class="card">
+    <h3>🖥 屏幕</h3>
+    ${$(('分辨率',d.screen.width+' × '+d.screen.height))}
+    ${$(('可用区域',d.screen.avail_width+' × '+d.screen.avail_height))}
+    ${$(('色深',d.screen.color_depth+'-bit'))}
+    ${$(('DPR',d.screen.pixel_ratio))}
+    ${$(('方向',d.screen.orientation))}
+  </div>
+
+  <div class="card">
+    <h3>🌐 网络</h3>
+    ${$(('类型',d.network.effective_type))}
+    ${$(('下行',d.network.downlink_mbps?d.network.downlink_mbps+' Mbps':'—'))}
+    ${$(('RTT',d.network.rtt_ms?d.network.rtt_ms+' ms':'—'))}
+    ${$(('省流',d.network.save_data?'开':'关'))}
+  </div>
+
+  <div class="card">
+    <h3>🧩 浏览器 / 特性</h3>
+    ${$(('UA',d.client.user_agent))}
+    ${$(('平台',d.client.platform))}
+    ${$(('语言',d.client.language))}
+    ${$(('Cookie',d.client.cookie_enabled?'允许':'禁止'))}
+  </div>
+  `;
+
+  document.getElementById('json').textContent=JSON.stringify(d,null,2);
+}
+
+function copyJSON(){
+  navigator.clipboard.writeText(JSON.stringify(CURRENT,null,2));
+  alert('JSON 已复制');
+}
+
+refresh();
+</script>
+</body>
+</html>
