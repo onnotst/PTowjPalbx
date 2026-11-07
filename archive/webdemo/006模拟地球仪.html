@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>地球仪 - 带国界线</title>
+<style>
+html, body { margin:0; height:100%; overflow:hidden; background:#000; }
+#ui {
+  position:absolute; top:12px; left:12px; z-index:10;
+  background:rgba(0,0,0,0.72); color:#fff; padding:12px 16px;
+  font-family:system-ui,sans-serif; border-radius:8px; font-size:14px;
+}
+#ui select, #ui button {
+  background:#1a1a2e; color:#fff; border:1px solid #0ff; border-radius:4px;
+  padding:4px 8px; margin-left:6px; cursor:pointer;
+}
+#ui button:hover { background:#0ff; color:#000; }
+#info {
+  position:absolute; bottom:12px; left:12px; z-index:10;
+  background:rgba(0,0,0,0.72); color:#0ff; padding:8px 12px;
+  font-family:monospace; border-radius:6px; font-size:13px;
+  max-width:400px; line-height:1.6;
+}
+canvas { display:block; }
+</style>
+</head>
+<body>
+
+<div id="ui">
+  🌍 地球分辨率：
+  <select id="res">
+    <option value="2">2K</option>
+    <option value="4" selected>4K</option>
+  </select>
+  <button id="toggleRotate">自动旋转：开</button>
+  <button id="toggleBorders">国界线：开</button>
+  <button id="toggleLabels">国名：开</button>
+</div>
+
+<div id="info">
+  鼠标拖拽旋转 · 滚轮缩放 · 自动旋转中<br>
+  青色线 = 国界线 · 悬浮查看国家名
+</div>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "/assets/js/three/three.module.js",
+    "three/addons/": "/assets/js/three/"
+  }
+}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/OrbitControls.js';
+
+let scene, camera, renderer, earth, controls;
+let borderLines = [];
+let countryLabels = [];
+let bordersVisible = true;
+let labelsVisible = true;
+let autoRotate = true;
+
+let raycaster = new THREE.Raycaster();
+let mouse = new THREE.Vector2();
+
+init();
+animate();
+
+function init() {
+  scene = new THREE.Scene();
+
+  camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.1, 1000);
+  camera.position.set(0, 0, 3.2);
+
+  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.setSize(innerWidth, innerHeight);
+  document.body.appendChild(renderer.domElement);
+
+  controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.08;
+  controls.enablePan = false;
+  controls.minDistance = 1.2;
+  controls.maxDistance = 8;
+  controls.autoRotate = true;
+  controls.autoRotateSpeed = 0.6;
+
+  // 灯光
+  const sun = new THREE.DirectionalLight(0xffffff, 2.2);
+  sun.position.set(5, 3, 5);
+  scene.add(sun);
+  scene.add(new THREE.AmbientLight(0xffffff, 0.12));
+
+  // 星空背景
+  addStars();
+
+  loadEarth(4);
+  loadCountryBorders();
+
+  addEventListener('resize', onResize);
+  document.addEventListener('mousemove', onMouseMove);
+
+  // 用户拖拽时暂停自动旋转，松手恢复
+  controls.addEventListener('start', () => {
+    controls.autoRotate = false;
+    autoRotate = false;
+    document.getElementById('toggleRotate').textContent = '自动旋转：关';
+    document.getElementById('info').innerHTML = '手动旋转中<br>青色线 = 国界线 · 悬浮查看国家名';
+  });
+
+  document.getElementById('res').onchange = e => {
+    loadEarth(Number(e.target.value));
+  };
+
+  document.getElementById('toggleRotate').onclick = () => {
+    autoRotate = !autoRotate;
+    controls.autoRotate = autoRotate;
+    document.getElementById('toggleRotate').textContent = '自动旋转：' + (autoRotate ? '开' : '关');
+  };
+
+  document.getElementById('toggleBorders').onclick = () => {
+    bordersVisible = !bordersVisible;
+    borderLines.forEach(l => l.visible = bordersVisible);
+    document.getElementById('toggleBorders').textContent = '国界线：' + (bordersVisible ? '开' : '关');
+  };
+
+  document.getElementById('toggleLabels').onclick = () => {
+    labelsVisible = !labelsVisible;
+    countryLabels.forEach(l => l.visible = labelsVisible);
+    document.getElementById('toggleLabels').textContent = '国名：' + (labelsVisible ? '开' : '关');
+  };
+}
+
+function addStars() {
+  const starGeo = new THREE.BufferGeometry();
+  const starCount = 3000;
+  const positions = new Float32Array(starCount * 3);
+  for (let i = 0; i < starCount * 3; i += 3) {
+    positions[i]   = (Math.random() - 0.5) * 200;
+    positions[i+1] = (Math.random() - 0.5) * 200;
+    positions[i+2] = (Math.random() - 0.5) * 200;
+  }
+  starGeo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+  const starMat = new THREE.PointsMaterial({ color: 0xffffff, size: 0.15 });
+  scene.add(new THREE.Points(starGeo, starMat));
+}
+
+function loadEarth(res) {
+  if (earth) {
+    scene.remove(earth);
+    earth.geometry.dispose();
+    earth.material.map.dispose();
+    earth.material.dispose();
+  }
+
+  const loader = new THREE.TextureLoader();
+  loader.load(`/assets/jpg/textures/earth_atmos_${res}k.jpg`, tex => {
+    tex.colorSpace = THREE.SRGBColorSpace;
+    const geo = new THREE.SphereGeometry(1, 96, 96);
+    const mat = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.8, metalness: 0 });
+    earth = new THREE.Mesh(geo, mat);
+    scene.add(earth);
+  });
+}
+
+function loadCountryBorders() {
+  fetch('/assets/geojson/countries.geojson')
+    .then(r => r.json())
+    .then(data => {
+      const borderMat = new THREE.LineBasicMaterial({
+        color: 0x00ffd5,
+        transparent: true,
+        opacity: 0.65
+      });
+
+      data.features.forEach(feature => {
+        const name = feature.properties.NAME_ZH || feature.properties.NAME || feature.properties.NAME_EN || '未知';
+        const coords = feature.geometry.coordinates;
+        const type = feature.geometry.type;
+
+        let centerLon = 0, centerLat = 0, ptCount = 0;
+
+        function processRing(ring) {
+          const pts = [];
+          ring.forEach(([lon, lat]) => {
+            const phi = (90 - lat) * Math.PI / 180;
+            const theta = (lon + 180) * Math.PI / 180;
+            const r = 1.002;
+            pts.push(new THREE.Vector3(
+              -r * Math.sin(phi) * Math.cos(theta),
+               r * Math.cos(phi),
+               r * Math.sin(phi) * Math.sin(theta)
+            ));
+            centerLon += lon;
+            centerLat += lat;
+            ptCount++;
+          });
+          return pts;
+        }
+
+        if (type === 'Polygon') {
+          coords.forEach(ring => {
+            const pts = processRing(ring);
+            const g = new THREE.BufferGeometry().setFromPoints(pts);
+            const line = new THREE.Line(g, borderMat);
+            line.userData = { countryName: name };
+            scene.add(line);
+            borderLines.push(line);
+          });
+        } else if (type === 'MultiPolygon') {
+          coords.forEach(poly => {
+            poly.forEach(ring => {
+              const pts = processRing(ring);
+              const g = new THREE.BufferGeometry().setFromPoints(pts);
+              const line = new THREE.Line(g, borderMat);
+              line.userData = { countryName: name };
+              scene.add(line);
+              borderLines.push(line);
+            });
+          });
+        }
+
+        if (ptCount > 0) {
+          centerLon /= ptCount;
+          centerLat /= ptCount;
+          addCountryLabel(name, centerLon, centerLat);
+        }
+      });
+    });
+}
+
+function addCountryLabel(name, lon, lat) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 512;
+  canvas.height = 64;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = 'rgba(0,0,0,0.7)';
+  ctx.fillRect(0, 0, 512, 64);
+  ctx.strokeStyle = '#00ffd5';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(0, 0, 512, 64);
+  ctx.font = 'bold 28px sans-serif';
+  ctx.fillStyle = '#00ffd5';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(name, 256, 32);
+
+  const tex = new THREE.CanvasTexture(canvas);
+  const spriteMat = new THREE.SpriteMaterial({ map: tex, transparent: true, opacity: 0.9 });
+  const sprite = new THREE.Sprite(spriteMat);
+
+  const phi = (90 - lat) * Math.PI / 180;
+  const theta = (lon + 180) * Math.PI / 180;
+  const r = 1.03;
+  sprite.position.set(
+    -r * Math.sin(phi) * Math.cos(theta),
+     r * Math.cos(phi),
+     r * Math.sin(phi) * Math.sin(theta)
+  );
+  sprite.scale.set(0.4, 0.05, 1);
+  sprite.visible = labelsVisible;
+  scene.add(sprite);
+  countryLabels.push(sprite);
+}
+
+function onMouseMove(e) {
+  mouse.x = (e.clientX / innerWidth) * 2 - 1;
+  mouse.y = -(e.clientY / innerHeight) * 2 + 1;
+
+  raycaster.setFromCamera(mouse, camera);
+  const intersects = raycaster.intersectObjects(borderLines);
+
+  if (intersects.length > 0) {
+    const name = intersects[0].object.userData.countryName;
+    document.getElementById('info').innerHTML =
+      `📍 ${name}<br>鼠标拖拽旋转 · 滚轮缩放` +
+      (autoRotate ? '<br>自动旋转中' : '');
+    document.body.style.cursor = 'pointer';
+  } else {
+    document.body.style.cursor = 'default';
+    document.getElementById('info').innerHTML =
+      '鼠标拖拽旋转 · 滚轮缩放' +
+      (autoRotate ? '<br>自动旋转中' : '') +
+      '<br>青色线 = 国界线 · 悬浮查看国家名';
+  }
+}
+
+function onResize() {
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+}
+
+function animate() {
+  requestAnimationFrame(animate);
+  controls.update(); // autoRotate 在这里统一驱动，底图和国界线同步
+  renderer.render(scene, camera);
+}
+</script>
+
+</body>
+</html>

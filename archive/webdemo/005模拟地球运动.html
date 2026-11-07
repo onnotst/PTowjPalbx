@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D宇宙层级运动模拟</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+        
+        #container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+            color: white;
+            z-index: 100;
+            max-width: 300px;
+        }
+        
+        .hierarchy {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+            color: white;
+            z-index: 100;
+            text-align: center;
+            line-height: 1.8;
+        }
+        
+        .info {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background-color: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border-radius: 5px;
+            color: white;
+            z-index: 100;
+            max-width: 300px;
+        }
+        
+        label {
+            display: block;
+            margin: 5px 0;
+        }
+        
+        button {
+            margin: 5px 0;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="container"></div>
+    
+    <div class="controls">
+        <h3>速度控制</h3>
+        <label>拉尼亚凯亚速度: <input type="range" id="laniakeaSpeed" min="0.01" max="0.5" step="0.01" value="0.05"></label>
+        <label>室女座超星系团速度: <input type="range" id="virgoSuperSpeed" min="0.05" max="1" step="0.05" value="0.2"></label>
+        <label>室女座星系团速度: <input type="range" id="virgoSpeed" min="0.1" max="2" step="0.1" value="0.5"></label>
+        <label>银河系速度: <input type="range" id="galaxySpeed" min="0.2" max="3" step="0.1" value="1"></label>
+        <label>太阳系速度: <input type="range" id="solarSpeed" min="0.5" max="5" step="0.1" value="2"></label>
+        
+        <h3>视图控制</h3>
+        <button id="toggleTrails">切换轨迹显示</button>
+        <button id="resetView">重置视图</button>
+        <button id="autoRotate">自动旋转视图</button>
+        <label><input type="checkbox" id="showConnections" checked> 显示连接线</label>
+        <label><input type="checkbox" id="showOrbits" checked> 显示轨道平面</label>
+    </div>
+    
+    <div class="hierarchy">
+        <div>拉尼亚凯亚超星系团 🌌</div>
+        <div style="font-size: 18px">|</div>
+        <div>室女座超星系团 🌠</div>
+        <div style="font-size: 18px">|</div>
+        <div>室女座星系团 🌌</div>
+        <div style="font-size: 18px">|</div>
+        <div>银河系 🌀</div>
+        <div style="font-size: 18px">|</div>
+        <div>太阳系 🌀</div>
+		<div style="font-size: 18px">|</div>
+        <div>地球 🌍</div>
+    </div>
+    
+    <div class="info">
+        <p><span style="color: #e74c3c">红色</span>: 拉尼亚凯亚超星系团</p>
+        <p><span style="color: #9b59b6">紫色</span>: 室女座超星系团</p>
+        <p><span style="color: #3498db">蓝色</span>: 室女座星系团</p>
+        <p><span style="color: #2ecc71">绿色</span>: 银河系</p>
+        <p><span style="color: #FFFF00">黄色</span>: 太阳</p>
+        <p><span style="color: #1abc9c">青色</span>: 地球</p>
+        <p>鼠标左键拖动: 旋转视图</p>
+        <p>鼠标右键拖动: 平移视图</p>
+        <p>鼠标滚轮: 缩放视图</p>
+    </div>
+
+    <script src="/assets/js/three.min.js"></script>
+    <script src="/assets/js/OrbitControls.js"></script>
+    <script>
+        // 初始化场景
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x000000);
+        
+        // 初始化相机
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 10000);
+        camera.position.set(0, 500, 800);
+        
+        // 初始化渲染器
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        document.getElementById('container').appendChild(renderer.domElement);
+        
+        // 添加轨道控制器
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        
+        // 添加光源
+        const ambientLight = new THREE.AmbientLight(0x404040);
+        scene.add(ambientLight);
+        
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+        directionalLight.position.set(1, 1, 1);
+        directionalLight.castShadow = true;
+        scene.add(directionalLight);
+        
+        // 天体参数 - 为每个轨道设置不同的倾斜角度
+        const universeCenter = createCelestialBody(0, 0, 0, 15, 0xffffff, "宇宙中心");
+        
+        // 拉尼亚凯亚轨道参数
+        const laniakeaOrbitRadius = 300;
+        const laniakeaOrbitInclination = THREE.MathUtils.degToRad(15);
+        
+        // 室女座超星系团轨道参数
+        const virgoSuperOrbitRadius = 120;
+        const virgoSuperOrbitInclination = THREE.MathUtils.degToRad(30);
+        
+        // 室女座星系团轨道参数
+        const virgoOrbitRadius = 60;
+        const virgoOrbitInclination = THREE.MathUtils.degToRad(45);
+        
+        // 银河系轨道参数
+        const milkyWayOrbitRadius = 30;
+        const milkyWayOrbitInclination = THREE.MathUtils.degToRad(60);
+        
+        // 太阳系轨道参数
+        const solarOrbitRadius = 15;
+        const solarOrbitInclination = THREE.MathUtils.degToRad(75);
+        
+        // 地球轨道参数
+        const earthOrbitRadius = 5;
+        const earthOrbitInclination = THREE.MathUtils.degToRad(7);
+        
+        // 创建天体
+        const laniakea = createCelestialBody(laniakeaOrbitRadius, 0, 0, 12, 0xe74c3c, "拉尼亚凯亚");
+        const virgoSupercluster = createCelestialBody(virgoSuperOrbitRadius, 0, 0, 10, 0x9b59b6, "室女座超星系团");
+        const virgoCluster = createCelestialBody(virgoOrbitRadius, 0, 0, 8, 0x3498db, "室女座星系团");
+        const milkyWay = createCelestialBody(milkyWayOrbitRadius, 0, 0, 6, 0x2ecc71, "银河系");
+        const sun = createCelestialBody(solarOrbitRadius, 0, 0, 4, 0xFFFF00, "太阳");
+        const earth = createCelestialBody(earthOrbitRadius, 0, 0, 2, 0x1abc9c, "地球");
+        
+        // 创建轨道组并设置倾斜角度
+        const laniakeaGroup = new THREE.Group();
+        laniakeaGroup.rotation.x = laniakeaOrbitInclination;
+        laniakeaGroup.add(laniakea.mesh);
+        
+        const virgoSuperGroup = new THREE.Group();
+        virgoSuperGroup.rotation.x = virgoSuperOrbitInclination;
+        virgoSuperGroup.add(virgoSupercluster.mesh);
+        
+        const virgoGroup = new THREE.Group();
+        virgoGroup.rotation.x = virgoOrbitInclination;
+        virgoGroup.add(virgoCluster.mesh);
+        
+        const milkyWayGroup = new THREE.Group();
+        milkyWayGroup.rotation.x = milkyWayOrbitInclination;
+        milkyWayGroup.add(milkyWay.mesh);
+        
+        const solarGroup = new THREE.Group();
+        solarGroup.rotation.x = solarOrbitInclination;
+        solarGroup.add(sun.mesh);
+        
+        const earthGroup = new THREE.Group();
+        earthGroup.rotation.x = earthOrbitInclination;
+        earthGroup.add(earth.mesh);
+        
+        // 添加到场景
+        scene.add(universeCenter.mesh);
+        universeCenter.mesh.add(laniakeaGroup);
+        laniakea.mesh.add(virgoSuperGroup);
+        virgoSupercluster.mesh.add(virgoGroup);
+        virgoCluster.mesh.add(milkyWayGroup);
+        milkyWay.mesh.add(solarGroup);
+        sun.mesh.add(earthGroup);
+        
+        // 创建轨道平面可视化
+        const orbitPlanes = {
+            laniakea: createOrbitPlane(laniakeaOrbitRadius, laniakeaOrbitInclination, 0xe74c3c),
+            virgoSuper: createOrbitPlane(virgoSuperOrbitRadius, virgoSuperOrbitInclination, 0x9b59b6),
+            virgo: createOrbitPlane(virgoOrbitRadius, virgoOrbitInclination, 0x3498db),
+            milkyWay: createOrbitPlane(milkyWayOrbitRadius, milkyWayOrbitInclination, 0x2ecc71),
+            solar: createOrbitPlane(solarOrbitRadius, solarOrbitInclination, 0xFFFF00),
+            earth: createOrbitPlane(earthOrbitRadius, earthOrbitInclination, 0x1abc9c)
+        };
+        
+        universeCenter.mesh.add(orbitPlanes.laniakea);
+        laniakea.mesh.add(orbitPlanes.virgoSuper);
+        virgoSupercluster.mesh.add(orbitPlanes.virgo);
+        virgoCluster.mesh.add(orbitPlanes.milkyWay);
+        milkyWay.mesh.add(orbitPlanes.solar);
+        sun.mesh.add(orbitPlanes.earth);
+        
+        // 轨迹线
+        const trails = {
+            laniakea: createTrail(0xe74c3c),
+            virgoSuper: createTrail(0x9b59b6),
+            virgo: createTrail(0x3498db),
+            milkyWay: createTrail(0x2ecc71),
+            sun: createTrail(0xFFFF00),
+            earth: createTrail(0x1abc9c)
+        };
+        
+        scene.add(trails.laniakea);
+        scene.add(trails.virgoSuper);
+        scene.add(trails.virgo);
+        scene.add(trails.milkyWay);
+        scene.add(trails.sun);
+        scene.add(trails.earth);
+        
+        // 连接线
+        const connections = {
+            universeLaniakea: createConnection(universeCenter.mesh, laniakea.mesh, 0xffffff),
+            laniakeaVirgoSuper: createConnection(laniakea.mesh, virgoSupercluster.mesh, 0xffffff),
+            virgoSuperVirgo: createConnection(virgoSupercluster.mesh, virgoCluster.mesh, 0xffffff),
+            virgoMilkyWay: createConnection(virgoCluster.mesh, milkyWay.mesh, 0xffffff),
+            milkyWaySun: createConnection(milkyWay.mesh, sun.mesh, 0xffffff),
+            sunEarth: createConnection(sun.mesh, earth.mesh, 0xffffff)
+        };
+        
+        // 控制参数
+        let showTrails = true;
+        let showConnections = true;
+        let showOrbits = true;
+        let autoRotate = false;
+        
+        // 事件监听
+        document.getElementById('toggleTrails').addEventListener('click', () => {
+            showTrails = !showTrails;
+            Object.values(trails).forEach(trail => trail.visible = showTrails);
+        });
+        
+        document.getElementById('resetView').addEventListener('click', () => {
+            controls.reset();
+            camera.position.set(0, 500, 800);
+        });
+        
+        document.getElementById('autoRotate').addEventListener('click', () => {
+            autoRotate = !autoRotate;
+        });
+        
+        document.getElementById('showConnections').addEventListener('change', (e) => {
+            showConnections = e.target.checked;
+            Object.values(connections).forEach(conn => conn.visible = showConnections);
+        });
+        
+        document.getElementById('showOrbits').addEventListener('change', (e) => {
+            showOrbits = e.target.checked;
+            Object.values(orbitPlanes).forEach(plane => plane.visible = showOrbits);
+        });
+        
+        // 窗口大小调整
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        // 动画循环
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // 获取速度控制
+            const laniakeaSpeed = parseFloat(document.getElementById('laniakeaSpeed').value) * 0.005;
+            const virgoSuperSpeed = parseFloat(document.getElementById('virgoSuperSpeed').value) * 0.01;
+            const virgoSpeed = parseFloat(document.getElementById('virgoSpeed').value) * 0.02;
+            const galaxySpeed = parseFloat(document.getElementById('galaxySpeed').value) * 0.03;
+            const solarSpeed = parseFloat(document.getElementById('solarSpeed').value) * 0.05;
+            
+            // 更新天体位置
+            laniakeaGroup.rotation.y += laniakeaSpeed;
+            virgoSuperGroup.rotation.y += virgoSuperSpeed;
+            virgoGroup.rotation.y += virgoSpeed;
+            milkyWayGroup.rotation.y += galaxySpeed;
+            solarGroup.rotation.y += solarSpeed;
+            earthGroup.rotation.y += solarSpeed * 2;
+            
+            // 更新轨迹
+            updateTrail(trails.laniakea, laniakea.mesh);
+            updateTrail(trails.virgoSuper, virgoSupercluster.mesh);
+            updateTrail(trails.virgo, virgoCluster.mesh);
+            updateTrail(trails.milkyWay, milkyWay.mesh);
+            updateTrail(trails.sun, sun.mesh);
+            updateTrail(trails.earth, earth.mesh);
+            
+            // 更新连接线
+            updateConnection(connections.universeLaniakea, universeCenter.mesh, laniakea.mesh);
+            updateConnection(connections.laniakeaVirgoSuper, laniakea.mesh, virgoSupercluster.mesh);
+            updateConnection(connections.virgoSuperVirgo, virgoSupercluster.mesh, virgoCluster.mesh);
+            updateConnection(connections.virgoMilkyWay, virgoCluster.mesh, milkyWay.mesh);
+            updateConnection(connections.milkyWaySun, milkyWay.mesh, sun.mesh);
+            updateConnection(connections.sunEarth, sun.mesh, earth.mesh);
+            
+            // 自动旋转视图
+            if (autoRotate) {
+                controls.autoRotate = true;
+                controls.autoRotateSpeed = 0.5;
+            } else {
+                controls.autoRotate = false;
+            }
+            
+            controls.update();
+            renderer.render(scene, camera);
+        }
+        
+        animate();
+        
+        // 辅助函数
+        function createCelestialBody(x, y, z, radius, color, name) {
+            const geometry = new THREE.SphereGeometry(radius, 32, 32);
+            const material = new THREE.MeshPhongMaterial({ 
+                color: color,
+                emissive: color,
+                emissiveIntensity: 0.2,
+                shininess: 30
+            });
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.position.set(x, y, z);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            
+            // 添加光晕效果
+            const glowGeometry = new THREE.SphereGeometry(radius * 1.5, 32, 32);
+            const glowMaterial = new THREE.MeshBasicMaterial({
+                color: color,
+                transparent: true,
+                opacity: 0.3
+            });
+            const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+            mesh.add(glow);
+            
+            return { mesh, name };
+        }
+        
+        function createOrbitPlane(radius, inclination, color) {
+            const geometry = new THREE.RingGeometry(radius * 0.9, radius, 64);
+            const material = new THREE.MeshBasicMaterial({
+                color: color,
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.2
+            });
+            const plane = new THREE.Mesh(geometry, material);
+            plane.rotation.x = inclination;
+            return plane;
+        }
+        
+        function createTrail(color) {
+            const geometry = new THREE.BufferGeometry();
+            const material = new THREE.LineBasicMaterial({ 
+                color: color,
+                transparent: true,
+                opacity: 0.5
+            });
+            return new THREE.Line(geometry, material);
+        }
+        
+        function updateTrail(trail, object) {
+            const worldPosition = new THREE.Vector3();
+            object.getWorldPosition(worldPosition);
+            
+            const positions = trail.geometry.attributes.position;
+            
+            if (!positions || positions.count >= 500) {
+                const newPositions = [];
+                
+                if (positions) {
+                    const array = positions.array;
+                    for (let i = 3; i < array.length; i++) {
+                        newPositions.push(array[i]);
+                    }
+                }
+                
+                newPositions.push(worldPosition.x, worldPosition.y, worldPosition.z);
+                
+                trail.geometry.dispose();
+                trail.geometry = new THREE.BufferGeometry();
+                trail.geometry.setAttribute('position', new THREE.Float32BufferAttribute(newPositions, 3));
+            } else {
+                const array = positions.array;
+                const newPositions = new Float32Array(array.length + 3);
+                newPositions.set(array);
+                newPositions.set([worldPosition.x, worldPosition.y, worldPosition.z], array.length);
+                
+                trail.geometry.dispose();
+                trail.geometry = new THREE.BufferGeometry();
+                trail.geometry.setAttribute('position', new THREE.BufferAttribute(newPositions, 3));
+            }
+        }
+        
+        function createConnection(obj1, obj2, color) {
+            const geometry = new THREE.BufferGeometry();
+            const material = new THREE.LineBasicMaterial({ 
+                color: color,
+                transparent: true,
+                opacity: 0.3
+            });
+            const line = new THREE.Line(geometry, material);
+            scene.add(line);
+            return line;
+        }
+        
+        function updateConnection(line, obj1, obj2) {
+            const pos1 = new THREE.Vector3();
+            const pos2 = new THREE.Vector3();
+            
+            obj1.getWorldPosition(pos1);
+            obj2.getWorldPosition(pos2);
+            
+            const positions = new Float32Array([
+                pos1.x, pos1.y, pos1.z,
+                pos2.x, pos2.y, pos2.z
+            ]);
+            
+            line.geometry.dispose();
+            line.geometry = new THREE.BufferGeometry();
+            line.geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        }
+    </script>
+</body>
+</html>

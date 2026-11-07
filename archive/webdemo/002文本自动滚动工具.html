@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>自动提词器</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif}
+  html,body{height:100%;overflow:hidden;background:#1a1a1a;color:#fff}
+  body{padding:8px;display:flex;flex-direction:column}
+  
+  .control{display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;align-items:center}
+  button{flex:1;min-width:70px;padding:10px 8px;border:none;border-radius:8px;background:#333;color:#fff;font-size:14px;cursor:pointer;-webkit-tap-highlight-color:transparent}
+  button:active{opacity:0.7}
+  .active{background:#007aff}
+  input[type="range"]{-webkit-appearance:none;flex:1;min-width:80px;height:32px;background:transparent}
+  input[type="range"]::-webkit-slider-runnable-track{height:4px;background:#444;border-radius:2px}
+  input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;background:#fff;border-radius:50%;margin-top:-8px}
+  label{font-size:13px;color:#aaa;min-width:40px}
+  
+  #textArea{width:100%;height:100px;padding:10px;font-size:16px;background:#222;color:#fff;border:1px solid #444;border-radius:8px;resize:none}
+  #tele{flex:1;overflow:hidden;position:relative;background:#000;border-radius:8px;margin-top:8px}
+  #content{padding:20px;line-height:1.6;white-space:pre-wrap;transition:transform 0.1s linear;will-change:transform}
+  
+  /* 触摸提示 */
+  #hint{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.7);padding:8px 16px;border-radius:20px;font-size:12px;opacity:0;transition:opacity 0.3s}
+  #hint.show{opacity:1}
+</style>
+</head>
+<body>
+
+<div class="control">
+  <button id="autoBtn" class="active">自动</button>
+  <button id="manualBtn">手动</button>
+  <button id="restartBtn">🔄 重置</button>
+</div>
+
+<div class="control">
+  <label>字号</label>
+  <input type="range" id="fontSize" min="18" max="60" value="28">
+  <label id="fontSizeVal">28</label>
+</div>
+
+<div class="control">
+  <label>速度</label>
+  <input type="range" id="speed" min="1" max="20" value="5">
+  <label id="speedVal">5</label>
+</div>
+
+<textarea id="textArea" placeholder="粘贴台词..."></textarea>
+
+<div id="tele">
+  <div id="content"></div>
+  <div id="hint">音量键/空格暂停 · 上下滑动手动控制</div>
+</div>
+
+<script>
+(function(){
+const contentEl = document.getElementById('content');
+const textArea = document.getElementById('textArea');
+const fontSizeCtrl = document.getElementById('fontSize');
+const speedCtrl = document.getElementById('speed');
+const fontSizeVal = document.getElementById('fontSizeVal');
+const speedVal = document.getElementById('speedVal');
+const autoBtn = document.getElementById('autoBtn');
+const manualBtn = document.getElementById('manualBtn');
+const restartBtn = document.getElementById('restartBtn');
+const hint = document.getElementById('hint');
+
+let isAuto = true;
+let scrollY = 0;
+let speed = 5;
+let fontSize = 28;
+let rafId;
+let lastTouchY = 0;
+let touchStartY = 0;
+let isManualMode = false;
+
+// 格式化文本：按标点分段
+function formatText(t) {
+  return t.replace(/([，。！？；：\n])/g, '$1\n').replace(/\n+/g, '\n');
+}
+
+function updateUI() {
+  contentEl.style.fontSize = fontSize + 'px';
+  contentEl.innerHTML = formatText(textArea.value).replace(/\n/g, '<br>');
+}
+
+function restart() {
+  scrollY = 0;
+  contentEl.style.transform = `translateY(0px)`;
+  isAuto = true;
+  isManualMode = false;
+  autoBtn.classList.add('active');
+  manualBtn.classList.remove('active');
+}
+
+// 自动滚动
+function autoScroll() {
+  if (isAuto && !isManualMode) {
+    scrollY += speed * 0.08;
+    contentEl.style.transform = `translateY(-${scrollY}px)`;
+  }
+  rafId = requestAnimationFrame(autoScroll);
+}
+
+// 按钮事件
+autoBtn.onclick = function() {
+  isAuto = true;
+  isManualMode = false;
+  this.classList.add('active');
+  manualBtn.classList.remove('active');
+  showHint();
+};
+
+manualBtn.onclick = function() {
+  isAuto = false;
+  isManualMode = true;
+  this.classList.add('active');
+  autoBtn.classList.remove('active');
+  showHint();
+};
+
+restartBtn.onclick = restart;
+
+// 滑块事件
+fontSizeCtrl.oninput = function() {
+  fontSize = parseInt(this.value);
+  fontSizeVal.textContent = fontSize;
+  updateUI();
+};
+
+speedCtrl.oninput = function() {
+  speed = parseInt(this.value);
+  speedVal.textContent = speed;
+};
+
+textArea.oninput = updateUI;
+
+// 显示提示
+function showHint() {
+  hint.classList.add('show');
+  setTimeout(() => hint.classList.remove('show'), 2000);
+}
+
+// 键盘/音量键控制
+document.addEventListener('keydown', function(e) {
+  if (e.key === ' ' || e.key === 'Spacebar' || e.key === 'MediaPlayPause' || e.key === 'AudioVolumeMute') {
+    e.preventDefault();
+    isAuto = !isAuto;
+    isManualMode = !isAuto;
+    autoBtn.classList.toggle('active', isAuto);
+    manualBtn.classList.toggle('active', !isAuto);
+    showHint();
+  } else if (e.key === 'ArrowDown' || e.key === 'AudioVolumeDown') {
+    e.preventDefault();
+    isAuto = false;
+    isManualMode = true;
+    autoBtn.classList.remove('active');
+    manualBtn.classList.add('active');
+    scrollY += 30;
+    contentEl.style.transform = `translateY(-${scrollY}px)`;
+    showHint();
+  } else if (e.key === 'ArrowUp' || e.key === 'AudioVolumeUp') {
+    e.preventDefault();
+    isAuto = false;
+    isManualMode = true;
+    autoBtn.classList.remove('active');
+    manualBtn.classList.add('active');
+    scrollY = Math.max(0, scrollY - 30);
+    contentEl.style.transform = `translateY(-${scrollY}px)`;
+    showHint();
+  }
+}, { passive: false });
+
+// 触摸滑动控制
+const tele = document.getElementById('tele');
+
+tele.addEventListener('touchstart', function(e) {
+  touchStartY = e.touches[0].clientY;
+  lastTouchY = touchStartY;
+  isManualMode = true;
+  isAuto = false;
+  autoBtn.classList.remove('active');
+  manualBtn.classList.add('active');
+}, { passive: true });
+
+tele.addEventListener('touchmove', function(e) {
+  const currentY = e.touches[0].clientY;
+  const deltaY = lastTouchY - currentY;
+  lastTouchY = currentY;
+  
+  scrollY += deltaY;
+  if (scrollY < 0) scrollY = 0;
+  contentEl.style.transform = `translateY(-${scrollY}px)`;
+}, { passive: true });
+
+tele.addEventListener('touchend', function() {
+  setTimeout(() => {
+    if (!isAuto) {
+      isManualMode = false;
+    }
+  }, 3000);
+}, { passive: true });
+
+// 防止页面缩放和滚动
+document.addEventListener('gesturestart', function(e) {
+  e.preventDefault();
+});
+
+document.addEventListener('touchmove', function(e) {
+  if (e.target.closest('#tele')) return;
+  e.preventDefault();
+}, { passive: false });
+
+// 初始化
+updateUI();
+autoScroll();
+
+// 首次使用提示
+setTimeout(showHint, 1000);
+
+// 页面可见性变化处理
+document.addEventListener('visibilitychange', function() {
+  if (document.hidden) {
+    // 页面隐藏时可以选择暂停
+  } else {
+    // 页面显示时恢复
+  }
+});
+})();
+</script>
+</body>
+</html>

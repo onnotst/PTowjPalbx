@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>跳转页面</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Arial', sans-serif;
+            color: white;
+        }
+        
+        .container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .countdown {
+            font-size: 3em;
+            font-weight: bold;
+            margin: 30px 0;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            animation: pulse 1s infinite;
+        }
+        
+        .time-display {
+            font-size: 1.2em;
+            margin: 20px 0;
+            opacity: 0.9;
+        }
+        
+        .progress-bar {
+            width: 300px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+            margin: 20px auto;
+            overflow: hidden;
+        }
+        
+        .progress {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88, #00ccff);
+            border-radius: 3px;
+            transition: width 0.1s ease;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .message {
+            font-size: 1.1em;
+            margin-top: 20px;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>页面跳转中...</h1>
+        <div class="countdown" id="countdown">1.000</div>
+        <div class="time-display">
+            当前时间: <span id="currentTime"></span>
+        </div>
+        <div class="progress-bar">
+            <div class="progress" id="progress"></div>
+        </div>
+        <div class="message">
+            即将跳转到目标页面
+        </div>
+    </div>
+
+    <script>
+        // 设置跳转目标URL（你可以修改这里）
+        const targetUrl = "/my/";
+        
+        // 跳转倒计时（毫秒）
+        let countdownTime = 1000;
+        let startTime = Date.now();
+        let elapsed = 0;
+        
+        // 获取DOM元素
+        const countdownElement = document.getElementById('countdown');
+        const currentTimeElement = document.getElementById('currentTime');
+        const progressElement = document.getElementById('progress');
+        
+        // 格式化时间显示（包含毫秒）
+        function formatTime(date) {
+            const hours = date.getHours().toString().padStart(2, '0');
+            const minutes = date.getMinutes().toString().padStart(2, '0');
+            const seconds = date.getSeconds().toString().padStart(2, '0');
+            const milliseconds = date.getMilliseconds().toString().padStart(3, '0');
+            return `${hours}:${minutes}:${seconds}.${milliseconds}`;
+        }
+        
+        // 更新当前时间显示（按ms刷新）
+        function updateCurrentTime() {
+            const now = new Date();
+            currentTimeElement.textContent = formatTime(now);
+        }
+        
+        // 更新倒计时和进度条
+        function updateCountdown() {
+            elapsed = Date.now() - startTime;
+            const remaining = Math.max(0, countdownTime - elapsed);
+            const remainingSeconds = (remaining / 1000).toFixed(3);
+            
+            // 更新倒计时显示
+            countdownElement.textContent = remainingSeconds;
+            
+            // 更新进度条
+            const progressPercent = ((elapsed / countdownTime) * 100);
+            progressElement.style.width = Math.min(progressPercent, 100) + '%';
+            
+            // 检查是否到达跳转时间
+            if (remaining <= 0) {
+                // 执行跳转
+                window.location.href = targetUrl;
+                return;
+            }
+            
+            // 继续更新（使用requestAnimationFrame实现平滑动画）
+            requestAnimationFrame(updateCountdown);
+        }
+        
+        // 初始化
+        function init() {
+            // 立即显示当前时间
+            updateCurrentTime();
+            
+            // 每秒更新时间显示（为了更好的性能，可以调整更新频率）
+            setInterval(updateCurrentTime, 1); // 1ms更新一次
+            
+            // 开始倒计时动画
+            requestAnimationFrame(updateCountdown);
+        }
+        
+        // 页面加载完成后启动
+        window.addEventListener('load', init);
+        
+        // 可选：添加点击立即跳转功能
+        document.addEventListener('click', function() {
+            window.location.href = targetUrl;
+        });
+        
+        // 可选：添加键盘事件（按任意键立即跳转）
+        document.addEventListener('keydown', function() {
+            window.location.href = targetUrl;
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>实用计算器</title>
+  <!-- 引入Materialize CSS -->
+  <link rel="stylesheet" href="../api/css/materialize.min.css">
+  <!-- 引入Materialize icon.css -->
+  <link rel="stylesheet" href="../api/woff/icon.css">
+  
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      font-family: 'Roboto', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    /* 计算器容器样式 */
+    .calculator-container {
+      width: 100%;
+      max-width: 400px;
+    }
+    
+    /* 计算器主体卡片 */
+    .calculator-card {
+      background: #FFFFFF;
+      border-radius: 24px;
+      padding: 30px 20px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+    }
+    
+    /* 计算器显示屏样式 */
+    .calc-display {
+      background: linear-gradient(135deg, #424242 0%, #000 100%);
+      color: #FFFFFF;
+      border-radius: 16px;
+      padding: 25px 20px;
+      margin-bottom: 25px;
+      text-align: right;
+      box-shadow: inset 0 2px 10px rgba(0,0,0,0.3);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    .calc-history {
+      color: #B0B0B0;
+      font-size: 1rem;
+      margin-bottom: 8px;
+      min-height: 20px;
+      word-wrap: break-word;
+    }
+    
+    .calc-result {
+      font-size: 2.8rem;
+      font-weight: 300;
+      line-height: 1.2;
+      word-wrap: break-word;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+    
+    /* 按键区域样式 */
+    .buttons-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-top: 10px;
+    }
+    
+    .buttons-grid .zero-btn {
+      grid-column: span 2;
+    }
+    
+    /* 计算器按钮样式 */
+    .calc-btn {
+      height: 65px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      font-weight: 500;
+      transition: all 0.2s;
+      cursor: pointer;
+      border: none;
+      user-select: none;
+    }
+    
+    /* 按钮颜色分类 */
+    .btn-number {
+      background: #F5F5F5;
+      color: #424242;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    .btn-number:hover {
+      background: #EEEEEE;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+    }
+    
+    .btn-function {
+      background: #F8BBD9;
+      color: #AD1457;
+      box-shadow: 0 4px 8px rgba(233, 30, 99, 0.2);
+    }
+    
+    .btn-function:hover {
+      background: #E91E63;
+      color: #FFFFFF;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(233, 30, 99, 0.3);
+    }
+    
+    .btn-operator {
+      background: #E1BEE7;
+      color: #6A1B9A;
+      box-shadow: 0 4px 8px rgba(156, 39, 176, 0.2);
+    }
+    
+    .btn-operator:hover {
+      background: #9C27B0;
+      color: #FFFFFF;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(156, 39, 176, 0.3);
+    }
+    
+    .btn-equals {
+      background: linear-gradient(135deg, #E91E63 0%, #AD1457 100%);
+      color: #FFFFFF;
+      box-shadow: 0 4px 12px rgba(233, 30, 99, 0.4);
+    }
+    
+    .btn-equals:hover {
+      background: linear-gradient(135deg, #AD1457 0%, #880E4F 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(233, 30, 99, 0.5);
+    }
+    
+    .calc-btn:active {
+      transform: translateY(0);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    /* 响应式调整 */
+    @media only screen and (max-width: 480px) {
+      .calculator-card {
+        margin: 0 10px;
+        padding: 20px 15px;
+      }
+      
+      .calc-btn {
+        height: 55px;
+        font-size: 1.2rem;
+      }
+      
+      .calc-result {
+        font-size: 2.2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="calculator-container">
+    <!-- 计算器主体 -->
+    <div class="calculator-card">
+      <!-- 显示屏 -->
+      <div class="calc-display">
+        <div class="calc-history" id="calc-history"></div>
+        <div class="calc-result" id="calc-result">0</div>
+      </div>
+
+      <!-- 按键区 -->
+      <div class="buttons-grid">
+        <!-- 第一行 -->
+        <div class="calc-btn btn-function" data-value="AC">AC</div>
+        <div class="calc-btn btn-function" data-value="+/-">+/-</div>
+        <div class="calc-btn btn-function" data-value="%">%</div>
+        <div class="calc-btn btn-operator" data-value="/">÷</div>
+
+        <!-- 第二行 -->
+        <div class="calc-btn btn-number" data-value="7">7</div>
+        <div class="calc-btn btn-number" data-value="8">8</div>
+        <div class="calc-btn btn-number" data-value="9">9</div>
+        <div class="calc-btn btn-operator" data-value="*">×</div>
+
+        <!-- 第三行 -->
+        <div class="calc-btn btn-number" data-value="4">4</div>
+        <div class="calc-btn btn-number" data-value="5">5</div>
+        <div class="calc-btn btn-number" data-value="6">6</div>
+        <div class="calc-btn btn-operator" data-value="-">-</div>
+
+        <!-- 第四行 -->
+        <div class="calc-btn btn-number" data-value="1">1</div>
+        <div class="calc-btn btn-number" data-value="2">2</div>
+        <div class="calc-btn btn-number" data-value="3">3</div>
+        <div class="calc-btn btn-operator" data-value="+">+</div>
+
+        <!-- 第五行 -->
+        <div class="calc-btn btn-number zero-btn" data-value="0">0</div>
+        <div class="calc-btn btn-number" data-value=".">.</div>
+        <div class="calc-btn btn-equals" data-value="=">=</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 引入Materialize JavaScript -->
+  <script src="../api/js/materialize.min.js"></script>
+  
+  <!-- JavaScript 计算器功能实现 -->
+  <script>
+    // 计算器核心功能
+    const calcHistory = document.getElementById('calc-history');
+    const calcResult = document.getElementById('calc-result');
+    let currentValue = '0'; // 当前输入值
+    let previousValue = ''; // 上一个值
+    let operator = ''; // 运算符
+    let resetScreen = false; // 是否需要重置屏幕
+
+    // 处理数字和小数点输入
+    function appendValue(value) {
+      if (currentValue === '0' || resetScreen) {
+        currentValue = value;
+        resetScreen = false;
+      } else {
+        // 防止重复输入小数点
+        if (value === '.' && currentValue.includes('.')) return;
+        currentValue += value;
+      }
+      updateDisplay();
+    }
+
+    // 处理运算符输入
+    function setOperator(op) {
+      if (operator !== '' && !resetScreen) {
+        calculate(); // 连续运算：先计算上一次的结果
+      }
+      previousValue = currentValue;
+      operator = op;
+      resetScreen = true;
+      calcHistory.textContent = `${previousValue} ${getOperatorSymbol(op)}`;
+    }
+
+    // 计算结果
+    function calculate() {
+      if (operator === '') return;
+      
+      let result = 0;
+      const prev = parseFloat(previousValue);
+      const curr = parseFloat(currentValue);
+
+      // 避免除以零
+      if (operator === '/' && curr === 0) {
+        calcResult.textContent = '错误';
+        currentValue = '0';
+        previousValue = '';
+        operator = '';
+        calcHistory.textContent = '';
+        return;
+      }
+
+      // 执行运算
+      switch (operator) {
+        case '+':
+          result = prev + curr;
+          break;
+        case '-':
+          result = prev - curr;
+          break;
+        case '*':
+          result = prev * curr;
+          break;
+        case '/':
+          result = prev / curr;
+          break;
+        case '%':
+          result = prev * (curr / 100);
+          break;
+        default:
+          return;
+      }
+
+      // 处理小数位数（最多保留8位，去除末尾多余的0）
+      result = Number.isInteger(result) ? result : parseFloat(result.toFixed(8));
+      
+      calcHistory.textContent = `${previousValue} ${getOperatorSymbol(operator)} ${currentValue} =`;
+      currentValue = result.toString();
+      operator = '';
+      resetScreen = true;
+      updateDisplay();
+    }
+
+    // 正负转换
+    function toggleSign() {
+      currentValue = currentValue.startsWith('-') 
+        ? currentValue.slice(1) 
+        : `-${currentValue}`;
+      updateDisplay();
+    }
+
+    // 百分比计算
+    function calculatePercentage() {
+      currentValue = (parseFloat(currentValue) / 100).toString();
+      updateDisplay();
+    }
+
+    // 清空所有
+    function clearAll() {
+      currentValue = '0';
+      previousValue = '';
+      operator = '';
+      calcHistory.textContent = '';
+      updateDisplay();
+    }
+
+    // 获取运算符显示符号
+    function getOperatorSymbol(op) {
+      switch (op) {
+        case '+': return '+';
+        case '-': return '-';
+        case '*': return '×';
+        case '/': return '÷';
+        case '%': return '%';
+        default: return '';
+      }
+    }
+
+    // 更新显示屏
+    function updateDisplay() {
+      calcResult.textContent = currentValue;
+    }
+
+    // 绑定按键事件
+    document.querySelectorAll('[data-value]').forEach(button => {
+      button.addEventListener('click', () => {
+        const value = button.getAttribute('data-value');
+        
+        switch (value) {
+          case 'AC':
+            clearAll();
+            break;
+          case '+/-':
+            toggleSign();
+            break;
+          case '%':
+            calculatePercentage();
+            break;
+          case '=':
+            calculate();
+            break;
+          case '+':
+          case '-':
+          case '*':
+          case '/':
+            setOperator(value);
+            break;
+          default:
+            appendValue(value);
+            break;
+        }
+      });
+    });
+
+    // 支持键盘输入
+    document.addEventListener('keydown', (e) => {
+      const key = e.key;
+      
+      // 数字键
+      if (/[0-9]/.test(key)) {
+        appendValue(key);
+      } 
+      // 小数点
+      else if (key === '.') {
+        appendValue('.');
+      } 
+      // 运算符
+      else if (key === '+' || key === '-' || key === '*' || key === '/') {
+        setOperator(key);
+      } 
+      // 等于
+      else if (key === 'Enter' || key === '=') {
+        calculate();
+        e.preventDefault(); // 阻止Enter键的默认行为
+      } 
+      // 清除
+      else if (key === 'Escape' || key === 'Delete') {
+        clearAll();
+      } 
+      // 退格
+      else if (key === 'Backspace') {
+        if (currentValue.length > 1) {
+          currentValue = currentValue.slice(0, -1);
+        } else {
+          currentValue = '0';
+        }
+        updateDisplay();
+      }
+    });
+
+    // 初始化显示
+    updateDisplay();
+  </script>
+</body>
+</html>
