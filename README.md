@@ -5,12 +5,16 @@
 ## 0. 配置你的系统用户信息（单个用户使用）
 git config --global user.name "onnotst"
 git config --global user.email "onnotst@163.com"
+git config --global core.autocrlf true
+
+.gitattributes处理换行问题
 
 ## 1. 查看你修改了哪些文件
 git status
 
 ## 2. 将修改的文件添加到暂存区（. 表示添加所有修改）
 git add .
+git add --renormalize .
 
 ## 3. 提交修改到本地仓库，并写上修改说明
 git commit -m "这里写你这次修改的简要说明"
