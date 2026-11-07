@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>执迷搜索-多方面搜索引用</title>
+  <link rel="icon" href="/assets/favicon.ico">
+  <meta charset="UTF-8">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f1f1f1;
+      margin: 0;
+      padding: 0;
+    }
+    h2 {
+      margin: 120px 0 0.5em;
+      color: #22888888;
+      text-align: center;
+    }
+    #search-box {
+      width: 61.8%;
+      margin: 30px auto;
+      text-align: center;
+    }
+    #search-input {
+      width: 100%;
+      padding: 14px;
+      font-size: 18px;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-sizing: border-box;
+    }
+    #search-input:focus {
+      outline: none;
+      border-color: #3a98ff;
+    }
+    .row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .row select {
+      background-color: #635265;
+      color: #fff;
+      border: none;
+      padding: 10px 16px;
+      font-size: 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      min-width: 150px;
+    }
+    .row button {
+      border: none;
+      padding: 10px 24px;
+      font-size: 15px;
+      border-radius: 5px;
+      cursor: pointer;
+      color: #fff;
+    }
+    .btn-search  { background-color: #3a98ff; }
+    .btn-content { background-color: #e0607e; }
+    .btn-ai      { background-color: #7c5cbf; }
+    .btn-map     { background-color: #2bb673; }
+    .label {
+      font-size: 13px;
+      color: #999;
+      min-width: 60px;
+      text-align: right;
+    }
+  </style>
+</head>
+<body>
+
+<h2>执迷搜索</h2>
+
+<div id="search-box">
+  <input id="search-input" type="text" placeholder="输入地点或关键词，回车走综合搜索..." />
+
+  <!-- 综合 -->
+  <div class="row">
+    <select class="engine-select" data-id="general">
+      <optgroup label="— 综合搜索 —">
+        <option value="https://cn.bing.com/search?q=" selected>必应</option>
+        <option value="https://www.baidu.com/s?wd=">百度</option>
+        <option value="https://m.sm.cn/s?q=">神马</option>
+        <option value="https://www.google.com/search?q=">谷歌</option>
+      </optgroup>
+    </select>
+    <button class="search-btn btn-search" data-id="general">搜索</button>
+  </div>
+
+  <!-- 内容 -->
+  <div class="row">
+    <select class="engine-select" data-id="content">
+      <optgroup label="— 内容平台 —">
+        <option value="https://www.douyin.com/search/" selected>抖音</option>
+        <option value="https://www.kuaishou.com/search/video?searchKey=">快手</option>
+        <option value="https://so.toutiao.com/search?keyword=">头条</option>
+        <option value="https://www.xiaohongshu.com/search_result?keyword=">小红书</option>
+        <option value="https://y.qq.com/n/ryqq/search?w=">QQ音乐</option>
+        <option value="https://music.163.com/#/search/m/?s=">网易云音乐</option>
+      </optgroup>
+    </select>
+    <button class="search-btn btn-content" data-id="content">搜索</button>
+  </div>
+
+  <!-- AI -->
+  <div class="row">
+    <select class="engine-select" data-id="ai">
+      <optgroup label="— AI 对话/搜索 —">
+        <option value="https://tongyi.aliyun.com/qianwen/?q=" selected>通义千问</option>
+        <option value="https://yuanbao.tencent.com/?q=">元宝</option>
+        <option value="https://www.doubao.com/chat?q=">豆包</option>
+        <option value="https://www.kimi.com/search?q=">Kimi</option>
+        <option value="https://metaso.cn/?q=">秘塔AI搜索</option>
+        <option value="https://www.nano.cn/search?q=">纳米AI搜索</option>
+      </optgroup>
+    </select>
+    <button class="search-btn btn-ai" data-id="ai">搜索</button>
+  </div>
+
+  <!-- 地图（新增） -->
+  <div class="row">
+    <select class="engine-select" data-id="map">
+      <optgroup label="— 地图 —">
+        <option value="https://www.amap.com/search?query=" selected>高德地图</option>
+        <option value="https://api.map.baidu.com/place/search?query=">百度地图</option>
+        <option value="https://apis.map.qq.com/uri/v1/search?keyword=">腾讯地图</option>
+      </optgroup>
+    </select>
+    <button class="search-btn btn-map" data-id="map">搜索</button>
+  </div>
+</div>
+
+<script>
+  const searchInput = document.getElementById('search-input');
+
+  document.querySelectorAll('.engine-select').forEach(sel => {
+    const saved = localStorage.getItem('engine-' + sel.dataset.id);
+    if (saved) sel.value = saved;
+    sel.addEventListener('change', () => {
+      localStorage.setItem('engine-' + sel.dataset.id, sel.value);
+    });
+  });
+
+  function doSearch(groupId) {
+    const query = searchInput.value.trim();
+    if (!query) return;
+    const sel = document.querySelector(`.engine-select[data-id="${groupId}"]`);
+    let base = sel.value;
+    let url = base + encodeURIComponent(query);
+
+    // 百度/腾讯地图补必要参数
+    if (groupId === 'map') {
+      if (base.includes('api.map.baidu.com')) {
+        url += '&region=全国&output=html&src=webapp.zhimisearch';
+      } else if (base.includes('apis.map.qq.com')) {
+        url += '&region=全国&referer=zhimisearch';
+      }
+    }
+    window.open(url, '_blank');
+  }
+
+  document.querySelectorAll('.search-btn').forEach(btn => {
+    btn.addEventListener('click', () => doSearch(btn.dataset.id));
+  });
+
+  searchInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      doSearch('general');
+    }
+  });
+</script>
+
+</body>
+</html>

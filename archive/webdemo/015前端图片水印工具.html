@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"/>
+    <title>前端图片水印工具</title>
+    <style>
+        :root {
+            --primary-color: #007BFF;
+            --primary-hover: #0056b3;
+            --secondary-color: #6c757d;
+            --light-bg: #f8f9fa;
+            --border-color: #dee2e6;
+            --text-primary: #333;
+            --text-secondary: #666;
+            --text-light: #777;
+            --success-color: #28a745;
+            --danger-color: #dc3545;
+            --shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            --shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+            --radius-sm: 4px;
+            --radius: 8px;
+            --radius-lg: 12px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--light-bg);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding: 0;
+            margin: 0;
+        }
+
+        #container {
+            max-width: 900px;
+            margin: 2rem auto;
+            background: #fff;
+            padding: 2rem;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow);
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+            font-weight: 600;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 0.5rem;
+        }
+
+        .intro {
+            font-size: 15px;
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background-color: rgba(0, 123, 255, 0.05);
+            border-left: 4px solid var(--primary-color);
+            border-radius: var(--radius-sm);
+        }
+
+        .links {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .links a {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.5rem 1rem;
+            background-color: var(--light-bg);
+            color: var(--primary-color);
+            text-decoration: none;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border-color);
+            transition: all 0.2s ease;
+        }
+
+        .links a:hover {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .form-label {
+            font-size: 15px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            min-width: 100px;
+            flex-shrink: 0;
+        }
+
+        .form-control {
+            padding: 0.5rem 0.75rem;
+            font-size: 14px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            flex: 1;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+
+        input[type="color"] {
+            height: 40px;
+            padding: 2px;
+            width: 60px;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .range-value {
+            min-width: 60px;
+            text-align: center;
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .checkbox-group {
+            display: flex;
+            gap: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .canvas-container {
+            margin-top: 1.5rem;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+
+        canvas {
+            width: 100%;
+            border: 2px dashed #adb5bd;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background-color: var(--light-bg);
+            aspect-ratio: 4/3;
+            object-fit: contain;
+        }
+
+        canvas:hover {
+            border-color: var(--primary-color);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .btn {
+            padding: 0.6rem 1.2rem;
+            font-size: 15px;
+            font-weight: 500;
+            background-color: var(--primary-color);
+            color: #fff;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            margin: 1.5rem 0;
+            flex-wrap: wrap;
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .radio-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        input[type="radio"] {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .quality-control {
+            margin-top: 1rem;
+            display: none;
+        }
+
+        /* ========== 新增：文件选择框样式 ========== */
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+            flex: 1;
+        }
+
+        .file-input {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+            z-index: 2;
+        }
+
+        .file-input-display {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.5rem 0.75rem;
+            font-size: 14px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            background-color: white;
+            min-height: 40px;
+            width: 100%;
+        }
+
+        .file-input-display:hover {
+            border-color: var(--primary-color);
+        }
+
+        .file-input-button {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        .file-count {
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        /* 响应式适配 */
+        @media (max-width: 768px) {
+            #container {
+                margin: 1rem;
+                padding: 1.5rem;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            .form-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            .form-label {
+                min-width: unset;
+            }
+
+            .checkbox-group {
+                gap: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .canvas-container {
+                grid-template-columns: 1fr;
+            }
+
+            .btn-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .radio-group {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+<div id="container">
+    <h1>📝 前端图片水印工具</h1>
+    
+    <div class="intro">
+        安全地为你的图片加水印，无任何网络请求，特别适合各种敏感证件（身份证，驾照，护照等）。
+    </div>
+
+    <!-- 第一步：选择图片 - 优化文件选择框 -->
+    <div class="form-group">
+        <div class="form-row">
+            <label class="form-label">选择图片</label>
+            <div class="file-input-wrapper">
+                <input type="file" id="image" class="file-input" autocomplete="off" multiple accept="image/png,image/jpeg,image/webp">
+                <div class="file-input-display" id="fileInputDisplay">
+                    <span id="fileDisplayText">未选择文件</span>
+                    <span class="file-input-button">选择文件</span>
+                </div>
+            </div>
+        </div>
+        <small style="color: var(--text-light); margin-top: 4px;">支持 PNG、JPG、WebP 格式，可多选</small>
+    </div>
+
+    <!-- 第二步：水印文字 -->
+    <div class="form-group">
+        <div class="form-row">
+            <label class="form-label">水印文字</label>
+            <input type="text" id="text" class="form-control" autocomplete="off" value="这里是水印文字" placeholder="请输入水印文字">
+        </div>
+    </div>
+
+    <!-- 颜色选择 -->
+    <div class="form-group">
+        <div class="form-row">
+            <label class="form-label">文字颜色</label>
+            <input type="color" id="color" class="form-control" value="#601f1f">
+            <span class="range-value" id="label-color">#601f1f</span>
+        </div>
+    </div>
+
+    <!-- 字体选择 -->
+    <div class="form-group">
+        <div class="form-row">
+            <label class="form-label">字体样式</label>
+            <select id="fontSelect" class="form-control"></select>
+        </div>
+    </div>
+
+    <!-- 文字样式 -->
+    <div class="form-group">
+        <label class="form-label">文字效果</label>
+        <div class="checkbox-group">
+            <div class="checkbox-item">
+                <input type="checkbox" id="bold" checked>
+                <label for="bold">加粗</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" id="italic">
+                <label for="italic">斜体</label>
+            </div>
+            <div class="checkbox-item">
+                <input type="checkbox" id="xx" checked>
+                <label for="xx">交错排列</label>
+            </div>
+        </div>
+    </div>
+
+    <!-- 不透明度 -->
+    <div class="form-group">
+        <div class="form-row">
+            <label class="form-label">不透明度</label>
+            <input type="range" id="alpha" min="0" max="1" step="0.01" value="0.25" class="form-control">
+            <span class="range-value" id="label-alpha">0.25</span>
+        </div>
+    </div>
+
+    <!-- 字号 -->
+    <div class="form-group">
+        <div class="form-row">
+            <label class="form-label">字号大小</label>
+            <input type="range" id="size" min="0.1" max="5" step="0.01" value="0.8" class="form-control">
+            <span class="range-value" id="label-size">0.80</span>
+        </div>
+    </div>
+
+    <!-- 角度 -->
+    <div class="form-group">
+        <div class="form-row">
+            <label class="form-label">旋转角度</label>
+            <input type="range" id="radio" min="-180" max="180" step="1" value="-30" class="form-control">
+            <span class="range-value" id="label-radio">-30°</span>
+        </div>
+    </div>
+
+    <!-- 左右间隔 -->
+    <div class="form-group">
+        <div class="form-row">
+            <label class="form-label">左右间隔</label>
+            <input type="range" id="marginHorizon" min="-5" max="12" step="0.1" value="1.5" class="form-control">
+            <span class="range-value" id="label-marginHorizon">1.50</span>
+        </div>
+    </div>
+
+    <!-- 上下间隔 -->
+    <div class="form-group">
+        <div class="form-row">
+            <label class="form-label">上下间隔</label>
+            <input type="range" id="marginVertical" min="-5" max="12" step="0.1" value="1.5" class="form-control">
+            <span class="range-value" id="label-marginVertical">1.50</span>
+        </div>
+    </div>
+
+    <!-- 下载设置 -->
+    <div class="form-group">
+        <div class="btn-group">
+            <button class="btn" onclick="downloadAllPic()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="margin-right: 6px;">
+                    <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+                </svg>
+                下载全部图片
+            </button>
+
+            <div class="radio-group">
+                <div class="radio-item">
+                    <input type="radio" value="image/png" name="pic-type" class="pic-type" checked id="type-png">
+                    <label for="type-png">PNG格式</label>
+                </div>
+                <div class="radio-item">
+                    <input type="radio" value="image/jpeg" name="pic-type" class="pic-type" id="type-jpeg">
+                    <label for="type-jpeg">JPEG格式</label>
+                </div>
+                <div class="radio-item">
+                    <input type="radio" value="image/webp" name="pic-type" class="pic-type" id="type-webp">
+                    <label for="type-webp">WebP格式</label>
+                </div>
+            </div>
+        </div>
+
+        <!-- 图片质量设置 -->
+        <div class="quality-control" id="pic-quality-div">
+            <div class="form-row">
+                <label class="form-label">图片质量</label>
+                <input type="range" id="pic-quality" min="1" max="100" step="1" value="90" class="form-control">
+                <span class="range-value" id="label-quality">90%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 图片预览区域 -->
+    <div class="canvas-container" id="graph"></div>
+</div>
+
+<script>
+// 工具函数
+const $ = sel => document.querySelector(sel);
+const $$ = sel => document.querySelectorAll(sel);
+
+// 全局变量
+let configInputSetting = {};
+let allCanvas = [];
+
+// 像素水印配置（方便调整）
+const pixelWatermarkConfig = {
+    fontSize: 9,          // 字体大小 (1-3px)
+    baseAlpha: 0.16,       // 基础透明度 (0.01-1)，0.3 更容易看到
+    randomAlphaRange: 0.09,// 透明度随机波动范围
+    baseColor: { r: 121, g: 121, b: 121 }, // 基础颜色
+    colorOffset: 5,       // 颜色随机偏移量 (1-5)
+    density: 80,          // 密度（值越小越密，50-100）
+    randomness: 0.7,      // 随机分布程度 (0.5-0.9)
+    showDebug: false       // 调试模式，true 更容易看到水印
+};
+
+// 初始化字体列表
+const initFontList = () => {
+    const fontOptions = [
+        "Arial", "Helvetica", "Times New Roman", "Courier New", "Verdana", 
+        "Georgia", "Impact", "Tahoma", "Palatino", "Garamond", 
+        "幼圆", "新宋体", "微软正黑体", "微软雅黑", "宋体", 
+        "思源宋体", "思源黑体", "苹方", "隶书", "楷体", 
+        "华文中宋", "华文行楷", "华文新魏", "华文细黑", "华文宋体",
+        "华文隶书", "华文楷体", "华文琥珀", "华文黑体", "华文仿宋",
+        "华文彩云", "黑体", "仿宋"
+    ];
+    
+    const selectElement = $("#fontSelect");
+    fontOptions.forEach(font => {
+        const optionElement = document.createElement("option");
+        optionElement.value = font;
+        optionElement.textContent = font;
+        optionElement.style.fontFamily = font;
+        selectElement.appendChild(optionElement);
+    });
+};
+
+// 重绘画布（清除原有内容）
+const redrawCanvas = (canvas, img) => {
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0);
+};
+
+// 生成随机颜色（可配置偏移）
+const getRandomColor = (baseR, baseG, baseB, alpha) => {
+    // 根据配置调整颜色偏移范围
+    const offset = pixelWatermarkConfig.showDebug ? 10 : pixelWatermarkConfig.colorOffset;
+    
+    // 随机偏移±offset，保持颜色基本一致但有微小差异
+    const r = Math.max(0, Math.min(255, baseR + (Math.random() - 0.5) * offset));
+    const g = Math.max(0, Math.min(255, baseG + (Math.random() - 0.5) * offset));
+    const b = Math.max(0, Math.min(255, baseB + (Math.random() - 0.5) * offset));
+    
+    // 调试模式下透明度更高
+    const finalAlpha = pixelWatermarkConfig.showDebug ? Math.min(0.8, alpha * 3) : alpha;
+    
+    return `rgba(${r}, ${g}, ${b}, ${finalAlpha})`;
+};
+
+// 绘制像素级隐藏水印
+const drawPixelWatermark = (canvas, img, mainText) => {
+    if (!canvas || !img || !mainText) return;
+    
+    const ctx = canvas.getContext('2d');
+    const canvasWidth = canvas.width;
+    const canvasHeight = canvas.height;
+    
+    // 调试模式下使用更大的字体和更高的密度
+    const fontSize = pixelWatermarkConfig.showDebug ? 3 : pixelWatermarkConfig.fontSize;
+    const density = pixelWatermarkConfig.showDebug ? 40 : pixelWatermarkConfig.density;
+    
+    // 使用等宽字体确保像素级显示
+    ctx.font = `${fontSize}px monospace`;
+    
+    // 选择水印字符（取主文本的字符，或固定字符）
+    const watermarkChars = mainText || '我';
+    
+    // 计算绘制点数量
+    const pointsX = Math.floor(canvasWidth / density);
+    const pointsY = Math.floor(canvasHeight / density);
+    
+    // 随机散布绘制像素水印
+    for (let i = 0; i < pointsX; i++) {
+        for (let j = 0; j < pointsY; j++) {
+            // 随机跳过一些点，增加不规则性
+            if (Math.random() > pixelWatermarkConfig.randomness) continue;
+            
+            // 计算绘制位置（带随机偏移）
+            const x = i * density + Math.random() * density;
+            const y = j * density + Math.random() * density;
+            
+            // 随机选择一个字符
+            const charIndex = Math.floor(Math.random() * watermarkChars.length);
+            const currentChar = watermarkChars.charAt(charIndex);
+            
+            // 每个点使用略微不同的颜色
+            ctx.fillStyle = getRandomColor(
+                pixelWatermarkConfig.baseColor.r,
+                pixelWatermarkConfig.baseColor.g,
+                pixelWatermarkConfig.baseColor.b,
+                pixelWatermarkConfig.baseAlpha + (Math.random() - 0.5) * pixelWatermarkConfig.randomAlphaRange
+            );
+            
+            // 绘制像素字符
+            ctx.fillText(currentChar, x, y);
+        }
+    }
+    
+    // 在图片边缘添加额外的像素水印（防裁剪）
+    if (!pixelWatermarkConfig.showDebug) {
+        const edgeOffset = 10;
+        const edgeChars = ['隐', '藏', '水', '印'];
+        edgeChars.forEach((char, idx) => {
+            // 四个边角
+            const positions = [
+                { x: edgeOffset, y: edgeOffset },
+                { x: canvasWidth - edgeOffset, y: edgeOffset },
+                { x: edgeOffset, y: canvasHeight - edgeOffset },
+                { x: canvasWidth - edgeOffset, y: canvasHeight - edgeOffset }
+            ];
+            
+            const pos = positions[idx % 4];
+            ctx.fillStyle = getRandomColor(120, 120, 120, 0.05);
+            ctx.fillText(char, pos.x, pos.y);
+        });
+    }
+};
+
+// 切换像素水印调试模式
+const togglePixelWatermarkDebug = () => {
+    pixelWatermarkConfig.showDebug = !pixelWatermarkConfig.showDebug;
+    
+    // 更新UI提示
+    const debugBtn = $('#pixelDebugBtn');
+    if (debugBtn) {
+        debugBtn.textContent = pixelWatermarkConfig.showDebug 
+            ? '隐藏像素水印（调试模式）' 
+            : '显示像素水印（正常模式）';
+    }
+    
+    // 重新绘制所有水印
+    allCanvas.forEach(({canvas, img}) => drawText(canvas, img));
+    
+    alert(`像素水印已切换为${pixelWatermarkConfig.showDebug ? '调试模式（可见）' : '正常模式（隐藏）'}`);
+};
+
+// 调整像素水印参数
+const adjustPixelWatermarkParam = (param, value) => {
+    if (pixelWatermarkConfig.hasOwnProperty(param)) {
+        pixelWatermarkConfig[param] = parseFloat(value);
+        // 重新绘制所有水印
+        allCanvas.forEach(({canvas, img}) => drawText(canvas, img));
+        console.log(`像素水印参数 ${param} 已调整为: ${value}`);
+    }
+};
+
+// 下载画布为图片
+const downloadCanvasAsImage = (canvas, fileName) => {
+    try {
+        // 下载前临时切换到正常模式
+        const wasDebug = pixelWatermarkConfig.showDebug;
+        if (wasDebug) {
+            pixelWatermarkConfig.showDebug = false;
+            // 重新绘制为隐藏模式
+            const imgObj = allCanvas.find(item => item.canvas === canvas)?.img;
+            if (imgObj) {
+                drawText(canvas, imgObj);
+            }
+        }
+        
+        let type = configInputSetting["pic-type"] || "image/png";
+        let quality = parseFloat($("#pic-quality")?.value || 90) / 100;
+        
+        // 生成图片数据
+        let imageData = canvas.toDataURL(type, quality);
+        
+        // 创建下载链接
+        let link = document.createElement('a');
+        link.download = `${fileName.replace(/\.\w+$/, '')}_watermark.${type.split("/")[1]}`;
+        
+        // 处理大数据URL，使用Blob优化
+        if (imageData.length > 2000000) { // 2MB以上
+            const byteString = atob(imageData.split(',')[1]);
+            const mimeString = imageData.split(',')[0].split(':')[1].split(';')[0];
+            const ab = new ArrayBuffer(byteString.length);
+            const ia = new Uint8Array(ab);
+            
+            for (let i = 0; i < byteString.length; i++) {
+                ia[i] = byteString.charCodeAt(i);
+            }
+            
+            const blob = new Blob([ab], { type: mimeString });
+            link.href = URL.createObjectURL(blob);
+            
+            // 下载完成后释放URL
+            link.onclick = () => {
+                setTimeout(() => URL.revokeObjectURL(link.href), 60000);
+            };
+        } else {
+            link.href = imageData;
+        }
+        
+        // 触发下载
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        // 恢复调试模式
+        if (wasDebug) {
+            setTimeout(() => {
+                pixelWatermarkConfig.showDebug = true;
+                const imgObj = allCanvas.find(item => item.canvas === canvas)?.img;
+                if (imgObj) {
+                    drawText(canvas, imgObj);
+                }
+            }, 1000);
+        }
+        
+    } catch (error) {
+        alert(`下载失败: ${error.message}`);
+        console.error('下载错误:', error);
+    }
+};
+
+// 下载所有图片
+const downloadAllPic = () => {
+    if (allCanvas.length === 0) {
+        return alert('请先选择图片并添加水印');
+    }
+    
+    // 下载前临时切换到正常模式
+    const wasDebug = pixelWatermarkConfig.showDebug;
+    if (wasDebug) {
+        pixelWatermarkConfig.showDebug = false;
+        // 重新绘制所有画布为隐藏模式
+        allCanvas.forEach(({canvas, img}) => drawText(canvas, img));
+    }
+    
+    allCanvas.forEach(({canvas, fileName}, index) => {
+        // 延迟下载，避免浏览器阻止
+        setTimeout(() => downloadCanvasAsImage(canvas, fileName), index * 300);
+    });
+    
+    // 恢复调试模式
+    if (wasDebug) {
+        setTimeout(() => {
+            pixelWatermarkConfig.showDebug = true;
+            allCanvas.forEach(({canvas, img}) => drawText(canvas, img));
+        }, 2000);
+    }
+};
+
+// 更新文件选择显示文本
+const updateFileDisplay = (files) => {
+    const displayText = $('#fileDisplayText');
+    
+    if (!files || files.length === 0) {
+        displayText.textContent = '未选择文件';
+        displayText.classList.remove('file-count');
+        return;
+    }
+    
+    if (files.length === 1) {
+        displayText.textContent = files[0].name;
+    } else {
+        displayText.textContent = `已选择 ${files.length} 个文件`;
+    }
+    
+    displayText.classList.add('file-count');
+};
+
+// 读取文件并创建画布
+const readFile = file => {
+    if (!file) return;
+    
+    const fileReader = new FileReader();
+    
+    fileReader.onload = () => {
+        const img = new Image();
+        img.crossOrigin = "anonymous"; // 处理跨域问题
+        
+        img.onload = () => {
+            // 创建画布
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            
+            // 绘制原始图片
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0);
+            
+            // 保存画布信息
+            allCanvas.push({img, canvas, fileName: file.name});
+            
+            // 绘制水印文字（主水印 + 像素水印）
+            drawText(canvas, img);
+            
+            // 添加到预览区域
+            $('#graph').appendChild(canvas);
+            
+            // 点击画布下载
+            canvas.addEventListener('click', () => {
+                downloadCanvasAsImage(canvas, file.name);
+            });
+            
+            // 添加提示
+            canvas.title = "点击下载此图片";
+        };
+        
+        img.onerror = () => {
+            alert(`无法加载图片: ${file.name}`);
+        };
+        
+        img.src = fileReader.result;
+    };
+    
+    fileReader.onerror = () => {
+        alert(`读取文件失败: ${file.name}`);
+    };
+    
+    fileReader.readAsDataURL(file);
+};
+
+// 生成样式（颜色+透明度）
+const makeStyle = () => {
+    try {
+        const color = configInputSetting.color.value;
+        const alpha = parseFloat(configInputSetting.alpha.value);
+        
+        // 转换十六进制颜色为RGB
+        const match = color.match(/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i);
+        if (match) {
+            return `rgba(${parseInt(match[1], 16)}, ${parseInt(match[2], 16)}, ${parseInt(match[3], 16)}, ${alpha})`;
+        }
+        
+        return `rgba(96, 31, 31, ${alpha})`; // 默认颜色
+    } catch (e) {
+        return 'rgba(96, 31, 31, 0.25)'; // 降级处理
+    }
+};
+
+// 绘制水印文字
+const drawText = (canvas, img) => {
+    if (!canvas || !img) return;
+    
+    // 清除并重新绘制原始图片
+    redrawCanvas(canvas, img);
+    
+    const text = configInputSetting.text.value.trim() || "水印文字";
+    if (!text) return;
+    
+    const ctx = canvas.getContext('2d');
+    const canvasWidth = canvas.width;
+    const canvasHeight = canvas.height;
+    
+    // ========== 1. 绘制主要水印（原有逻辑） ==========
+    // 计算文字大小
+    const baseFontSize = Math.max(15, Math.min(canvasWidth, canvasHeight) / 25);
+    const textSize = parseFloat(configInputSetting.size.value) * baseFontSize;
+    
+    // 设置文字样式
+    ctx.fillStyle = makeStyle();
+    ctx.font = `${$("#bold").checked ? "bold " : ""}${$("#italic").checked ? "italic " : ""}${textSize}px ${$("#fontSelect").value}`;
+    
+    // 计算文字间距
+    const baseWidth = ctx.measureText('啊').width;
+    const textWidth = ctx.measureText(text).width;
+    
+    const marginHorizon = parseFloat(configInputSetting.marginHorizon.value);
+    const marginVertical = parseFloat(configInputSetting.marginVertical.value);
+    
+    let xAdd = textWidth + marginHorizon * baseWidth;
+    let yAdd = textWidth + marginVertical * baseWidth;
+    
+    xAdd = Math.max(xAdd, 10);
+    yAdd = Math.max(yAdd, 10);
+    
+    // 旋转角度
+    const rotateAngle = parseFloat(configInputSetting.radio.value) * Math.PI / 180;
+    
+    // 是否交错排列
+    const isStagger = $("#xx").checked;
+    
+    // 绘制重复水印（扩大绘制范围，确保全屏覆盖）
+    const border = 500;
+    for (let i = -border; i < canvasWidth + border; i += xAdd) {
+        for (let j = -border, jj = 0; j < canvasHeight + border; j += yAdd, jj++) {
+            ctx.save();
+            
+            // 交错偏移
+            const offsetX = isStagger && jj % 2 === 0 ? xAdd / 2 : 0;
+            
+            // 平移和旋转
+            ctx.translate(i + offsetX, j);
+            ctx.rotate(rotateAngle);
+            
+            // 绘制文字
+            ctx.fillText(text, 0, 0);
+            
+            ctx.restore();
+        }
+    }
+    
+    // ========== 2. 绘制像素级隐藏水印（新增逻辑） ==========
+    drawPixelWatermark(canvas, img, text);
+};
+
+// 初始化输入控件
+const initInputControls = () => {
+    // 绑定格式选择
+    $$('.pic-type').forEach(item => {
+        item.addEventListener('change', () => {
+            const qualityDiv = $("#pic-quality-div");
+            
+            if (item.checked) {
+                configInputSetting["pic-type"] = item.value;
+                
+                // 只对JPEG和WebP显示质量设置
+                qualityDiv.style.display = (item.value === "image/webp" || item.value === "image/jpeg") 
+                    ? "block" 
+                    : "none";
+            }
+        });
+    });
+
+    // 绑定文件选择
+    $('#image').addEventListener('change', function () {
+        const files = this.files;
+        
+        // 更新文件显示文本
+        updateFileDisplay(files);
+        
+        // 清空原有画布
+        $('#graph').innerHTML = '';
+        allCanvas = [];
+        
+        // 处理选中的文件
+        [...files].forEach(file => {
+            const type = file.type;
+            
+            // 验证文件类型
+            if (!['image/png', 'image/jpeg', 'image/webp'].includes(type)) {
+                return alert(`文件 ${file.name} 格式不支持，仅支持 PNG、JPG、WebP 格式`);
+            }
+            
+            readFile(file);
+        });
+    });
+
+    // 绑定文本输入
+    configInputSetting["text"] = $('#text');
+    configInputSetting["text"].addEventListener('input', () => {
+        allCanvas.forEach(({canvas, img}) => drawText(canvas, img));
+    });
+
+    // 绑定字体选择
+    configInputSetting["fontSelect"] = $('#fontSelect');
+    configInputSetting["fontSelect"].addEventListener('change', () => {
+        allCanvas.forEach(({canvas, img}) => drawText(canvas, img));
+    });
+
+    // 绑定其他输入控件
+    const inputItems = [
+        'color', 'alpha', "marginHorizon", "marginVertical", 
+        'size', 'radio', "xx", "bold", "italic"
+    ];
+
+    inputItems.forEach(item => {
+        const el = $('#' + item);
+        if (!el) return;
+        
+        configInputSetting[item] = el;
+        const labelDom = $('#label-' + item);
+        
+        // 初始化显示值
+        if (labelDom) {
+            let displayValue = el.value;
+            
+            // 特殊格式化
+            if (item === 'radio') displayValue += '°';
+            if (item === 'quality') displayValue += '%';
+            
+            labelDom.innerText = isNaN(displayValue) 
+                ? displayValue 
+                : parseFloat(displayValue).toFixed(2);
+        }
+
+        // 绑定输入事件
+        el.addEventListener('input', () => {
+            // 更新显示值
+            if (labelDom) {
+                let displayValue = el.value;
+                
+                if (item === 'radio') displayValue += '°';
+                if (item === 'quality') displayValue += '%';
+                
+                labelDom.innerText = isNaN(displayValue) 
+                    ? displayValue 
+                    : parseFloat(displayValue).toFixed(2);
+            }
+            
+            // 重新绘制水印
+            allCanvas.forEach(({canvas, img}) => drawText(canvas, img));
+        });
+    });
+
+    // 绑定质量控制
+    const qualityInput = $('#pic-quality');
+    if (qualityInput) {
+        qualityInput.value = 90;
+        $('#label-quality').innerText = '90%';
+        
+        qualityInput.addEventListener('input', () => {
+            $('#label-quality').innerText = `${qualityInput.value}%`;
+        });
+    }
+
+    // 初始化颜色显示
+    $('#label-color').innerText = $('#color').value;
+    $('#color').addEventListener('input', () => {
+        $('#label-color').innerText = $('#color').value;
+    });
+
+    // 绑定复选框事件
+    ['bold', 'italic', 'xx'].forEach(id => {
+        $(`#${id}`).addEventListener('change', () => {
+            allCanvas.forEach(({canvas, img}) => drawText(canvas, img));
+        });
+    });
+
+    // 添加像素水印调试按钮
+    if (!$('#pixelDebugBtn')) {
+        const btnGroup = document.querySelector('.btn-group');
+        const debugBtn = document.createElement('button');
+        debugBtn.id = 'pixelDebugBtn';
+        debugBtn.className = 'btn';
+        debugBtn.style.background = '#28a745';
+        debugBtn.style.marginLeft = '10px';
+        debugBtn.textContent = pixelWatermarkConfig.showDebug 
+            ? '隐藏像素水印（调试模式）' 
+            : '显示像素水印（正常模式）';
+        debugBtn.onclick = togglePixelWatermarkDebug;
+        btnGroup.appendChild(debugBtn);
+    }
+};
+
+// 页面加载完成后初始化
+window.addEventListener('DOMContentLoaded', () => {
+    initFontList();
+    initInputControls();
+    
+    // 设置默认图片格式
+    configInputSetting["pic-type"] = "image/png";
+    
+    // 初始化文件显示
+    updateFileDisplay(null);
+    
+    // 控制台输出调整提示
+    console.log('=== 像素水印参数调整指南 ===');
+    console.log('// 调整透明度 (0.01-1)');
+    console.log('adjustPixelWatermarkParam("baseAlpha", 0.5)');
+    console.log('// 调整字体大小 (1-5)');
+    console.log('adjustPixelWatermarkParam("fontSize", 2)');
+    console.log('// 调整颜色偏移量 (1-10)');
+    console.log('adjustPixelWatermarkParam("colorOffset", 5)');
+    console.log('// 调整密度（值越小越密）(30-100)');
+    console.log('adjustPixelWatermarkParam("density", 60)');
+    console.log('// 切换调试模式');
+    console.log('togglePixelWatermarkDebug()');
+});
+</script>
+</body>
+</html>

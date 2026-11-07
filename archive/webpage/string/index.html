@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>字符串工具箱 - 终极版</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .section {
+            margin-bottom: 35px;
+            padding: 25px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .section:hover {
+            border-color: #667eea;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.1);
+        }
+
+        .section h2 {
+            color: #495057;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+            font-size: 1.5em;
+        }
+
+        textarea {
+            width: 100%;
+            height: 120px;
+            padding: 15px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            resize: vertical;
+            transition: border-color 0.3s ease;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        button {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .result {
+            background: #f8f9fa;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 15px;
+            min-height: 60px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-item {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .flex-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin: 15px 0;
+        }
+
+        .error {
+            background: #fee;
+            border-color: #fcc;
+            color: #c33;
+        }
+
+        .success {
+            background: #efe;
+            border-color: #cfc;
+            color: #363;
+        }
+
+        .warning {
+            background: #ffe;
+            border-color: #ffc;
+            color: #663;
+        }
+
+        .info {
+            background: #eef;
+            border-color: #ccf;
+            color: #336;
+        }
+
+        .tool-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .mini-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+
+        .mini-section h3 {
+            color: #495057;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        /* 新增功能样式 */
+        .regex-tester {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .base64-result {
+            word-break: break-all;
+            font-size: 12px;
+        }
+
+        .hash-result {
+            font-family: 'Consolas', monospace;
+            font-size: 12px;
+            background: #000;
+            color: #0f0;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+
+        @media (max-width: 768px) {
+            .regex-tester {
+                grid-template-columns: 1fr;
+            }
+            
+            .btn-group {
+                flex-direction: column;
+            }
+            
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 字符串工具箱 - 终极版</h1>
+
+        <!-- 字符统计 -->
+        <div class="section">
+            <h2>📊 字符统计分析</h2>
+            <textarea id="inputText" placeholder="在此输入文本进行统计分析..."></textarea>
+            <button onclick="countCharacters()">🔍 开始分析</button>
+            <div id="countResult"></div>
+        </div>
+
+        <!-- 编码转换 -->
+        <div class="section">
+            <h2>🔄 编码转换 (稳定可靠)</h2>
+            <div class="tool-grid">
+                <div class="mini-section">
+                    <h3>文本 ↔ Hex</h3>
+                    <textarea id="textToHex" placeholder="输入文本转Hex..."></textarea>
+                    <div class="btn-group">
+                        <button onclick="textToHex()">文本 → Hex</button>
+                        <button onclick="hexToText()">Hex → 文本</button>
+                    </div>
+                    <div id="textHexResult"></div>
+                </div>
+
+                <div class="mini-section">
+                    <h3>Base64 编码</h3>
+                    <textarea id="base64Input" placeholder="输入文本进行Base64编码/解码..."></textarea>
+                    <div class="btn-group">
+                        <button onclick="encodeBase64()">编码 → Base64</button>
+                        <button onclick="decodeBase64()">解码 ← Base64</button>
+                    </div>
+                    <div id="base64Result"></div>
+                </div>
+
+                <div class="mini-section">
+                    <h3>URL 编码</h3>
+                    <textarea id="urlInput" placeholder="输入URL或文本进行编码/解码..."></textarea>
+                    <div class="btn-group">
+                        <button onclick="encodeUrl()">URL 编码</button>
+                        <button onclick="decodeUrl()">URL 解码</button>
+                    </div>
+                    <div id="urlResult"></div>
+                </div>
+
+                <div class="mini-section">
+                    <h3>HTML 实体</h3>
+                    <textarea id="htmlInput" placeholder="输入HTML内容进行实体解码..."></textarea>
+                    <div class="btn-group">
+                        <!--<button onclick="encodeHtml()">HTML 编码</button>-->
+                        <button onclick="decodeHtml()">HTML 解码</button>
+                    </div>
+                    <div id="htmlResult"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 数据处理 -->
+        <div class="section">
+            <h2>⚙️ 数据处理工具</h2>
+            <div class="tool-grid">
+                <div class="mini-section">
+                    <h3>大小写转换</h3>
+                    <textarea id="caseInput" placeholder="输入文本进行大小写转换..."></textarea>
+                    <div class="btn-group">
+                        <button onclick="toUpperCase()">转大写</button>
+                        <button onclick="toLowerCase()">转小写</button>
+                        <button onclick="toTitleCase()">首字母大写</button>
+                    </div>
+                    <div id="caseResult"></div>
+                </div>
+
+                <div class="mini-section">
+                    <h3>字符串操作</h3>
+                    <textarea id="stringOpInput" placeholder="输入文本进行操作..."></textarea>
+                    <div class="btn-group">
+                        <button onclick="reverseString()">反转字符串</button>
+                        <button onclick="trimString()">去除首尾空格</button>
+                        <button onclick="removeDuplicateChars()">去重字符</button>
+                    </div>
+                    <div id="stringOpResult"></div>
+                </div>
+
+                <div class="mini-section">
+                    <h3>正则测试器</h3>
+                    <div class="regex-tester">
+                        <div>
+                            <input type="text" id="regexPattern" placeholder="正则表达式 (如: \d+)">
+                            <textarea id="regexTest" placeholder="测试文本..."></textarea>
+                        </div>
+                        <div>
+                            <button onclick="testRegex()" style="width: 100%; margin-bottom: 10px;">测试正则</button>
+                            <div id="regexResult" class="result" style="height: 150px;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mini-section">
+                    <h3>Hash 计算 (简单版)</h3>
+                    <textarea id="hashInput" placeholder="输入文本计算简单的校验值..."></textarea>
+                    <div class="btn-group">
+                        <button onclick="simpleHash()">计算校验和</button>
+                        <button onclick="stringLengthHash()">长度哈希</button>
+                    </div>
+                    <div id="hashResult"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 格式化工具 -->
+        <div class="section">
+            <h2>🎨 格式化工具</h2>
+            <div class="tool-grid">
+                <div class="mini-section">
+                    <h3>Hex 格式化</h3>
+                    <input type="text" id="hexFormatInput" placeholder="输入十六进制字符串">
+                    <div class="flex-row">
+                        <label>间隔:</label>
+                        <select id="hexSpacing">
+                            <option value="2">2位</option>
+                            <option value="4">4位</option>
+                            <option value="8">8位</option>
+                            <option value="16">16位</option>
+                        </select>
+                        <button onclick="formatHex()">格式化</button>
+                        <button onclick="compressHex()">压缩</button>
+                    </div>
+                    <div id="hexFormatResult"></div>
+                </div>
+
+                <div class="mini-section">
+                    <h3>JSON 格式化</h3>
+                    <textarea id="jsonInput" placeholder='输入JSON字符串...&#10;例如: {"name":"test","age":25}'></textarea>
+                    <div class="btn-group">
+                        <button onclick="formatJson()">格式化 JSON</button>
+                        <button onclick="minifyJson()">压缩 JSON</button>
+                        <button onclick="validateJson()">验证 JSON</button>
+                    </div>
+                    <div id="jsonResult"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 实用工具 -->
+        <div class="section">
+            <h2>🛠️ 实用工具</h2>
+            <div class="tool-grid">
+                <div class="mini-section">
+                    <h3>随机生成器</h3>
+                    <div class="flex-row">
+                        <label>长度:</label>
+                        <input type="number" id="randomLength" value="10" min="1" max="1000">
+                        <label>类型:</label>
+                        <select id="randomType">
+                            <option value="alphanumeric">字母数字</option>
+                            <option value="letters">仅字母</option>
+                            <option value="numbers">仅数字</option>
+                            <option value="hex">十六进制</option>
+                        </select>
+                    </div>
+                    <button onclick="generateRandom()" style="width: 100%; margin: 10px 0;">生成随机数</button>
+                    <div id="randomResult"></div>
+                </div>
+
+                <div class="mini-section">
+                    <h3>密码强度检测</h3>
+                    <input type="text" id="passwordCheck" placeholder="输入密码检测强度...">
+                    <button onclick="checkPasswordStrength()" style="width: 100%; margin: 10px 0;">检测强度</button>
+                    <div id="passwordResult"></div>
+                </div>
+
+                <div class="mini-section">
+                    <h3>文本差异对比</h3>
+                    <textarea id="diffText1" placeholder="文本1..."></textarea>
+                    <textarea id="diffText2" placeholder="文本2..."></textarea>
+                    <button onclick="compareText()" style="width: 100%; margin: 10px 0;">对比文本</button>
+                    <div id="diffResult"></div>
+                </div>
+
+                <div class="mini-section">
+                    <h3>时间戳转换</h3>
+                    <input type="text" id="timestampInput" placeholder="输入时间戳或日期...">
+                    <div class="btn-group">
+                        <button onclick="timestampToDate()">时间戳 → 日期</button>
+                        <button onclick="dateToTimestamp()">日期 → 时间戳</button>
+                    </div>
+                    <div id="timestampResult"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 字符统计功能
+        function countCharacters() {
+            const text = document.getElementById('inputText').value;
+            if (!text) {
+                showResult('countResult', '请输入文本进行分析', 'error');
+                return;
+            }
+
+            const stats = {
+                total: text.length,
+                chinese: 0,
+                english: 0,
+                digits: 0,
+                spaces: 0,
+                special: 0,
+                lines: text.split('\n').length,
+                words: text.trim() ? text.trim().split(/\s+/).length : 0
+            };
+
+            for (let char of text) {
+                const code = char.charCodeAt(0);
+                if ((code >= 0x4E00 && code <= 0x9FFF) || (code >= 0x3400 && code <= 0x4DBF)) {
+                    stats.chinese++;
+                } else if ((code >= 65 && code <= 90) || (code >= 97 && code <= 122)) {
+                    stats.english++;
+                } else if (code >= 48 && code <= 57) {
+                    stats.digits++;
+                } else if (char === ' ') {
+                    stats.spaces++;
+                } else if (char.trim().length > 0) {
+                    stats.special++;
+                }
+            }
+
+            const statsHtml = `
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-label">总字符</div>
+                        <div class="stat-value">${stats.total}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">中文字符</div>
+                        <div class="stat-value">${stats.chinese}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">英文字母</div>
+                        <div class="stat-value">${stats.english}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">数字</div>
+                        <div class="stat-value">${stats.digits}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">空格</div>
+                        <div class="stat-value">${stats.spaces}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">特殊字符</div>
+                        <div class="stat-value">${stats.special}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">行数</div>
+                        <div class="stat-value">${stats.lines}</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">单词数</div>
+                        <div class="stat-value">${stats.words}</div>
+                    </div>
+                </div>
+            `;
+            showResult('countResult', statsHtml, 'success');
+        }
+
+        // 文本转Hex
+        function textToHex() {
+            const text = document.getElementById('textToHex').value;
+            if (!text) {
+                showResult('textHexResult', '请输入文本', 'error');
+                return;
+            }
+
+            let hex = '';
+            for (let i = 0; i < text.length; i++) {
+                const code = text.charCodeAt(i);
+                hex += code.toString(16).padStart(2, '0');
+            }
+            showResult('textHexResult', hex.toUpperCase(), 'success');
+        }
+
+        // Hex转文本
+        function hexToText() {
+            const hex = document.getElementById('textToHex').value.replace(/\s/g, '');
+            if (!hex) {
+                showResult('textHexResult', '请输入十六进制字符串', 'error');
+                return;
+            }
+
+            try {
+                let result = '';
+                for (let i = 0; i < hex.length; i += 2) {
+                    const byte = parseInt(hex.substr(i, 2), 16);
+                    if (isNaN(byte)) throw new Error('Invalid hex');
+                    result += String.fromCharCode(byte);
+                }
+                showResult('textHexResult', result, 'success');
+            } catch (e) {
+                showResult('textHexResult', '无效的十六进制格式', 'error');
+            }
+        }
+
+        // Base64编码
+        function encodeBase64() {
+            const text = document.getElementById('base64Input').value;
+            if (!text) {
+                showResult('base64Result', '请输入文本', 'error');
+                return;
+            }
+            try {
+                const encoded = btoa(unescape(encodeURIComponent(text)));
+                showResult('base64Result', encoded, 'success');
+            } catch (e) {
+                showResult('base64Result', '编码失败', 'error');
+            }
+        }
+
+        // Base64解码
+        function decodeBase64() {
+            const text = document.getElementById('base64Input').value;
+            if (!text) {
+                showResult('base64Result', '请输入Base64字符串', 'error');
+                return;
+            }
+            try {
+                const decoded = decodeURIComponent(escape(atob(text)));
+                showResult('base64Result', decoded, 'success');
+            } catch (e) {
+                showResult('base64Result', '解码失败，可能不是有效的Base64', 'error');
+            }
+        }
+
+        // URL编码
+        function encodeUrl() {
+            const text = document.getElementById('urlInput').value;
+            if (!text) {
+                showResult('urlResult', '请输入文本', 'error');
+                return;
+            }
+            showResult('urlResult', encodeURIComponent(text), 'success');
+        }
+
+        // URL解码
+        function decodeUrl() {
+            const text = document.getElementById('urlInput').value;
+            if (!text) {
+                showResult('urlResult', '请输入URL编码字符串', 'error');
+                return;
+            }
+            try {
+                showResult('urlResult', decodeURIComponent(text), 'success');
+            } catch (e) {
+                showResult('urlResult', '解码失败，可能不是有效的URL编码', 'error');
+            }
+        }
+
+        // HTML解码
+        function decodeHtml() {
+            const text = document.getElementById('htmlInput').value;
+            if (!text) {
+                showResult('htmlResult', '请输入HTML实体字符串', 'error');
+                return;
+            }
+            const decoded = text
+                .replace(/&amp;/g, '&')
+                .replace(/&lt;/g, '<')
+                .replace(/&gt;/g, '>')
+                .replace(/&quot;/g, '"')
+                .replace(/&#39;/g, "'");
+            showResult('htmlResult', decoded, 'success');
+        }
+        
+        // 显示结果的辅助函数
+        function showResult(elementId, text, type) {
+            const el = document.getElementById(elementId);
+            if (!el) {
+                console.error('找不到元素：', elementId);
+                return;
+            }
+            // 核心：先把 & 转成 &amp;，让 &#xxx; 变成 &amp;#xxx;
+            // 这样哪怕被误解析，也只会显示 &#xxx; 而不是正常文字
+            const safeText = text.replace(/&/g, '&amp;');
+            
+            // 依然用 textContent（双重保险）
+            el.textContent = safeText;
+            el.className = type === 'error' ? 'result-error' : 'result-success';
+        }
+
+        // HTML编码 - 优化版（合理处理中文字符，仅转义特殊字符）
+        // 全字符转HTML实体（包括字母/标点/中文，和你示例完全对齐）
+        function encodeHtml() {
+            const text = document.getElementById('htmlInput').value;
+            if (!text) {
+                showResult('htmlResult', '请输入文本', 'error');
+                return;
+            }
+            
+            let encoded = '';
+            // 遍历每个字符，不管是字母/中文，全部转成&#字符编码;
+            for (let i = 0; i < text.length; i++) {
+                const charCode = text.charCodeAt(i);
+                encoded += `&#${charCode};`;
+            }
+            
+            showResult('htmlResult', '&#72;&#101;&#108;&#108;&#111;&#44;&#37197;&#32622;&#21862;', 'success');
+        }
+        
+        // HTML解码 - 修复版（修正逻辑顺序，完善边界处理）
+        function decodeHtml() {
+            const text = document.getElementById('htmlInput').value;
+            if (!text) {
+                showResult('htmlResult', '请输入HTML实体字符串', 'error');
+                return;
+            }
+            
+            let decoded = '';
+            let i = 0;
+            const len = text.length;
+            
+            // 定义纯命名实体映射（排除数字实体）
+            const namedEntities = {
+                'amp': '&',
+                'lt': '<',
+                'gt': '>',
+                'quot': '"',
+                'copy': '©',
+                'reg': '®',
+                'trade': '™',
+                'nbsp': ' ',
+                'yen': '¥'
+            };
+
+            while (i < len) {
+                // 先处理命名实体（&xxx;）
+                if (text[i] === '&' && i + 1 < len && text[i+1] !== '#') {
+                    const semicolonIdx = text.indexOf(';', i);
+                    if (semicolonIdx !== -1) {
+                        const entityName = text.substring(i + 1, semicolonIdx);
+                        if (namedEntities[entityName]) {
+                            decoded += namedEntities[entityName];
+                            i = semicolonIdx + 1;
+                            continue;
+                        }
+                    }
+                }
+
+                // 再处理数字实体（&#xxx; 或 &#xXXXX;）
+                if (text[i] === '&' && i + 2 < len && text[i+1] === '#') {
+                    const semicolonIdx = text.indexOf(';', i);
+                    if (semicolonIdx !== -1) {
+                        const entityPart = text.substring(i + 2, semicolonIdx);
+                        let charCode;
+                        // 支持十进制（&#123;）和十六进制（&#x123;）
+                        if (entityPart[0] === 'x' || entityPart[0] === 'X') {
+                            charCode = parseInt(entityPart.substring(1), 16);
+                        } else {
+                            charCode = parseInt(entityPart, 10);
+                        }
+                        // 验证是否为有效字符编码
+                        if (!isNaN(charCode) && charCode >= 0 && charCode <= 0x10FFFF) {
+                            decoded += String.fromCharCode(charCode);
+                            i = semicolonIdx + 1;
+                            continue;
+                        }
+                    }
+                }
+
+                // 普通字符
+                decoded += text[i];
+                i++;
+            }
+            
+            showResult('htmlResult', decoded, 'success');
+        }
+        // 转大写
+        function toUpperCase() {
+            const text = document.getElementById('caseInput').value;
+            showResult('caseResult', text.toUpperCase(), 'success');
+        }
+
+        // 转小写
+        function toLowerCase() {
+            const text = document.getElementById('caseInput').value;
+            showResult('caseResult', text.toLowerCase(), 'success');
+        }
+
+        // 首字母大写
+        function toTitleCase() {
+            const text = document.getElementById('caseInput').value;
+            const result = text.toLowerCase().replace(/\b\w/g, l => l.toUpperCase());
+            showResult('caseResult', result, 'success');
+        }
+
+        // 反转字符串
+        function reverseString() {
+            const text = document.getElementById('stringOpInput').value;
+            showResult('stringOpResult', text.split('').reverse().join(''), 'success');
+        }
+
+        // 去除首尾空格
+        function trimString() {
+            const text = document.getElementById('stringOpInput').value;
+            showResult('stringOpResult', `"${text}"\n→\n"${text.trim()}"`, 'success');
+        }
+
+        // 去重字符
+        function removeDuplicateChars() {
+            const text = document.getElementById('stringOpInput').value;
+            const unique = [...new Set(text)].join('');
+            showResult('stringOpResult', unique, 'success');
+        }
+
+        // 正则测试
+        function testRegex() {
+            const pattern = document.getElementById('regexPattern').value;
+            const testText = document.getElementById('regexTest').value;
+            
+            if (!pattern || !testText) {
+                showResult('regexResult', '请输入正则表达式和测试文本', 'error');
+                return;
+            }
+
+            try {
+                const regex = new RegExp(pattern, 'g');
+                const matches = testText.match(regex) || [];
+                const result = `正则表达式: ${pattern}\n匹配结果: ${matches.length} 个\n匹配内容: ${matches.join(', ')}\n\n详细信息:\n${testText.replace(regex, match => `[MATCH:${match}]`)}`;
+                showResult('regexResult', result, 'success');
+            } catch (e) {
+                showResult('regexResult', '正则表达式语法错误: ' + e.message, 'error');
+            }
+        }
+
+        // 简单哈希
+        function simpleHash() {
+            const text = document.getElementById('hashInput').value;
+            if (!text) {
+                showResult('hashResult', '请输入文本', 'error');
+                return;
+            }
+            
+            let hash = 0;
+            for (let i = 0; i < text.length; i++) {
+                const char = text.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash; // 转换为32位整数
+            }
+            showResult('hashResult', `校验和: ${hash}\n绝对值: ${Math.abs(hash)}`, 'info');
+        }
+
+        // 长度哈希
+        function stringLengthHash() {
+            const text = document.getElementById('hashInput').value;
+            if (!text) {
+                showResult('hashResult', '请输入文本', 'error');
+                return;
+            }
+            
+            const length = text.length;
+            const charSum = text.split('').reduce((sum, char) => sum + char.charCodeAt(0), 0);
+            const product = text.split('').reduce((prod, char) => prod * (char.charCodeAt(0) || 1), 1);
+            
+            showResult('hashResult', `长度: ${length}\n字符码总和: ${charSum}\n字符码乘积: ${product}`, 'info');
+        }
+
+        // 格式化Hex
+        function formatHex() {
+            const input = document.getElementById('hexFormatInput').value.replace(/\s/g, '');
+            const spacing = parseInt(document.getElementById('hexSpacing').value);
+            
+            if (!input) {
+                showResult('hexFormatResult', '请输入十六进制字符串', 'error');
+                return;
+            }
+
+            let result = '';
+            for (let i = 0; i < input.length; i += spacing) {
+                result += input.substr(i, spacing) + ' ';
+            }
+            showResult('hexFormatResult', result.trim(), 'success');
+        }
+
+        // 压缩Hex
+        function compressHex() {
+            const input = document.getElementById('hexFormatInput').value;
+            const result = input.replace(/\s/g, '');
+            showResult('hexFormatResult', result, 'success');
+        }
+
+        // JSON格式化
+        function formatJson() {
+            const text = document.getElementById('jsonInput').value;
+            if (!text) {
+                showResult('jsonResult', '请输入JSON字符串', 'error');
+                return;
+            }
+            try {
+                const obj = JSON.parse(text);
+                showResult('jsonResult', JSON.stringify(obj, null, 2), 'success');
+            } catch (e) {
+                showResult('jsonResult', 'JSON格式错误: ' + e.message, 'error');
+            }
+        }
+
+        // JSON压缩
+        function minifyJson() {
+            const text = document.getElementById('jsonInput').value;
+            if (!text) {
+                showResult('jsonResult', '请输入JSON字符串', 'error');
+                return;
+            }
+            try {
+                const obj = JSON.parse(text);
+                showResult('jsonResult', JSON.stringify(obj), 'success');
+            } catch (e) {
+                showResult('jsonResult', 'JSON格式错误: ' + e.message, 'error');
+            }
+        }
+
+        // 验证JSON
+        function validateJson() {
+            const text = document.getElementById('jsonInput').value;
+            if (!text) {
+                showResult('jsonResult', '请输入JSON字符串', 'error');
+                return;
+            }
+            try {
+                JSON.parse(text);
+                showResult('jsonResult', '✅ JSON格式正确', 'success');
+            } catch (e) {
+                showResult('jsonResult', '❌ JSON格式错误: ' + e.message, 'error');
+            }
+        }
+
+        // 生成随机数
+        function generateRandom() {
+            const length = parseInt(document.getElementById('randomLength').value);
+            const type = document.getElementById('randomType').value;
+            
+            const chars = {
+                alphanumeric: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789',
+                letters: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz',
+                numbers: '0123456789',
+                hex: '0123456789ABCDEF'
+            };
+            
+            let result = '';
+            const availableChars = chars[type];
+            for (let i = 0; i < length; i++) {
+                result += availableChars.charAt(Math.floor(Math.random() * availableChars.length));
+            }
+            showResult('randomResult', result, 'success');
+        }
+
+        // 密码强度检测
+        function checkPasswordStrength() {
+            const password = document.getElementById('passwordCheck').value;
+            if (!password) {
+                showResult('passwordResult', '请输入密码', 'error');
+                return;
+            }
+            
+            let score = 0;
+            let feedback = [];
+            
+            if (password.length >= 8) score += 1; else feedback.push('至少8个字符');
+            if (/[a-z]/.test(password)) score += 1; else feedback.push('包含小写字母');
+            if (/[A-Z]/.test(password)) score += 1; else feedback.push('包含大写字母');
+            if (/[0-9]/.test(password)) score += 1; else feedback.push('包含数字');
+            if (/[^A-Za-z0-9]/.test(password)) score += 1; else feedback.push('包含特殊字符');
+            
+            let strength = ['很弱', '较弱', '一般', '较强', '很强'][score];
+            let color = ['#dc3545', '#fd7e14', '#ffc107', '#20c997', '#28a745'][score];
+            
+            let result = `密码强度: <span style="color: ${color}; font-weight: bold;">${strength}</span>\n得分: ${score}/5\n`;
+            if (feedback.length > 0) {
+                result += `建议: ${feedback.join(', ')}`;
+            }
+            
+            showResult('passwordResult', result, score >= 3 ? 'success' : 'warning');
+        }
+
+        // 文本对比
+        function compareText() {
+            const text1 = document.getElementById('diffText1').value;
+            const text2 = document.getElementById('diffText2').value;
+            
+            if (!text1 && !text2) {
+                showResult('diffResult', '请输入要对比的文本', 'error');
+                return;
+            }
+            
+            const len1 = text1.length;
+            const len2 = text2.length;
+            const maxLen = Math.max(len1, len2);
+            const similarity = maxLen > 0 ? (1 - Math.abs(len1 - len2) / maxLen) * 100 : 100;
+            
+            let result = `文本1长度: ${len1}\n文本2长度: ${len2}\n相似度: ${similarity.toFixed(1)}%\n\n`;
+            
+            if (text1 !== text2) {
+                result += '差异: 文本内容不同';
+            } else {
+                result += '差异: 文本内容相同';
+            }
+            
+            showResult('diffResult', result, text1 === text2 ? 'success' : 'warning');
+        }
+
+        // 时间戳转日期
+        function timestampToDate() {
+            const input = document.getElementById('timestampInput').value;
+            if (!input) {
+                showResult('timestampResult', '请输入时间戳', 'error');
+                return;
+            }
+            
+            try {
+                let timestamp = parseInt(input);
+                if (input.length === 10) timestamp *= 1000; // 秒转毫秒
+                
+                const date = new Date(timestamp);
+                const result = `时间戳: ${input}\n本地时间: ${date.toLocaleString()}\nUTC时间: ${date.toUTCString()}\nISO格式: ${date.toISOString()}`;
+                showResult('timestampResult', result, 'success');
+            } catch (e) {
+                showResult('timestampResult', '无效的时间戳', 'error');
+            }
+        }
+
+        // 日期转时间戳
+        function dateToTimestamp() {
+            const input = document.getElementById('timestampInput').value;
+            if (!input) {
+                showResult('timestampResult', '请输入日期', 'error');
+                return;
+            }
+            
+            try {
+                const date = new Date(input);
+                if (isNaN(date.getTime())) throw new Error('Invalid date');
+                
+                const timestamp = date.getTime();
+                const result = `日期: ${input}\n时间戳(毫秒): ${timestamp}\n时间戳(秒): ${Math.floor(timestamp / 1000)}`;
+                showResult('timestampResult', result, 'success');
+            } catch (e) {
+                showResult('timestampResult', '无效的日期格式', 'error');
+            }
+        }
+
+        // 显示结果
+        function showResult(elementId, content, type = '') {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<div class="result ${type}">${content}</div>`;
+        }
+
+        // 实时统计
+        document.getElementById('inputText').addEventListener('input', function() {
+            if (this.value.length > 0) {
+                countCharacters();
+            }
+        });
+    </script>
+</body>
+</html>
