@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>中文命名工具（纯前端）</title>
+<style>
+    body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background: #f5f5f5; }
+    .container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    h1 { text-align: center; }
+    textarea { width: 100%; min-height: 100px; padding: 10px; font-size: 16px; }
+    button { margin-top: 10px; padding: 10px 20px; background: #4CAF50; color: white; border: none; cursor: pointer; }
+    button:hover { background: #45a049; }
+    .result-item { display: flex; align-items: center; margin: 10px 0; padding: 10px; background: #f9f9f9; }
+    .result-label { width: 160px; font-weight: bold; }
+    .result-value { flex: 1; padding: 5px; background: white; border: 1px solid #eee; word-break: break-all; }
+    .copy-btn { margin-left: 10px; background: #2196F3; }
+    .notification { position: fixed; bottom: 20px; right: 20px; background: #4CAF50; color: #fff; padding: 10px 15px; display: none; }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h1>中文命名工具</h1>
+
+    <textarea id="input" placeholder="请输入中文，例如：仓库审核接口"></textarea>
+    <br />
+    <button id="convertBtn">转换</button>
+
+    <div id="results"></div>
+</div>
+
+<div class="notification" id="notification">已复制</div>
+
+<script>
+let wordMap = {};
+let dictionaryWords = [];
+
+/* ---------- 加载 words.json ---------- */
+fetch('/assets/json/fanyi/words.json')
+    .then(res => res.json())
+    .then(data => {
+        if (!data.RECORDS) throw new Error('words.json 格式错误');
+        data.RECORDS.forEach(item => {
+            wordMap[item.word] = item.definition.replace(/\s+/g, '');
+            dictionaryWords.push(item.word);
+        });
+    })
+    .catch(err => alert('words.json 加载失败：' + err.message));
+
+/* ---------- 主转换逻辑 ---------- */
+document.getElementById('convertBtn').onclick = () => {
+    const input = document.getElementById('input').value.trim();
+    if (!input) return;
+
+    const results = translateChineseToFormats(input);
+    renderResults(results);
+};
+
+function translateChineseToFormats(chinese) {
+    const cleaned = chinese.replace(/[^\u4e00-\u9fa5\s]/g, '');
+    let words = cleaned.split(/\s+/).filter(Boolean);
+
+    if (words.length <= 1 && cleaned.length > 1) {
+        words = splitChineseWords(cleaned);
+    }
+
+    const englishWords = words.map(w => wordMap[w] || pinyinFirst(w));
+
+    return {
+        camelCase: toCamel(englishWords, false),
+        PascalCase: toCamel(englishWords, true),
+        snake_case: toSnake(englishWords, '_', false),
+        'kebab-case': toSnake(englishWords, '-', false),
+        pre_underscore: '_' + toSnake(englishWords, '_', false),
+        UPPER_SNAKE_CASE: toSnake(englishWords, '_', true),
+        'UPPER-KEBAB-CASE': toSnake(englishWords, '-', true)
+    };
+}
+
+/* ---------- 分词（最大匹配） ---------- */
+function splitChineseWords(text) {
+    const result = [];
+    let i = 0;
+    while (i < text.length) {
+        let matched = false;
+        for (let len = 4; len >= 1; len--) {
+            const word = text.substr(i, len);
+            if (dictionaryWords.includes(word)) {
+                result.push(word);
+                i += len;
+                matched = true;
+                break;
+            }
+        }
+        if (!matched) {
+            result.push(text[i]);
+            i++;
+        }
+    }
+    return result;
+}
+
+/* ---------- 拼音首字母（简化版） ---------- */
+function pinyinFirst(char) {
+    const map = {
+        '仓':'c','库':'k','审':'s','核':'h','接':'j','口':'k',
+        '用':'y','户':'h','名':'m','称':'c'
+    };
+    return map[char] || 'x';
+}
+
+/* ---------- 命名格式 ---------- */
+function toCamel(words, pascal) {
+    return words.map((w, i) =>
+        (!pascal && i === 0) ? w.toLowerCase() :
+        w.charAt(0).toUpperCase() + w.slice(1)
+    ).join('');
+}
+
+function toSnake(words, sep, upper) {
+    const str = words.join(sep);
+    return upper ? str.toUpperCase() : str.toLowerCase();
+}
+
+/* ---------- 渲染结果 ---------- */
+function renderResults(res) {
+    const box = document.getElementById('results');
+    box.innerHTML = '';
+
+    for (const key in res) {
+        box.innerHTML += `
+            <div class="result-item">
+                <div class="result-label">${key}</div>
+                <div class="result-value" id="${key}">${res[key]}</div>
+                <button class="copy-btn" onclick="copy('${key}')">复制</button>
+            </div>
+        `;
+    }
+}
+
+/* ---------- 复制 ---------- */
+function copy(id) {
+    navigator.clipboard.writeText(document.getElementById(id).innerText);
+    const n = document.getElementById('notification');
+    n.style.display = 'block';
+    setTimeout(() => n.style.display = 'none', 1500);
+}
+</script>
+
+</body>
+</html>

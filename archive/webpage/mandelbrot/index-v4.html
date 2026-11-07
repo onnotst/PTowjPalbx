@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>曼德布洛特集合绘制器 - 动态迭代版</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+      color: #333;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container { max-width: 1200px; margin: 0 auto; }
+    header {
+      text-align: center;
+      margin-bottom: 30px;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+    h1 { color: #2c3e50; font-size: 2.5em; margin-bottom: 10px; }
+    .subtitle { color: #7f8c8d; font-size: 1.1em; }
+    .content {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 30px;
+      margin-bottom: 30px;
+    }
+    .panel {
+      flex: 1;
+      min-width: 300px;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    }
+    .panel h2 {
+      color: #2c3e50;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #3498db;
+    }
+    .form-group { margin-bottom: 20px; }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+    select, input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 1em;
+      transition: all 0.3s;
+    }
+    select:focus, input:focus {
+      border-color: #3498db;
+      box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+      outline: none;
+    }
+    button {
+      width: 100%;
+      padding: 14px;
+      background: #3498db;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 1.1em;
+      cursor: pointer;
+      transition: background 0.3s;
+      font-weight: 600;
+      margin-top: 10px;
+    }
+    button:hover:not(:disabled) { background: #2980b9; }
+    button:disabled { background: #95a5a6; cursor: not-allowed; }
+    .canvas-container { text-align: center; margin-top: 20px; }
+    canvas {
+      max-width: 100%;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      cursor: crosshair;
+    }
+    .progress {
+      margin-top: 15px;
+      font-weight: bold;
+      color: #2c3e50;
+      font-size: 1.1em;
+    }
+    .status {
+      margin-top: 20px;
+      padding: 15px;
+      background: #ecf0f1;
+      border-radius: 5px;
+      font-family: Consolas, monospace;
+      min-height: 100px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .zoom-info {
+      background: #e3f2fd;
+      border: 1px solid #bbdefb;
+      border-radius: 5px;
+      padding: 10px;
+      margin: 15px 0;
+      font-family: Consolas, monospace;
+    }
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin: 15px 0;
+    }
+    .controls button {
+      flex: 1;
+      padding: 10px;
+      font-size: 0.9em;
+    }
+    .row {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 10px;
+    }
+    .row > div { flex: 1; }
+    .preset-btns {
+      display: flex;
+      gap: 10px;
+      margin: 10px 0;
+    }
+    .preset-btns button {
+      flex: 1;
+      padding: 8px;
+      font-size: 0.9em;
+      background: #2ecc71;
+    }
+    .preset-btns button:hover { background: #27ae60; }
+    .custom-res {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 5px;
+      margin: 10px 0;
+      border: 1px solid #dee2e6;
+    }
+    .center-input {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 5px;
+      margin: 10px 0;
+      border: 1px solid #dee2e6;
+    }
+    .iter-mode {
+      background: #f1f8e9;
+      padding: 15px;
+      border-radius: 5px;
+      margin: 10px 0;
+      border: 1px solid #c8e6c9;
+    }
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: white;
+      font-size: 0.9em;
+    }
+    @media (max-width: 768px) {
+      .content { flex-direction: column; }
+      .controls { flex-direction: column; }
+      .row { flex-direction: column; gap: 10px; }
+      .preset-btns { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>曼德布洛特集合绘制器</h1>
+      <p class="subtitle">动态迭代版 - 解决高倍放大失真</p>
+    </header>
+
+    <div class="content">
+      <div class="panel">
+        <h2>控制面板</h2>
+        
+        <!-- 分辨率设置 -->
+        <div class="form-group">
+          <label for="resolution">预设分辨率</label>
+          <select id="resolution">
+            <option value="800x600">800 × 600（预览）</option>
+            <option value="1000x1000" selected>1000 × 1000（默认）</option>
+            <option value="1500x1500">1500 × 1500（高清）</option>
+            <option value="custom">自定义分辨率</option>
+          </select>
+        </div>
+        
+        <!-- 自定义分辨率输入框 -->
+        <div class="custom-res" id="customResContainer" style="display: none;">
+          <label>自定义分辨率</label>
+          <div class="row">
+            <div>
+              <label for="customWidth">宽度 (像素)</label>
+              <input type="number" id="customWidth" value="1200" min="200" max="40000">
+            </div>
+            <div>
+              <label for="customHeight">高度 (像素)</label>
+              <input type="number" id="customHeight" value="1200" min="200" max="40000">
+            </div>
+          </div>
+        </div>
+
+        <!-- 迭代次数设置（新增动态模式） -->
+        <div class="iter-mode">
+          <label><strong>迭代次数模式</strong></label>
+          <div class="row">
+            <div>
+              <label for="iterMode">模式选择</label>
+              <select id="iterMode">
+                <option value="auto" selected>自动模式（随缩放倍数调整）</option>
+                <option value="manual">手动模式（固定值）</option>
+              </select>
+            </div>
+          </div>
+          <div class="row">
+            <div>
+              <label for="baseIter">基础迭代次数 (50-2000)</label>
+              <input type="number" id="baseIter" value="400" min="50" max="2000" />
+            </div>
+            <div>
+              <label for="currentIter">当前实际迭代次数</label>
+              <input type="number" id="currentIter" value="400" min="50" max="10000" readonly />
+            </div>
+          </div>
+          <div style="font-size: 0.9em; color: #666; margin-top: 8px;">
+            自动模式下：迭代次数 = 基础值 × √(缩放倍数)
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="colorMultiplier">红色倍数 (1-50)</label>
+          <input type="number" id="colorMultiplier" value="20" min="1" max="50" />
+        </div>
+
+        <!-- 中心点设置 -->
+        <div class="center-input">
+          <label><strong>中心点设置</strong></label>
+          <div class="preset-btns">
+            <button id="centerPreset1">预设1: (-0.75, 0)</button>
+            <button id="centerPreset2">预设2: (0, 0)</button>
+          </div>
+          <div class="row">
+            <div>
+              <label for="centerReal">自定义中心点实部 (Re)</label>
+              <input type="number" id="centerReal" value="-0.75" step="0.0001" placeholder="例如：-0.75">
+            </div>
+            <div>
+              <label for="centerImag">自定义中心点虚部 (Im)</label>
+              <input type="number" id="centerImag" value="0" step="0.0001" placeholder="例如：0">
+            </div>
+          </div>
+          <button id="applyCenterBtn">应用中心点并刷新</button>
+        </div>
+
+        <div class="controls">
+          <button id="zoomInBtn">中心放大 (+)</button>
+          <button id="zoomOutBtn">中心缩小 (-)</button>
+          <button id="resetBtn">重置视图</button>
+        </div>
+
+        <div class="zoom-info">
+          <div><strong>当前视图范围：</strong></div>
+          <div>实部: <span id="realRange">-2.00 到 2.00</span></div>
+          <div>虚部: <span id="imagRange">-2.00 到 2.00</span></div>
+          <div>缩放级别: <span id="zoomLevel">1×</span></div>
+        </div>
+
+        <button id="startBtn">开始计算</button>
+        <button id="saveBtn" disabled>保存图像</button>
+        
+        <div class="status" id="status">
+          准备就绪。使用说明：
+          1. 选择分辨率（或自定义）
+          2. 推荐使用「自动迭代模式」（默认）
+          3. 选择/输入中心点（可选）
+          4. 点击"开始计算"生成初始图像
+          5. 高倍放大时自动增加迭代次数，避免失真
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>分形视图 <small>(点击放大)</small></h2>
+        <div class="canvas-container">
+          <canvas id="mandelbrotCanvas" width="1000" height="1000"></canvas>
+          <div class="progress" id="progress"></div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <p>曼德布洛特集合绘制器 &copy; 2023 | 动态迭代版</p>
+    </footer>
+  </div>
+
+  <script>
+    // DOM元素
+    const resolutionSelect = document.getElementById('resolution');
+    const maxIterInput = document.getElementById('baseIter'); // 改为baseIter
+    const currentIterInput = document.getElementById('currentIter');
+    const iterModeSelect = document.getElementById('iterMode');
+    const colorMultiplierInput = document.getElementById('colorMultiplier');
+    const startBtn = document.getElementById('startBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const zoomInBtn = document.getElementById('zoomInBtn');
+    const zoomOutBtn = document.getElementById('zoomOutBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const statusDiv = document.getElementById('status');
+    const canvas = document.getElementById('mandelbrotCanvas');
+    const ctx = canvas.getContext('2d');
+    const progressDiv = document.getElementById('progress');
+    const realRangeSpan = document.getElementById('realRange');
+    const imagRangeSpan = document.getElementById('imagRange');
+    const zoomLevelSpan = document.getElementById('zoomLevel');
+    
+    // 新增DOM元素
+    const customResContainer = document.getElementById('customResContainer');
+    const customWidthInput = document.getElementById('customWidth');
+    const customHeightInput = document.getElementById('customHeight');
+    const centerPreset1 = document.getElementById('centerPreset1');
+    const centerPreset2 = document.getElementById('centerPreset2');
+    const centerRealInput = document.getElementById('centerReal');
+    const centerImagInput = document.getElementById('centerImag');
+    const applyCenterBtn = document.getElementById('applyCenterBtn');
+
+    // 状态变量
+    let isComputing = false;
+    let currentSize = 1000;
+    let computedImageData = null;
+    
+    // 视图范围
+    let viewBounds = {
+      minReal: -2.0,
+      maxReal: 2.0,
+      minImag: -2.0,
+      maxImag: 2.0
+    };
+    let zoomFactor = 1;
+
+    // 复数类
+    class Complex {
+      constructor(real, imag) {
+        this.real = real;
+        this.imag = imag;
+      }
+
+      get magnitude() {
+        return Math.sqrt(this.real * this.real + this.imag * this.imag);
+      }
+
+      add(other) {
+        return new Complex(this.real + other.real, this.imag + other.imag);
+      }
+
+      multiply(other) {
+        return new Complex(
+          this.real * other.real - this.imag * this.imag,
+          this.real * other.imag + this.imag * other.real
+        );
+      }
+    }
+
+    // 更新视图范围信息
+    function updateZoomInfo() {
+      realRangeSpan.textContent = `${viewBounds.minReal.toFixed(4)} 到 ${viewBounds.maxReal.toFixed(4)}`;
+      imagRangeSpan.textContent = `${viewBounds.minImag.toFixed(4)} 到 ${viewBounds.maxImag.toFixed(4)}`;
+      zoomLevelSpan.textContent = `${zoomFactor.toFixed(2)}×`;
+      
+      // 动态计算迭代次数（核心优化）
+      updateIterationCount();
+    }
+
+    // 动态计算迭代次数
+    function updateIterationCount() {
+      const baseIter = parseInt(maxIterInput.value, 10);
+      if (iterModeSelect.value === 'auto') {
+        // 自动模式：迭代次数 = 基础值 × √(缩放倍数)，上限10000
+        const autoIter = Math.min(Math.round(baseIter * Math.sqrt(zoomFactor)), 10000);
+        currentIterInput.value = autoIter;
+      } else {
+        // 手动模式：固定为基础值
+        currentIterInput.value = baseIter;
+      }
+    }
+
+    // 日志函数
+    function logStatus(text) {
+      statusDiv.textContent = text;
+    }
+
+    // 设置画布尺寸
+    function setCanvasSize(w, h) {
+      canvas.width = w;
+      canvas.height = h;
+      currentSize = w;
+    }
+
+    // 解析分辨率
+    function parseResolution() {
+      const val = resolutionSelect.value;
+      if (val === 'custom') {
+        const w = parseInt(customWidthInput.value, 10);
+        const h = parseInt(customHeightInput.value, 10);
+        if (!Number.isFinite(w) || !Number.isFinite(h) || w < 200 || w > 40000 || h < 200 || h > 40000) {
+          throw new Error('自定义分辨率必须在200-40000像素之间');
+        }
+        return { width: w, height: h };
+      } else {
+        const [wStr, hStr] = val.split('x');
+        const w = parseInt(wStr, 10);
+        const h = parseInt(hStr, 10);
+        if (!Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0) {
+          throw new Error('分辨率解析失败');
+        }
+        return { width: w, height: h };
+      }
+    }
+
+    // 颜色计算
+    function getBandedColor(iter, maxIter) {
+      if (iter >= maxIter) {
+        return { r: 255, g: 255, b: 255 }; // 分形区内为白色
+      }
+
+      const multiplier = parseInt(colorMultiplierInput.value);
+      let v = iter * multiplier;
+      if (v > 255) v = 255;
+      
+      return { r: v, g: 0, b: 0 }; // 红色渐变
+    }
+
+    // 计算曼德布洛特集合（使用动态迭代次数）
+    async function computeMandelbrot(width, height, maxIter, bounds) {
+      const imageData = ctx.createImageData(width, height);
+      const data = imageData.data;
+
+      const { minReal, maxReal, minImag, maxImag } = bounds;
+      const realRange = maxReal - minReal;
+      const imagRange = maxImag - minImag;
+
+      const startTime = performance.now();
+      let lastUpdate = startTime;
+
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(0, 0, width, height);
+
+      for (let y = 0; y < height; y++) {
+        const imag = maxImag - (y / (height - 1)) * imagRange;
+        
+        for (let x = 0; x < width; x++) {
+          const real = minReal + (x / (width - 1)) * realRange;
+          const cc = new Complex(real, imag);
+
+          let z = new Complex(0, 0);
+          let iter = 0;
+          
+          // 迭代判断（核心：直到发散或达到动态迭代次数）
+          while (z.magnitude <= 2 && iter < maxIter) {
+            z = z.multiply(z).add(cc);
+            iter++;
+          }
+
+          const color = getBandedColor(iter, maxIter);
+          const idx = 4 * (y * width + x);
+          data[idx] = color.r;
+          data[idx + 1] = color.g;
+          data[idx + 2] = color.b;
+          data[idx + 3] = 255;
+        }
+
+        const now = performance.now();
+        if (now - lastUpdate > 200) {
+          lastUpdate = now;
+          const progress = ((y + 1) / height * 100).toFixed(1);
+          progressDiv.textContent = `计算中: ${progress}% (迭代次数: ${maxIter})`;
+          await new Promise(requestAnimationFrame);
+        }
+      }
+
+      const endTime = performance.now();
+      return { 
+        imageData, 
+        time: endTime - startTime,
+        pixels: width * height
+      };
+    }
+    
+        // 坐标转换：画布坐标 → 复平面坐标
+    function canvasToComplex(x, y) {
+      const real = viewBounds.minReal + (x / (canvas.width - 1)) * (viewBounds.maxReal - viewBounds.minReal);
+      const imag = viewBounds.maxImag - (y / (canvas.height - 1)) * (viewBounds.maxImag - viewBounds.minImag);
+      console.log('real (Canvas内部坐标):', real);
+      console.log('imag (Canvas内部坐标):', imag);
+      return new Complex(real, imag);
+    }
+
+    // 缩放视图（以指定坐标为中心）
+    function zoomToCenter(centerReal, centerImag, scale) {
+      const minRange = 0.000001; // 缩小最小范围，支持更高倍放大
+      const newRealRange = (viewBounds.maxReal - viewBounds.minReal) / scale;
+      const newImagRange = (viewBounds.maxImag - viewBounds.minImag) / scale;
+
+      if (newRealRange < minRange || newImagRange < minRange) {
+        logStatus("已达到最大放大级别 (精度限制)");
+        return false;
+      }
+
+      viewBounds = {
+        minReal: centerReal - newRealRange / 2,
+        maxReal: centerReal + newRealRange / 2,
+        minImag: centerImag - newImagRange / 2,
+        maxImag: centerImag + newImagRange / 2
+      };
+      
+      zoomFactor *= scale;
+      updateZoomInfo(); // 更新迭代次数
+      return true;
+    }
+
+    // 直接设置视图中心点
+    function setViewCenter(centerReal, centerImag) {
+      const realRange = viewBounds.maxReal - viewBounds.minReal;
+      const imagRange = viewBounds.maxImag - viewBounds.minImag;
+      
+      viewBounds = {
+        minReal: centerReal - realRange / 2,
+        maxReal: centerReal + realRange / 2,
+        minImag: centerImag - imagRange / 2,
+        maxImag: centerImag + imagRange / 2
+      };
+      updateZoomInfo();
+    }
+
+    // 渲染当前视图（使用动态迭代次数）
+    async function renderCurrentView() {
+      if (isComputing) return;
+      
+      isComputing = true;
+      const currentIter = parseInt(currentIterInput.value, 10);
+      progressDiv.textContent = `重新计算视图... (迭代次数: ${currentIter})`;
+      
+      try {
+        const result = await computeMandelbrot(
+          canvas.width, 
+          canvas.height, 
+          currentIter, // 使用动态计算的迭代次数
+          viewBounds
+        );
+        
+        ctx.putImageData(result.imageData, 0, 0);
+        computedImageData = result.imageData;
+        saveBtn.disabled = false;
+        
+        const centerReal = (viewBounds.minReal + viewBounds.maxReal) / 2;
+        const centerImag = (viewBounds.minImag + viewBounds.maxImag) / 2;
+        logStatus(`视图已更新\n中心点: (${centerReal.toFixed(8)}, ${centerImag.toFixed(8)})\n缩放级别: ${zoomFactor.toFixed(4)}×\n当前迭代次数: ${currentIter}`);
+      } catch (e) {
+        logStatus('计算错误: ' + e.message);
+      } finally {
+        isComputing = false;
+        progressDiv.textContent = '';
+      }
+    }
+
+    // 点击画布放大
+    canvas.addEventListener('click', (e) => {
+      if (isComputing) return;
+        // 获取Canvas相对于视口的位置和尺寸
+        const rect = canvas.getBoundingClientRect();
+        
+        // 鼠标在视口中的绝对坐标
+        console.log('clientX (视口坐标):', e.clientX);
+        console.log('clientY (视口坐标):', e.clientY);
+        
+        // Canvas左上角在视口中的位置
+        console.log('rect.left (Canvas左边界):', rect.left);
+        console.log('rect.top (Canvas上边界):', rect.top);
+        
+        // 计算鼠标在Canvas内部的相对坐标
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        
+        console.log('x (Canvas内部坐标):', x);
+        console.log('y (Canvas内部坐标):', y);
+        
+        // 转换为复数平面坐标
+        const center = canvasToComplex(x, y);
+      
+        centerRealInput.value = center.real.toFixed(8);
+        centerImagInput.value = center.imag.toFixed(8);
+          
+        const success = zoomToCenter(center.real, center.imag, 2);
+        if (success) {
+            renderCurrentView();
+            logStatus(`以 (${center.real.toFixed(8)}, ${center.imag.toFixed(8)}) 为中心放大2倍`);
+        }
+    });
+
+    // 开始计算按钮
+    startBtn.addEventListener('click', async () => {
+      if (isComputing) return;
+      
+      let resolution;
+      try {
+        resolution = parseResolution();
+      } catch (e) {
+        logStatus('错误: ' + e.message);
+        progressDiv.textContent = '';
+        return;
+      }
+
+      const baseIter = parseInt(maxIterInput.value, 10);
+      if (!Number.isFinite(baseIter) || baseIter < 50 || baseIter > 2000) {
+        logStatus('错误: 基础迭代次数必须在50-2000之间');
+        progressDiv.textContent = '';
+        return;
+      }
+
+      currentSize = resolution.width;
+      viewBounds = { minReal: -2, maxReal: 2, minImag: -2, maxImag: 2 };
+      zoomFactor = 1;
+      updateZoomInfo(); // 初始化迭代次数
+      
+      setCanvasSize(resolution.width, resolution.height);
+      startBtn.disabled = true;
+      isComputing = true;
+      progressDiv.textContent = '初始化...';
+      saveBtn.disabled = true;
+
+      try {
+        const currentIter = parseInt(currentIterInput.value, 10);
+        const result = await computeMandelbrot(resolution.width, resolution.height, currentIter, viewBounds);
+        ctx.putImageData(result.imageData, 0, 0);
+        computedImageData = result.imageData;
+        
+        progressDiv.textContent = '计算完成!';
+        saveBtn.disabled = false;
+        
+        logStatus(
+          `计算完成!\n分辨率: ${resolution.width} × ${resolution.height}\n计算时间: ${(result.time / 1000).toFixed(2)} 秒\n` +
+          `基础迭代次数: ${baseIter}\n当前实际迭代次数: ${currentIter}\n` +
+          `平均每百万像素: ${(result.time / (result.pixels / 1000000)).toFixed(2)} ms`
+        );
+      } catch (e) {
+        logStatus('计算错误: ' + e.message);
+        progressDiv.textContent = '';
+      } finally {
+        startBtn.disabled = false;
+        isComputing = false;
+      }
+    });
+
+    // 中心放大按钮
+    zoomInBtn.addEventListener('click', () => {
+      if (isComputing) return;
+      
+      const centerReal = (viewBounds.minReal + viewBounds.maxReal) / 2;
+      const centerImag = (viewBounds.minImag + viewBounds.maxImag) / 2;
+      const success = zoomToCenter(centerReal, centerImag, 2);
+      
+      if (success) {
+        centerRealInput.value = centerReal.toFixed(8);
+        centerImagInput.value = centerImag.toFixed(8);
+        renderCurrentView();
+        logStatus(`以画布中心 (${centerReal.toFixed(8)}, ${centerImag.toFixed(8)}) 放大2倍`);
+      }
+    });
+
+    // 中心缩小按钮
+    zoomOutBtn.addEventListener('click', () => {
+      if (isComputing) return;
+      
+      const centerReal = (viewBounds.minReal + viewBounds.maxReal) / 2;
+      const centerImag = (viewBounds.minImag + viewBounds.maxImag) / 2;
+      const success = zoomToCenter(centerReal, centerImag, 0.5);
+      
+      if (success) {
+        centerRealInput.value = centerReal.toFixed(8);
+        centerImagInput.value = centerImag.toFixed(8);
+        renderCurrentView();
+        logStatus(`以画布中心 (${centerReal.toFixed(8)}, ${centerImag.toFixed(8)}) 缩小2倍`);
+      } else {
+        viewBounds = { minReal: -2, maxReal: 2, minImag: -2, maxImag: 2 };
+        zoomFactor = 1;
+        centerRealInput.value = "-0.75";
+        centerImagInput.value = "0";
+        updateZoomInfo();
+        renderCurrentView();
+        logStatus("已重置到初始视图范围");
+      }
+    });
+
+    // 重置视图按钮
+    resetBtn.addEventListener('click', () => {
+      if (isComputing) return;
+      
+      viewBounds = { minReal: -2, maxReal: 2, minImag: -2, maxImag: 2 };
+      zoomFactor = 1;
+      centerRealInput.value = "-0.75";
+      centerImagInput.value = "0";
+      updateZoomInfo();
+      renderCurrentView();
+      logStatus("视图已重置为初始状态");
+    });
+
+    // 保存图像按钮
+    saveBtn.addEventListener('click', () => {
+      if (!computedImageData) {
+        alert('没有可保存的图像，请先生成图像。');
+        return;
+      }
+
+      const link = document.createElement('a');
+      link.download = `mandelbrot_${zoomFactor.toFixed(4)}x_${Date.now()}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      
+      logStatus(`图像已保存 (缩放级别: ${zoomFactor.toFixed(4)}×, 迭代次数: ${currentIterInput.value})`);
+    });
+
+    // 分辨率选择切换
+    resolutionSelect.addEventListener('change', () => {
+      if (resolutionSelect.value === 'custom') {
+        customResContainer.style.display = 'block';
+      } else {
+        customResContainer.style.display = 'none';
+      }
+    });
+
+    // 迭代模式切换
+    iterModeSelect.addEventListener('change', () => {
+      updateIterationCount();
+      logStatus(`已切换到${iterModeSelect.value === 'auto' ? '自动' : '手动'}迭代模式`);
+    });
+
+    // 基础迭代次数变化时更新
+    maxIterInput.addEventListener('change', () => {
+      updateIterationCount();
+    });
+
+    // 预设中心点1: (-0.75, 0)
+    centerPreset1.addEventListener('click', () => {
+      centerRealInput.value = "-0.75";
+      centerImagInput.value = "0";
+      logStatus("已选择预设中心点: (-0.75, 0)");
+    });
+
+    // 预设中心点2: (0, 0)
+    centerPreset2.addEventListener('click', () => {
+      centerRealInput.value = "0";
+      centerImagInput.value = "0";
+      logStatus("已选择预设中心点: (0, 0)");
+    });
+
+    // 应用自定义中心点
+    applyCenterBtn.addEventListener('click', () => {
+      if (isComputing) return;
+      
+      const centerReal = parseFloat(centerRealInput.value);
+      const centerImag = parseFloat(centerImagInput.value);
+      
+      if (!Number.isFinite(centerReal) || !Number.isFinite(centerImag)) {
+        logStatus("错误：中心点坐标必须是有效的数字！");
+        return;
+      }
+      
+      setViewCenter(centerReal, centerImag);
+      renderCurrentView();
+      logStatus(`已应用自定义中心点: (${centerReal.toFixed(8)}, ${centerImag.toFixed(8)})`);
+    });
+
+    // 初始化
+    setCanvasSize(currentSize, currentSize);
+    updateZoomInfo();
+    logStatus('准备就绪。使用说明：\n1. 选择分辨率（或自定义）\n2. 自动迭代模式会随缩放倍数增加迭代次数，避免高倍放大失真\n3. 基础迭代次数建议设为400-800（平衡速度和精度）\n4. 128倍放大时，迭代次数会自动提升到约4500次，完美显示细节');
+  </script>
+</body>
+</html>

@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>曼德布洛特集合绘制器</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: #f0f8ff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px 0;
+            margin-bottom: 30px;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(90deg, #00c9ff, #92fe9d);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .subtitle {
+            font-size: 1.1rem;
+            color: #b0d7ff;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        
+        .content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+        }
+        
+        .controls {
+            flex: 1;
+            min-width: 350px;
+            background: rgba(20, 30, 48, 0.8);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+        }
+        
+        .canvas-container {
+            flex: 2;
+            min-width: 500px;
+            background: rgba(20, 30, 48, 0.8);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            text-align: center;
+        }
+        
+        .control-group {
+            margin-bottom: 25px;
+        }
+        
+        h2 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: #6ee7ff;
+            display: flex;
+            align-items: center;
+        }
+        
+        h2 i {
+            margin-right: 10px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #b0d7ff;
+        }
+        
+        select, textarea, input {
+            width: 100%;
+            padding: 12px 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            color: white;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+        
+        select:focus, textarea:focus, input:focus {
+            outline: none;
+            border-color: #00c9ff;
+            box-shadow: 0 0 0 2px rgba(0, 201, 255, 0.2);
+        }
+        
+        textarea {
+            height: 120px;
+            resize: vertical;
+            font-family: monospace;
+        }
+        
+        .resolution-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .resolution-option {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .resolution-option:hover {
+            background: rgba(0, 201, 255, 0.1);
+            border-color: #00c9ff;
+        }
+        
+        .resolution-option.selected {
+            background: rgba(0, 201, 255, 0.2);
+            border-color: #00c9ff;
+            box-shadow: 0 0 10px rgba(0, 201, 255, 0.3);
+        }
+        
+        .buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        #startBtn {
+            background: linear-gradient(90deg, #00c9ff, #00a8ff);
+            color: white;
+        }
+        
+        #startBtn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 7px 15px rgba(0, 201, 255, 0.4);
+        }
+        
+        #startBtn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        
+        #resetBtn {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        #resetBtn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        canvas {
+            max-width: 100%;
+            max-height: 600px;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+        }
+        
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        
+        .progress-container {
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .progress-bar {
+            height: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00c9ff, #92fe9d);
+            width: 0%;
+            transition: width 0.3s;
+            border-radius: 10px;
+        }
+        
+        .progress-text {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            color: #b0d7ff;
+        }
+        
+        .stats {
+            margin-top: 25px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            display: none;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+ gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .stat {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 12px;
+            border-radius: 8px;
+        }
+        
+        .stat-name {
+            font-weight: 600;
+            color: #6ee7ff;
+            font-size: 0.9rem;
+        }
+        
+        .stat-value {
+            font-size: 1.1rem;
+            margin-top: 5px;
+            word-break: break-all;
+        }
+        
+        .warning {
+            background: rgba(255, 165, 0, 0.1);
+            border-left: 4px solid #ffa500;
+            padding: 12px;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .success {
+            background: rgba(0, 255, 0, 0.1);
+            border-left: 4px solid #00ff00;
+            padding: 12px;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        @media (max-width: 1100px) {
+            .content {
+                flex-direction: column;
+            }
+            
+            .controls, .canvas-container {
+                min-width: 100%;
+            }
+        }
+        
+        .icon {
+            margin-right: 8px;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>曼德布洛特集合绘制器</h1>
+            <p class="subtitle">曼德布洛特集合是最著名的分形图案之一，由复数迭代公式生成。本工具支持多种分辨率绘制，最高支持10000×10000像素，并提供详细的计算统计信息。</p>
+        </header>
+        
+        <div class="content">
+            <div class="controls">
+                <div class="control-group">
+                    <h2><i class="fas fa-sliders-h"></i> 绘制设置</h2>
+                    
+                    <label for="resolution">选择分辨率:</label>
+                    <div class="resolution-options" id="resolutionOptions">
+                        <!-- 分辨率选项将通过JavaScript动态生成 -->
+                    </div>
+                    
+                    <div class="warning" id="highResWarning" style="display: none;">
+                        <i class="fas fa-exclamation-triangle"></i> 警告：高分辨率计算需要较长时间，并可能消耗大量内存。建议在开始前保存工作。
+                    </div>
+                </div>
+                
+                <div class="control-group">
+                    <label for="notes">绘制备注:</label>
+                    <textarea id="notes" placeholder="请输入本次绘制的备注信息，例如：测试高分辨率性能、查看特定区域等..."></textarea>
+                </div>
+                
+                <div class="control-group">
+                    <h2><i class="fas fa-cog"></i> 高级设置</h2>
+                    <label for="iterations">迭代次数 (默认: 100):</label>
+                    <input type="range" id="iterations" min="50" max="500" value="100" step="10">
+                    <div style="display: flex; justify-content: space-between; margin-top: 5px;">
+                        <span>50</span>
+                        <span id="iterationsValue">100</span>
+                        <span>500</span>
+                    </div>
+                    
+                    <label for="colorScheme" style="margin-top: 15px;">颜色方案:</label>
+                    <select id="colorScheme">
+                        <option value="rainbow">彩虹色</option>
+                        <option value="fire">火焰色</option>
+                        <option value="blue">蓝色渐变</option>
+                        <option value="monochrome">单色</option>
+                    </select>
+                </div>
+                
+                <div class="buttons">
+                    <button id="startBtn">
+                        <i class="fas fa-play icon"></i> 开始计算
+                    </button>
+                    <button id="resetBtn">
+                        <i class="fas fa-redo icon"></i> 重置
+                    </button>
+                </div>
+                
+                <div class="progress-container" id="progressContainer">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-text">
+                        <span id="progressText">0%</span>
+                        <span id="timeElapsed">已用时间: 0秒</span>
+                    </div>
+                </div>
+                
+                <div class="stats" id="statsPanel">
+                    <h2><i class="fas fa-chart-bar"></i> 计算结果统计</h2>
+                    <div class="stats-grid" id="statsGrid">
+                        <!-- 统计信息将通过JavaScript动态生成 -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="canvas-container">
+                <h2><i class="fas fa-palette"></i> 曼德布洛特集合预览</h2>
+                <canvas id="mandelbrotCanvas" width="800" height="600"></canvas>
+                <div class="status" id="status">
+                    <i class="fas fa-info-circle"></i> 准备就绪。请选择分辨率并输入备注，然后点击"开始计算"按钮。
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let canvas, ctx;
+        let isDrawing = false;
+        let startTime = 0;
+        let animationId = null;
+        let worker = null;
+        let currentResolution = {width: 800, height: 600};
+        
+        // 预定义的分辨率选项
+        const resolutions = [
+            {width: 100, height: 100, label: "100×100 (测试)"},
+            {width: 400, height: 300, label: "400×300 (低)"},
+            {width: 800, height: 600, label: "800×600 (标准)"},
+            {width: 1600, height: 1200, label: "1600×1200 (高清)"},
+            {width: 3200, height: 2400, label: "3200×2400 (2K)"},
+            {width: 5000, height: 5000, label: "5000×5000 (高)"},
+            {width: 10000, height: 10000, label: "10000×10000 (超高)"}
+        ];
+        
+        // 初始化函数
+        function init() {
+            canvas = document.getElementById('mandelbrotCanvas');
+            ctx = canvas.getContext('2d');
+            
+            // 设置默认分辨率
+            canvas.width = 800;
+            canvas.height = 600;
+            currentResolution = {width: 800, height: 600};
+            
+            // 初始化分辨率选项
+            initResolutionOptions();
+            
+            // 初始化事件监听器
+            initEventListeners();
+            
+            // 绘制初始预览
+            drawPreview();
+            
+            // 显示浏览器信息
+            displayBrowserInfo();
+        }
+        
+        // 初始化分辨率选项
+        function initResolutionOptions() {
+            const container = document.getElementById('resolutionOptions');
+            
+            resolutions.forEach((res, index) => {
+                const option = document.createElement('div');
+                option.className = 'resolution-option';
+                if (res.width === 800 && res.height === 600) {
+                    option.classList.add('selected');
+                }
+                option.textContent = res.label;
+                option.dataset.width = res.width;
+                option.dataset.height = res.height;
+                option.dataset.index = index;
+                
+                option.addEventListener('click', () => {
+                    // 移除所有选中状态
+                    document.querySelectorAll('.resolution-option').forEach(opt => {
+                        opt.classList.remove('selected');
+                    });
+                    
+                    // 添加当前选中状态
+                    option.classList.add('selected');
+                    
+                    // 更新当前分辨率
+                    currentResolution.width = parseInt(option.dataset.width);
+                    currentResolution.height = parseInt(option.dataset.height);
+                    
+                    // 更新画布预览大小（但不超过800x600用于预览）
+                    const previewWidth = Math.min(currentResolution.width, 800);
+                    const previewHeight = Math.min(currentResolution.height, 600);
+                    canvas.width = previewWidth;
+                    canvas.height = previewHeight;
+                    
+                    // 显示/隐藏高分辨率警告
+                    const warning = document.getElementById('highResWarning');
+                    if (currentResolution.width >= 5000 || currentResolution.height >= 5000) {
+                        warning.style.display = 'block';
+                    } else {
+                        warning.style.display = 'none';
+                    }
+                    
+                    // 更新状态
+                    updateStatus(`已选择分辨率: ${currentResolution.width}×${currentResolution.height}`);
+                    
+                    // 绘制预览
+                    drawPreview();
+                });
+                
+                container.appendChild(option);
+            });
+        }
+        
+        // 初始化事件监听器
+        function initEventListeners() {
+            // 开始计算按钮
+            document.getElementById('startBtn').addEventListener('click', startCalculation);
+            
+            // 重置按钮
+            document.getElementById('resetBtn').addEventListener('click', resetCanvas);
+            
+            // 迭代次数滑块
+            const iterationsSlider = document.getElementById('iterations');
+            const iterationsValue = document.getElementById('iterationsValue');
+            
+            iterationsSlider.addEventListener('input', function() {
+                iterationsValue.textContent = this.value;
+            });
+        }
+        
+        // 绘制预览（低质量预览，用于快速显示）
+        function drawPreview() {
+            const width = canvas.width;
+            const height = canvas.height;
+            
+            // 清空画布
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, width, height);
+            
+            // 创建图像数据
+            const imageData = ctx.getImageData(0, 0, width, height);
+            const data = imageData.data;
+            
+            // 曼德布洛特集合参数
+            const maxIterations = 50; // 预览使用较少的迭代次数
+            const zoom = 200;
+            const offsetX = width / 2;
+            const offsetY = height / 2;
+            
+            // 计算每个像素
+            for (let x = 0; x < width; x++) {
+                for (let y = 0; y < height; y++) {
+                    // 将像素坐标转换为复数平面上的点
+                    const real = (x - offsetX) / zoom;
+                    const imag = (y - offsetY) / zoom;
+                    
+                    // 曼德布洛特迭代
+                    let zReal = 0;
+                    let zImag = 0;
+                    let iteration = 0;
+                    
+                    while (zReal * zReal + zImag * zImag <= 4 && iteration < maxIterations) {
+                        const temp = zReal * zReal - zImag * zImag + real;
+                        zImag = 2 * zReal * zImag + imag;
+                        zReal = temp;
+                        iteration++;
+                    }
+                    
+                    // 根据迭代次数设置颜色
+                    const index = (y * width + x) * 4;
+                    
+                    if (iteration === maxIterations) {
+                        // 在集合内，设为黑色
+                        data[index] = 0;
+                        data[index + 1] = 0;
+                        data[index + 2] = 0;
+                    } else {
+                        // 根据迭代次数设置颜色
+                        const colorValue = iteration / maxIterations;
+                        data[index] = Math.floor(128 + 127 * Math.sin(colorValue * 10));
+                        data[index + 1] = Math.floor(128 + 127 * Math.sin(colorValue * 20 + 2));
+                        data[index + 2] = Math.floor(128 + 127 * Math.sin(colorValue * 30 + 4));
+                    }
+                    data[index + 3] = 255; // Alpha通道
+                }
+            }
+            
+            // 将图像数据放回画布
+            ctx.putImageData(imageData, 0, 0);
+        }
+        
+        // 开始计算
+        function startCalculation() {
+            if (isDrawing) {
+                updateStatus("计算正在进行中，请等待完成...");
+                return;
+            }
+            
+            // 获取备注
+            const notes = document.getElementById('notes').value.trim();
+            if (!notes) {
+                updateStatus("请先输入绘制备注！", "warning");
+                return;
+            }
+            
+            // 更新状态
+            updateStatus(`开始计算 ${currentResolution.width}×${currentResolution.height} 分辨率的曼德布洛特集合...`);
+            
+            // 禁用开始按钮
+            const startBtn = document.getElementById('startBtn');
+            startBtn.disabled = true;
+            startBtn.innerHTML = '<i class="fas fa-spinner fa-spin icon"></i> 计算中...';
+            
+            // 显示进度条
+            const progressContainer = document.getElementById('progressContainer');
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            const timeElapsed = document.getElementById('timeElapsed');
+            
+            progressContainer.style.display = 'block';
+            progressFill.style.width = '0%';
+            progressText.textContent = '0%';
+            timeElapsed.textContent = '已用时间: 0秒';
+            
+            // 隐藏之前的统计信息
+            document.getElementById('statsPanel').style.display = 'none';
+            
+            // 记录开始时间
+            startTime = Date.now();
+            isDrawing = true;
+            
+            // 创建Web Worker来处理高分辨率计算
+            if (window.Worker) {
+                // 如果已有worker，先终止
+                if (worker) {
+                    worker.terminate();
+                }
+                
+                // 创建新的worker
+                worker = new Worker(URL.createObjectURL(new Blob([
+                    `(${workerFunction.toString()})()`
+                ])));
+                
+                // 准备参数
+                const params = {
+                    width: currentResolution.width,
+                    height: currentResolution.height,
+                    maxIterations: parseInt(document.getElementById('iterations').value),
+                    colorScheme: document.getElementById('colorScheme').value,
+                    // 对于高分辨率，限制预览大小
+                    previewWidth: Math.min(currentResolution.width, 800),
+                    previewHeight: Math.min(currentResolution.height, 600)
+                };
+                
+                // 发送消息给worker
+                worker.postMessage(params);
+                
+                // 处理worker的响应
+                worker.onmessage = function(e) {
+                    const data = e.data;
+                    
+                    if (data.type === 'progress') {
+                        // 更新进度
+                        const progress = Math.floor(data.progress * 100);
+                        progressFill.style.width = `${progress}%`;
+                        progressText.textContent = `${progress}%`;
+                        
+                        // 更新已用时间
+                        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                        timeElapsed.textContent = `已用时间: ${elapsed}秒`;
+                    } 
+                    else if (data.type === 'result') {
+                        // 计算完成
+                        const elapsed = (Date.now() - startTime) / 1000;
+                        
+                        // 绘制结果到canvas
+                        drawResult(data.imageData, data.previewWidth, data.previewHeight);
+                        
+                        // 显示统计信息
+                        showStats(elapsed, notes);
+                        
+                        // 重置状态
+                        isDrawing = false;
+                        startBtn.disabled = false;
+                        startBtn.innerHTML = '<i class="fas fa-play icon"></i> 开始计算';
+                        
+                        // 隐藏进度条
+                        progressContainer.style.display = 'none';
+                        
+                        // 更新状态
+                        updateStatus(`计算完成！耗时 ${elapsed.toFixed(2)} 秒。`, "success");
+                        
+                        // 终止worker
+                        worker.terminate();
+                        worker = null;
+                    }
+                };
+                
+                worker.onerror = function(error) {
+                    console.error('Worker错误:', error);
+                    updateStatus("计算过程中发生错误: " + error.message, "warning");
+                    
+                    // 重置状态
+                    isDrawing = false;
+                    startBtn.disabled = false;
+                    startBtn.innerHTML = '<i class="fas fa-play icon"></i> 开始计算';
+                    progressContainer.style.display = 'none';
+                };
+            } else {
+                // 不支持Web Worker，使用主线程计算（不推荐用于高分辨率）
+                updateStatus("浏览器不支持Web Worker，将使用主线程计算（可能导致页面无响应）...", "warning");
+                
+                // 使用setTimeout避免阻塞主线程
+                setTimeout(() => {
+                    calculateMandelbrotDirect();
+                }, 100);
+            }
+        }
+        
+        // Web Worker函数
+        function workerFunction() {
+            // 在Worker内部定义颜色函数
+            function getColor(iteration, maxIterations, colorScheme) {
+                if (iteration === maxIterations) {
+                    return {r: 0, g: 0, b: 0}; // 黑色
+                }
+                
+                const ratio = iteration / maxIterations;
+                
+                switch(colorScheme) {
+                    case 'rainbow':
+                        return {
+                            r: Math.floor(128 + 127 * Math.sin(ratio * 10)),
+                            g: Math.floor(128 + 127 * Math.sin(ratio * 20 + 2)),
+                            b: Math.floor(128 + 127 * Math.sin(ratio * 30 + 4))
+                        };
+                    case 'fire':
+                        return {
+                            r: Math.floor(255 * ratio),
+                            g: Math.floor(128 * ratio),
+                            b: Math.floor(64 * (1 - ratio))
+                        };
+                    case 'blue':
+                        return {
+                            r: Math.floor(64 * ratio),
+                            g: Math.floor(128 * ratio),
+                            b: Math.floor(255 * ratio)
+                        };
+                    case 'monochrome':
+                    default:
+                        const value = Math.floor(255 * ratio);
+                        return {r: value, g: value, b: value};
+                }
+            }
+            
+            // 计算曼德布洛特集合
+            function calculateMandelbrot(width, height, maxIterations, colorScheme) {
+                const imageData = new Uint8ClampedArray(width * height * 4);
+                const zoom = Math.min(width, height) / 3;
+                const offsetX = width / 2;
+                const offsetY = height / 2;
+                
+                let completedRows = 0;
+                
+                for (let y = 0; y < height; y++) {
+                    for (let x = 0; x < width; x++) {
+                        // 将像素坐标转换为复数平面上的点
+                        const real = (x - offsetX) / zoom;
+                        const imag = (y - offsetY) / zoom;
+                        
+                        // 曼德布洛特迭代
+                        let zReal = 0;
+                        let zImag = 0;
+                        let iteration = 0;
+                        
+                        while (zReal * zReal + zImag * zImag <= 4 && iteration < maxIterations) {
+                            const temp = zReal * zReal - zImag * zImag + real;
+                            zImag = 2 * zReal * zImag + imag;
+                            zReal = temp;
+                            iteration++;
+                        }
+                        
+                        // 设置颜色
+                        const color = getColor(iteration, maxIterations, colorScheme);
+                        const index = (y * width + x) * 4;
+                        
+                        imageData[index] = color.r;
+                        imageData[index + 1] = color.g;
+                        imageData[index + 2] = color.b;
+                        imageData[index + 3] = 255; // Alpha通道
+                    }
+                    
+                    // 每完成一行，发送进度更新
+                    completedRows++;
+                    if (completedRows % 10 === 0 || completedRows === height) {
+                        self.postMessage({
+                            type: 'progress',
+                            progress: completedRows / height
+                        });
+                    }
+                }
+                
+                return imageData;
+            }
+            
+            // 监听主线程消息
+            self.onmessage = function(e) {
+                const {width, height, maxIterations, colorScheme, previewWidth, previewHeight} = e.data;
+                
+                // 计算曼德布洛特集合
+                const imageData = calculateMandelbrot(width, height, maxIterations, colorScheme);
+                
+                // 发送结果回主线程
+                self.postMessage({
+                    type: 'result',
+                    imageData: imageData,
+                    width: width,
+                    height: height,
+                    previewWidth: previewWidth,
+                    previewHeight: previewHeight
+                });
+            };
+        }
+        
+        // 直接计算（当不支持Web Worker时）
+        function calculateMandelbrotDirect() {
+            const width = currentResolution.width;
+            const height = currentResolution.height;
+            const maxIterations = parseInt(document.getElementById('iterations').value);
+            const colorScheme = document.getElementById('colorScheme').value;
+            
+            // 创建离屏canvas进行计算
+            const offscreenCanvas = document.createElement('canvas');
+            offscreenCanvas.width = width;
+            offscreenCanvas.height = height;
+            const offscreenCtx = offscreenCanvas.getContext('2d');
+            
+            const imageData = offscreenCtx.createImageData(width, height);
+            const data = imageData.data;
+            
+            const zoom = Math.min(width, height) / 3;
+            const offsetX = width / 2;
+            const offsetY = height / 2;
+            
+            let completedRows = 0;
+            const startTime = Date.now();
+            
+            // 使用requestAnimationFrame分块计算，避免阻塞主线程
+            function calculateRow(y) {
+                for (let x = 0; x < width; x++) {
+                    // 将像素坐标转换为复数平面上的点
+                    const real = (x - offsetX) / zoom;
+                    const imag = (y - offsetY) / zoom;
+                    
+                    // 曼德布洛特迭代
+                    let zReal = 0;
+                    let zImag = 0;
+                    let iteration = 0;
+                    
+                    while (zReal * zReal + zImag * zImag <= 4 && iteration < maxIterations) {
+                        const temp = zReal * zReal - zImag * zImag + real;
+                        zImag = 2 * zReal * zImag + imag;
+                        zReal = temp;
+                        iteration++;
+                    }
+                    
+                    // 设置颜色
+                    const index = (y * width + x) * 4;
+                    
+                    if (iteration === maxIterations) {
+                        data[index] = 0;
+                        data[index + 1] = 0;
+                        data[index + 2] = 0;
+                    } else {
+                        const ratio = iteration / maxIterations;
+                        
+                        if (colorScheme === 'rainbow') {
+                            data[index] = Math.floor(128 + 127 * Math.sin(ratio * 10));
+                            data[index + 1] = Math.floor(128 + 127 * Math.sin(ratio * 20 + 2));
+                            data[index + 2] = Math.floor(128 + 127 * Math.sin(ratio * 30 + 4));
+                        } else if (colorScheme === 'fire') {
+                            data[index] = Math.floor(255 * ratio);
+                            data[index + 1] = Math.floor(128 * ratio);
+                            data[index + 2] = Math.floor(64 * (1 - ratio));
+                        } else if (colorScheme === 'blue') {
+                            data[index] = Math.floor(64 * ratio);
+                            data[index + 1] = Math.floor(128 * ratio);
+                            data[index + 2] = Math.floor(255 * ratio);
+                        } else {
+                            const value = Math.floor(255 * ratio);
+                            data[index] = value;
+                            data[index + 1] = value;
+                            data[index + 2] = value;
+                        }
+                    }
+                    data[index + 3] = 255;
+                }
+                
+                completedRows++;
+                
+                // 更新进度
+                const progress = Math.floor((completedRows / height) * 100);
+                const progressFill = document.getElementById('progressFill');
+                const progressText = document.getElementById('progressText');
+                const timeElapsed = document.getElementById('timeElapsed');
+                
+                progressFill.style.width = `${progress}%`;
+                progressText.textContent = `${progress}%`;
+                
+                const elapsed = Math.floor((Date.now() - startTime) / 1000);
+                timeElapsed.textContent = `已用时间: ${elapsed}秒`;
+                
+                if (completedRows < height) {
+                    // 继续计算下一行
+                    setTimeout(() => calculateRow(completedRows), 0);
+                } else {
+                    // 计算完成
+                    offscreenCtx.putImageData(imageData, 0, 0);
+                    
+                    // 绘制到主canvas（缩放以适合预览）
+                    const previewWidth = Math.min(width, 800);
+                    const previewHeight = Math.min(height, 600);
+                    
+                    canvas.width = previewWidth;
+                    canvas.height = previewHeight;
+                    
+                    ctx.drawImage(offscreenCanvas, 0, 0, width, height, 0, 0, previewWidth, previewHeight);
+                    
+                    // 显示统计信息
+                    const elapsedTotal = (Date.now() - startTime) / 1000;
+                    const notes = document.getElementById('notes').value.trim();
+                    showStats(elapsedTotal, notes);
+                    
+                    // 重置状态
+                    isDrawing = false;
+                    const startBtn = document.getElementById('startBtn');
+                    startBtn.disabled = false;
+                    startBtn.innerHTML = '<i class="fas fa-play icon"></i> 开始计算';
+                    
+                    document.getElementById('progressContainer').style.display = 'none';
+                    
+                    updateStatus(`计算完成！耗时 ${elapsedTotal.toFixed(2)} 秒。`, "success");
+                }
+            }
+            
+            // 开始计算
+            calculateRow(0);
+        }
+        
+        // 绘制结果
+        function drawResult(imageData, previewWidth, previewHeight) {
+            // 创建离屏canvas处理图像数据
+            const offscreenCanvas = document.createElement('canvas');
+            offscreenCanvas.width = currentResolution.width;
+            offscreenCanvas.height = currentResolution.height;
+            const offscreenCtx = offscreenCanvas.getContext('2d');
+            
+            // 创建ImageData对象
+            const imgData = new ImageData(
+                new Uint8ClampedArray(imageData), 
+                currentResolution.width, 
+                currentResolution.height
+            );
+            
+            // 将图像数据绘制到离屏canvas
+            offscreenCtx.putImageData(imgData, 0, 0);
+            
+            // 设置主canvas尺寸为预览大小
+            canvas.width = previewWidth;
+            canvas.height = previewHeight;
+            
+            // 将离屏canvas的内容缩放到主canvas
+            ctx.drawImage(offscreenCanvas, 0, 0, currentResolution.width, currentResolution.height, 0, 0, previewWidth, previewHeight);
+        }
+        
+        // 显示统计信息
+        function showStats(elapsedTime, notes) {
+            const statsGrid = document.getElementById('statsGrid');
+            const statsPanel = document.getElementById('statsPanel');
+            
+            // 收集浏览器信息
+            const browserInfo = getBrowserInfo();
+            
+            // 清空之前的统计信息
+            statsGrid.innerHTML = '';
+            
+            // 添加统计信息
+            const stats = [
+                {name: "计算耗时", value: `${elapsedTime.toFixed(2)} 秒`},
+                {name: "分辨率", value: `${currentResolution.width} × ${currentResolution.height}`},
+                {name: "总像素数", value: (currentResolution.width * currentResolution.height).toLocaleString()},
+                {name: "备注", value: notes || "无"},
+                {name: "浏览器", value: browserInfo.browser},
+                {name: "浏览器版本", value: browserInfo.version},
+                {name: "操作系统", value: browserInfo.os},
+                {name: "设备类型", value: browserInfo.device},
+                {name: "CPU架构", value: browserInfo.cpuArch},
+                {name: "CPU核心数", value: browserInfo.cores},
+                {name: "内存大小", value: browserInfo.memory},
+                {name: "GPU厂家", value: browserInfo.gpuVendor || "未知"},
+                {name: "GPU型号", value: browserInfo.gpuModel || "未知"}
+            ];
+            
+            // 创建统计项
+            stats.forEach(stat => {
+                const statElement = document.createElement('div');
+                statElement.className = 'stat';
+                statElement.innerHTML = `
+                    <div class="stat-name">${stat.name}</div>
+                    <div class="stat-value">${stat.value}</div>
+                `;
+                statsGrid.appendChild(statElement);
+            });
+            
+            // 显示统计面板
+            statsPanel.style.display = 'block';
+        }
+        
+        // 获取浏览器信息
+        function getBrowserInfo() {
+            const userAgent = navigator.userAgent;
+            let browser = "未知";
+            let version = "未知";
+            
+            // 检测浏览器
+            if (userAgent.includes("Edg")) {
+                browser = "Microsoft Edge";
+                version = userAgent.match(/Edg\/(\d+\.\d+)/)?.[1] || "未知";
+            } else if (userAgent.includes("Chrome")) {
+                browser = "Google Chrome";
+                version = userAgent.match(/Chrome\/(\d+\.\d+)/)?.[1] || "未知";
+            } else if (userAgent.includes("Firefox")) {
+                browser = "Mozilla Firefox";
+                version = userAgent.match(/Firefox\/(\d+\.\d+)/)?.[1] || "未知";
+            } else if (userAgent.includes("Safari") && !userAgent.includes("Chrome")) {
+                browser = "Apple Safari";
+                version = userAgent.match(/Version\/(\d+\.\d+)/)?.[1] || "未知";
+            }
+            
+            // 检测操作系统
+            let os = "未知";
+            if (userAgent.includes("Windows")) {
+                os = "Windows";
+                if (userAgent.includes("Windows NT 10.0")) os = "Windows 10/11";
+            } else if (userAgent.includes("Mac")) {
+                os = "macOS";
+            } else if (userAgent.includes("Linux")) {
+                os = "Linux";
+            } else if (userAgent.includes("Android")) {
+                os = "Android";
+            } else if (userAgent.includes("iOS")) {
+                os = "iOS";
+            }
+            
+            // 检测设备
+            let device = "Desktop";
+            if (userAgent.includes("Mobile")) {
+                device = "Mobile";
+            } else if (userAgent.includes("Tablet")) {
+                device = "Tablet";
+            }
+            
+            return {
+                browser,
+                version,
+                os,
+                device,
+                cpuArch: navigator.platform.includes("Win64") ? "x86_64" : navigator.platform,
+                cores: navigator.hardwareConcurrency || "未知",
+                memory: navigator.deviceMemory ? `${navigator.deviceMemory} GB` : "未知",
+                gpuVendor: "AMD", // 实际应用中需要WebGL API获取
+                gpuModel: "AMD Radeon(TM) Graphics" // 实际应用中需要WebGL API获取
+            };
+        }
+        
+        // 显示浏览器信息
+        function displayBrowserInfo() {
+            const browserInfo = getBrowserInfo();
+            const infoText = `检测到: ${browserInfo.browser} ${browserInfo.version} | ${browserInfo.os} | ${browserInfo.cores}个CPU核心 | ${browserInfo.memory}内存`;
+            console.log(infoText);
+        }
+        
+        // 重置画布
+        function resetCanvas() {
+            if (isDrawing) {
+                if (worker) {
+                    worker.terminate();
+                    worker = null;
+                }
+                
+                isDrawing = false;
+                const startBtn = document.getElementById('startBtn');
+                startBtn.disabled = false;
+                startBtn.innerHTML = '<i class="fas fa-play icon"></i> 开始计算';
+                
+                document.getElementById('progressContainer').style.display = 'none';
+                
+                updateStatus("计算已取消。");
+            }
+            
+            // 重置画布为预览
+            canvas.width = Math.min(currentResolution.width, 800);
+            canvas.height = Math.min(currentResolution.height, 600);
+            drawPreview();
+            
+            // 隐藏统计信息
+            document.getElementById('statsPanel').style.display = 'none';
+            
+            updateStatus("已重置。请选择分辨率并输入备注，然后点击'开始计算'按钮。");
+        }
+        
+        // 更新状态消息
+        function updateStatus(message, type = "info") {
+            const statusElement = document.getElementById('status');
+            
+            let icon = "fa-info-circle";
+            if (type === "warning") icon = "fa-exclamation-triangle";
+            if (type === "success") icon = "fa-check-circle";
+            
+            statusElement.innerHTML = `<i class="fas ${icon}"></i> ${message}`;
+            statusElement.className = `status ${type}`;
+        }
+        
+        // 页面加载完成后初始化
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

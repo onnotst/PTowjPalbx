@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link rel="shortcut icon" href="/assets/favicon.ico" />
+    <title>JSON格式化工具 - 增强版</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --background-color: #f8f9fa;
+            --text-color: #333;
+            --border-color: #ddd;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+        
+        .input-section, .output-section {
+            margin-bottom: 25px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--primary-color);
+        }
+        
+        textarea {
+            width: 100%;
+            min-height: 200px;
+            padding: 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+        
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: background-color 0.3s, transform 0.2s;
+            flex: 1;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+        }
+        
+        button.secondary {
+            background-color: var(--secondary-color);
+        }
+        
+        button.secondary:hover {
+            background-color: #27ae60;
+        }
+        
+        #json-output-container {
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            padding: 12px;
+            background-color: #f5f5f5;
+            min-height: 200px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            white-space: pre;
+            overflow-x: auto;
+        }
+        
+        /* 语法高亮样式 */
+        .json-key { color: #d63c5e; font-weight: bold; }
+        .json-string { color: #2e7d32; }
+        .json-number { color: #c6711b; }
+        .json-boolean { color: #1976d2; }
+        .json-null { color: #9c27b0; }
+        .json-punctuation { color: #212121; }
+        
+        .status {
+            margin-top: 10px;
+            padding: 8px 12px;
+            border-radius: 4px;
+            display: none;
+        }
+        
+        .success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #c8e6c9;
+        }
+        
+        .error {
+            background-color: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+        }
+        
+        .copy-btn {
+            position: absolute;
+            right: 15px;
+            top: 15px;
+            background: rgba(0, 0, 0, 0.1);
+            border: none;
+            border-radius: 4px;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+        
+        .copy-btn:hover {
+            background: rgba(0, 0, 0, 0.2);
+        }
+        
+        .output-wrapper {
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>JSON格式化工具</h1>
+        
+        <div class="input-section">
+            <label for="json-input">输入JSON字符串:</label>
+            <textarea id="json-input" placeholder='例如: {"name":"张三","age":30,"isStudent":false,"address":{"city":"北京","zip":"100000"},"hobbies":["读书","游泳"]}'></textarea>
+        </div>
+        
+        <div class="button-group">
+            <button onclick="formatJson()">格式化JSON</button>
+            <button class="secondary" onclick="clearAll()">清空所有</button>
+        </div>
+        
+        <div id="status-message" class="status"></div>
+        
+        <div class="output-section">
+            <label for="json-output-container">格式化结果:</label>
+            <div class="output-wrapper">
+                <div id="json-output-container"></div>
+                <button class="copy-btn" onclick="copyToClipboard()">复制</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function formatJson() {
+            const input = document.getElementById('json-input').value.trim();
+            const outputContainer = document.getElementById('json-output-container');
+            const statusMessage = document.getElementById('status-message');
+            
+            // 清除之前的状态信息
+            statusMessage.style.display = 'none';
+            statusMessage.className = 'status';
+            
+            if (!input) {
+                showStatus('请输入JSON字符串', 'error');
+                return;
+            }
+            
+            try {
+                const parsedJson = JSON.parse(input);
+                const formattedJson = JSON.stringify(parsedJson, null, 4);
+                outputContainer.innerHTML = syntaxHighlight(formattedJson);
+                showStatus('JSON格式化成功!', 'success');
+            } catch (e) {
+                outputContainer.innerHTML = '';
+                showStatus('JSON格式化失败: ' + e.message, 'error');
+            }
+        }
+        
+        function syntaxHighlight(json) {
+            if (typeof json !== 'string') {
+                json = JSON.stringify(json, null, 4);
+            }
+            
+            // 转义HTML特殊字符
+            json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            
+            // 添加语法高亮
+            return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function(match) {
+                let cls = 'json-number';
+                
+                if (/^"/.test(match)) {
+                    if (/:$/.test(match)) {
+                        cls = 'json-key';
+                        // 移除末尾的冒号以便单独着色
+                        match = match.replace(/:$/, '') + '<span class="json-punctuation">:</span>';
+                    } else {
+                        cls = 'json-string';
+                    }
+                } else if (/true|false/.test(match)) {
+                    cls = 'json-boolean';
+                } else if (/null/.test(match)) {
+                    cls = 'json-null';
+                }
+                
+                return '<span class="' + cls + '">' + match + '</span>';
+            })
+            // 添加括号和逗号的高亮
+            .replace(/[{}[\],]/g, function(match) {
+                return '<span class="json-punctuation">' + match + '</span>';
+            });
+        }
+        
+        function showStatus(message, type) {
+            const statusMessage = document.getElementById('status-message');
+            statusMessage.textContent = message;
+            statusMessage.className = 'status ' + type;
+            statusMessage.style.display = 'block';
+        }
+        
+        function clearAll() {
+            document.getElementById('json-input').value = '';
+            document.getElementById('json-output-container').innerHTML = '';
+            document.getElementById('status-message').style.display = 'none';
+        }
+        
+        function copyToClipboard() {
+            const outputContainer = document.getElementById('json-output-container');
+            const textToCopy = outputContainer.textContent;
+            
+            if (!textToCopy) {
+                showStatus('没有内容可复制', 'error');
+                return;
+            }
+            
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                showStatus('已复制到剪贴板!', 'success');
+            }).catch(err => {
+                showStatus('复制失败: ' + err, 'error');
+            });
+        }
+    </script>
+</body>
+</html>

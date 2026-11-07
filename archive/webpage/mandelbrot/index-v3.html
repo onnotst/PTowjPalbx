@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>曼德布洛特集合绘制器 - 无限放大版</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+      color: #333;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container { max-width: 1400px; margin: 0 auto; }
+    header {
+      text-align: center;
+      margin-bottom: 30px;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+    h1 { color: #2c3e50; font-size: 2.5em; margin-bottom: 10px; }
+    .subtitle { color: #7f8c8d; font-size: 1.1em; }
+    .content {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 30px;
+      margin-bottom: 30px;
+    }
+    .panel {
+      flex: 1;
+      min-width: 300px;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    }
+    .panel h2 {
+      color: #2c3e50;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #3498db;
+    }
+    .form-group { margin-bottom: 20px; }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+    select, input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 1em;
+      transition: all 0.3s;
+    }
+    select:focus, input:focus {
+      border-color: #3498db;
+      box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+      outline: none;
+    }
+    .row {
+      display: flex;
+      gap: 15px;
+    }
+    .row > div { flex: 1; }
+    button {
+      width: 100%;
+      padding: 14px;
+      background: #3498db;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 1.1em;
+      cursor: pointer;
+      transition: background 0.3s;
+      font-weight: 600;
+      margin-top: 10px;
+    }
+    button:hover:not(:disabled) { background: #2980b9; }
+    button:disabled { background: #95a5a6; cursor: not-allowed; }
+    .canvas-container { 
+      text-align: center; 
+      margin-top: 20px;
+      position: relative;
+    }
+    canvas {
+      max-width: 100%;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      cursor: crosshair;
+    }
+    .progress {
+      margin-top: 15px;
+      font-weight: bold;
+      color: #2c3e50;
+      font-size: 1.1em;
+    }
+    .status {
+      margin-top: 20px;
+      padding: 15px;
+      background: #ecf0f1;
+      border-radius: 5px;
+      font-family: Consolas, monospace;
+      min-height: 100px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .info {
+      background: #d4edda;
+      border: 1px solid #c3e6cb;
+      border-radius: 5px;
+      padding: 10px;
+      margin-bottom: 15px;
+      font-size: 0.9em;
+    }
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin: 15px 0;
+    }
+    .controls button {
+      flex: 1;
+      padding: 10px;
+      font-size: 0.9em;
+    }
+    .zoom-info {
+      background: #e3f2fd;
+      border: 1px solid #bbdefb;
+      border-radius: 5px;
+      padding: 10px;
+      margin: 15px 0;
+      font-family: Consolas, monospace;
+    }
+    .selection-box {
+      position: absolute;
+      border: 2px dashed #ff0000;
+      background: rgba(255, 0, 0, 0.1);
+      pointer-events: none;
+      display: none;
+    }
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: white;
+      font-size: 0.9em;
+    }
+    @media (max-width: 768px) {
+      .content { flex-direction: column; }
+      .row { flex-direction: column; gap: 10px; }
+      .controls { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>曼德布洛特集合绘制器</h1>
+      <p class="subtitle">无限放大版 - 点击或拖拽放大细节</p>
+    </header>
+
+    <div class="content">
+      <div class="panel">
+        <h2>控制面板</h2>
+        
+        <div class="info">
+          <strong>C# 代码逻辑 + 无限放大：</strong><br>
+          • 背景色：LightBlue<br>
+          • 初始范围：(-2,2) × (-2,2)<br>
+          • 最大迭代：400 次<br>
+          • 颜色：红色深度 = 迭代次数 × 20<br>
+          • 分形区内：白色<br>
+          • <strong>新增：点击/拖拽/滚轮无限放大</strong>
+        </div>
+
+        <div class="form-group">
+          <label for="size">基础图像尺寸</label>
+          <select id="size">
+            <option value="800">800 × 800</option>
+            <option value="1000" selected>1000 × 1000（推荐）</option>
+            <option value="1500">1500 × 1500</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="maxIter">最大迭代次数</label>
+          <input type="number" id="maxIter" value="400" min="50" max="2000" />
+          <small style="color: #666;">放大时可增加此值提高细节</small>
+        </div>
+
+        <div class="form-group">
+          <label for="colorMultiplier">颜色倍数</label>
+          <input type="number" id="colorMultiplier" value="20" min="1" max="50" />
+        </div>
+
+        <div class="controls">
+          <button id="zoomInBtn">放大 (+)</button>
+          <button id="zoomOutBtn">缩小 (-)</button>
+          <button id="resetBtn">重置视图</button>
+        </div>
+
+        <div class="zoom-info">
+          <div><strong>当前视图范围：</strong></div>
+          <div>实部: <span id="realRange">-2.00 到 2.00</span></div>
+          <div>虚部: <span id="imagRange">-2.00 到 2.00</span></div>
+          <div>缩放级别: <span id="zoomLevel">1×</span></div>
+        </div>
+
+        <button id="startBtn">重新生成基础图像</button>
+        <button id="saveBtn" disabled>保存当前视图</button>
+        
+        <div class="status" id="status">
+          准备就绪。点击画布放大，拖拽框选区域，或使用滚轮缩放。
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>分形视图 <small>(点击或拖拽放大)</small></h2>
+        <div class="canvas-container">
+          <canvas id="mandelbrotCanvas" width="1000" height="1000"></canvas>
+          <div class="selection-box" id="selectionBox"></div>
+          <div class="progress" id="progress"></div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <p>无限放大曼德布洛特集合 - 探索无限细节</p>
+    </footer>
+  </div>
+
+  <script>
+    const sizeSelect = document.getElementById('size');
+    const maxIterInput = document.getElementById('maxIter');
+    const colorMultiplierInput = document.getElementById('colorMultiplier');
+    const startBtn = document.getElementById('startBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const zoomInBtn = document.getElementById('zoomInBtn');
+    const zoomOutBtn = document.getElementById('zoomOutBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const statusDiv = document.getElementById('status');
+    const canvas = document.getElementById('mandelbrotCanvas');
+    const ctx = canvas.getContext('2d');
+    const progressDiv = document.getElementById('progress');
+    const selectionBox = document.getElementById('selectionBox');
+    const realRangeSpan = document.getElementById('realRange');
+    const imagRangeSpan = document.getElementById('imagRange');
+    const zoomLevelSpan = document.getElementById('zoomLevel');
+
+    let computedImageData = null;
+    let isComputing = false;
+    let currentSize = 1000;
+    
+    // 视图范围
+    let viewBounds = {
+      minReal: -2,
+      maxReal: 2,
+      minImag: -2,
+      maxImag: 2
+    };
+    
+    let zoomFactor = 1;
+    let isDragging = false;
+    let dragStart = { x: 0, y: 0 };
+    let dragEnd = { x: 0, y: 0 };
+
+    function logStatus(text) {
+      statusDiv.textContent = text;
+    }
+
+    function updateZoomInfo() {
+      realRangeSpan.textContent = `${viewBounds.minReal.toFixed(4)} 到 ${viewBounds.maxReal.toFixed(4)}`;
+      imagRangeSpan.textContent = `${viewBounds.minImag.toFixed(4)} 到 ${viewBounds.maxImag.toFixed(4)}`;
+      zoomLevelSpan.textContent = `${zoomFactor}×`;
+    }
+
+    // 复数类
+    class Complex {
+      constructor(real, imag) {
+        this.real = real;
+        this.imag = imag;
+      }
+
+      get magnitude() {
+        return Math.sqrt(this.real * this.real + this.imag * this.imag);
+      }
+
+      add(other) {
+        return new Complex(this.real + other.real, this.imag + other.imag);
+      }
+
+      multiply(other) {
+        return new Complex(
+          this.real * other.real - this.imag * other.imag,
+          this.real * other.imag + this.imag * other.real
+        );
+      }
+    }
+
+    // C# 的 mandelBrot 函数
+    function mandelBrot(cc) {
+      const iterator = parseInt(maxIterInput.value);
+      let z = new Complex(0, 0);
+      
+      for (let i = 0; i < iterator; i++) {
+        if (z.magnitude > 2) {
+          return getColor(i);
+        }
+        z = z.multiply(z).add(cc);
+      }
+      return { r: 255, g: 255, b: 255 };
+    }
+
+    function getColor(n) {
+      const multiplier = parseInt(colorMultiplierInput.value);
+      let v = n * multiplier;
+      if (v > 255) v = 255;
+      return { r: v, g: 0, b: 0 };
+    }
+
+    // 计算曼德布洛特集合
+    async function computeMandelbrot(bounds, size) {
+      const imageData = ctx.createImageData(size, size);
+      const data = imageData.data;
+
+      const startTime = performance.now();
+      let lastUpdate = startTime;
+
+      // LightBlue 背景
+      ctx.fillStyle = 'lightblue';
+      ctx.fillRect(0, 0, size, size);
+
+      const realRange = bounds.maxReal - bounds.minReal;
+      const imagRange = bounds.maxImag - bounds.minImag;
+
+      for (let y = 0; y < size; y++) {
+        const imag = bounds.maxImag - (y / (size - 1)) * imagRange;
+        
+        for (let x = 0; x < size; x++) {
+          const real = bounds.minReal + (x / (size - 1)) * realRange;
+          const cc = new Complex(real, imag);
+          const color = mandelBrot(cc);
+          const idx = 4 * (y * size + x);
+          data[idx] = color.r;
+          data[idx + 1] = color.g;
+          data[idx + 2] = color.b;
+          data[idx + 3] = 255;
+        }
+
+        const now = performance.now();
+        if (now - lastUpdate > 200) {
+          lastUpdate = now;
+          const progress = ((y + 1) / size * 100).toFixed(1);
+          progressDiv.textContent = `计算中: ${progress}%`;
+          await new Promise(requestAnimationFrame);
+        }
+      }
+
+      const endTime = performance.now();
+      return {
+        imageData,
+        time: endTime - startTime,
+        bounds: bounds
+      };
+    }
+
+    // 坐标转换：画布坐标 → 复平面坐标
+    function canvasToComplex(x, y, size, bounds) {
+      const realRange = bounds.maxReal - bounds.minReal;
+      const imagRange = bounds.maxImag - bounds.minImag;
+      
+      return {
+        real: bounds.minReal + (x / (size - 1)) * realRange,
+        imag: bounds.maxImag - (y / (size - 1)) * imagRange
+      };
+    }
+
+    // 坐标转换：复平面坐标 → 画布坐标
+    function complexToCanvas(real, imag, size, bounds) {
+      const realRange = bounds.maxReal - bounds.minReal;
+      const imagRange = bounds.maxImag - bounds.minImag;
+      
+      return {
+        x: Math.round(((real - bounds.minReal) / realRange) * (size - 1)),
+        y: Math.round(((bounds.maxImag - imag) / imagRange) * (size - 1))
+      };
+    }
+
+    // 缩放视图
+    function zoomToRegion(realMin, realMax, imagMin, imagMax) {
+      viewBounds = { minReal: realMin, maxReal: realMax, minImag: imagMin, maxImag: imagMax };
+      zoomFactor *= 2; // 每次放大2倍
+      renderCurrentView();
+    }
+
+    // 渲染当前视图
+    async function renderCurrentView() {
+      if (isComputing) return;
+      
+      isComputing = true;
+      progressDiv.textContent = '重新计算视图...';
+      
+      try {
+        const result = await computeMandelbrot(viewBounds, currentSize);
+        ctx.putImageData(result.imageData, 0, 0);
+        computedImageData = result.imageData;
+        saveBtn.disabled = false;
+        updateZoomInfo();
+        logStatus(`视图已更新\n范围: ${viewBounds.minReal.toFixed(4)} ≤ Re ≤ ${viewBounds.maxReal.toFixed(4)}\n` +
+                 `${viewBounds.minImag.toFixed(4)} ≤ Im ≤ ${viewBounds.maxImag.toFixed(4)}`);
+      } catch (e) {
+        logStatus('计算错误: ' + e.message);
+      } finally {
+        isComputing = false;
+        progressDiv.textContent = '';
+      }
+    }
+
+    // 鼠标事件处理
+    canvas.addEventListener('mousedown', (e) => {
+      if (isComputing) return;
+      
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      
+      isDragging = true;
+      dragStart = { x, y };
+      dragEnd = { x, y };
+      
+      selectionBox.style.display = 'block';
+      selectionBox.style.left = x + 'px';
+      selectionBox.style.top = y + 'px';
+      selectionBox.style.width = '0px';
+      selectionBox.style.height = '0px';
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+      if (!isDragging || isComputing) return;
+      
+      const rect = canvas.getBoundingClientRect();
+      dragEnd = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+      
+      const left = Math.min(dragStart.x, dragEnd.x);
+      const top = Math.min(dragStart.y, dragEnd.y);
+      const width = Math.abs(dragEnd.x - dragStart.x);
+      const height = Math.abs(dragEnd.y - dragStart.y);
+      
+      selectionBox.style.left = left + 'px';
+      selectionBox.style.top = top + 'px';
+      selectionBox.style.width = width + 'px';
+      selectionBox.style.height = height + 'px';
+    });
+
+    canvas.addEventListener('mouseup', (e) => {
+      if (!isDragging || isComputing) return;
+      
+      isDragging = false;
+      selectionBox.style.display = 'none';
+      
+      const rect = canvas.getBoundingClientRect();
+      dragEnd = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+      
+      const width = Math.abs(dragEnd.x - dragStart.x);
+      const height = Math.abs(dragEnd.y - dragStart.y);
+      
+      // 最小拖拽距离
+      if (width < 10 || height < 10) {
+        // 单击放大
+        const clickX = (dragStart.x + dragEnd.x) / 2;
+        const clickY = (dragStart.y + dragEnd.y) / 2;
+        const center = canvasToComplex(clickX, clickY, currentSize, viewBounds);
+        
+        const realRange = (viewBounds.maxReal - viewBounds.minReal) / 4;
+        const imagRange = (viewBounds.maxImag - viewBounds.minImag) / 4;
+        
+        zoomToRegion(
+          center.real - realRange, center.real + realRange,
+          center.imag - imagRange, center.imag + imagRange
+        );
+      } else {
+        // 拖拽区域放大
+        const realMin = canvasToComplex(Math.min(dragStart.x, dragEnd.x), 0, currentSize, viewBounds).real;
+        const realMax = canvasToComplex(Math.max(dragStart.x, dragEnd.x), 0, currentSize, viewBounds).real;
+        const imagMin = canvasToComplex(0, Math.max(dragStart.y, dragEnd.y), currentSize, viewBounds).imag;
+        const imagMax = canvasToComplex(0, Math.min(dragStart.y, dragEnd.y), currentSize, viewBounds).imag;
+        
+        zoomToRegion(realMin, realMax, imagMin, imagMax);
+      }
+    });
+
+    // 鼠标滚轮缩放
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      if (isComputing) return;
+      
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const center = canvasToComplex(x, y, currentSize, viewBounds);
+      
+      const zoom = e.deltaY > 0 ? 0.5 : 2; // 滚轮向下缩小，向上放大
+      const realRange = (viewBounds.maxReal - viewBounds.minReal) * zoom;
+      const imagRange = (viewBounds.maxImag - viewBounds.minImag) * zoom;
+      
+      zoomFactor *= zoom;
+      
+      viewBounds = {
+        minReal: center.real - realRange / 2,
+        maxReal: center.real + realRange / 2,
+        minImag: center.imag - imagRange / 2,
+        maxImag: center.imag + imagRange / 2
+      };
+      
+      renderCurrentView();
+    });
+
+    // 按钮事件
+    startBtn.addEventListener('click', async () => {
+      if (isComputing) return;
+      
+      currentSize = parseInt(sizeSelect.value);
+      viewBounds = { minReal: -2, maxReal: 2, minImag: -2, maxImag: 2 };
+      zoomFactor = 1;
+      
+      setCanvasSize(currentSize, currentSize);
+      await renderCurrentView();
+    });
+
+    zoomInBtn.addEventListener('click', () => {
+      const centerReal = (viewBounds.minReal + viewBounds.maxReal) / 2;
+      const centerImag = (viewBounds.minImag + viewBounds.maxImag) / 2;
+      const realRange = (viewBounds.maxReal - viewBounds.minReal) / 2;
+      const imagRange = (viewBounds.maxImag - viewBounds.minImag) / 2;
+      
+      zoomToRegion(
+        centerReal - realRange, centerReal + realRange,
+        centerImag - imagRange, centerImag + imagRange
+      );
+    });
+
+    zoomOutBtn.addEventListener('click', () => {
+      const centerReal = (viewBounds.minReal + viewBounds.maxReal) / 2;
+      const centerImag = (viewBounds.minImag + viewBounds.maxImag) / 2;
+      const realRange = (viewBounds.maxReal - viewBounds.minReal) * 2;
+      const imagRange = (viewBounds.maxImag - viewBounds.minImag) * 2;
+      
+      zoomFactor /= 2;
+      viewBounds = {
+        minReal: centerReal - realRange / 2,
+        maxReal: centerReal + realRange / 2,
+        minImag: centerImag - imagRange / 2,
+        maxImag: centerImag + imagRange / 2
+      };
+      
+      renderCurrentView();
+    });
+
+    resetBtn.addEventListener('click', () => {
+      viewBounds = { minReal: -2, maxReal: 2, minImag: -2, maxImag: 2 };
+      zoomFactor = 1;
+      renderCurrentView();
+    });
+
+    saveBtn.addEventListener('click', () => {
+      if (!computedImageData) return;
+      
+      const link = document.createElement('a');
+      link.download = `mandelbrot_zoom_${zoomFactor}x_${Date.now()}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      
+      logStatus(`图像已保存 (${zoomFactor}× 放大)`);
+    });
+
+    function setCanvasSize(w, h) {
+      canvas.width = w;
+      canvas.height = h;
+    }
+
+    // 初始化
+    setCanvasSize(currentSize, currentSize);
+    updateZoomInfo();
+    logStatus('准备就绪。点击画布放大，拖拽框选区域，或使用滚轮缩放。');
+  </script>
+</body>
+</html>

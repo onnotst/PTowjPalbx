@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>图片旋转工具 - 纯前端</title>
+<script src="https://fastly.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+<link href="https://fastly.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+
+<style>
+.drop {
+    transition: all .2s;
+}
+.drop:hover {
+    background:#f0fdf4;
+    border-color:#10b981;
+}
+</style>
+</head>
+
+<body class="bg-gray-100 min-h-screen py-8">
+
+<div class="max-w-5xl mx-auto bg-white rounded-xl shadow-lg p-6">
+
+    <h1 class="text-3xl font-bold mb-6 text-center">
+        <i class="fa fa-refresh"></i> 图片旋转工具（前端版）
+    </h1>
+
+    <!-- 上传 -->
+    <div id="drop" class="drop border-2 border-dashed rounded-lg p-10 text-center cursor-pointer mb-6">
+        <i class="fa fa-cloud-upload text-4xl text-gray-400"></i>
+        <p class="mt-2">点击或拖放图片（JPG / PNG / GIF）</p>
+        <input type="file" id="file" accept="image/*" class="hidden">
+    </div>
+
+    <!-- 操作 -->
+    <div class="flex flex-wrap gap-3 justify-center mb-6">
+        <button onclick="rotate(-90)" class="bg-blue-600 text-white px-4 py-2 rounded">
+            <i class="fa fa-rotate-left"></i> 左转 90°
+        </button>
+        <button onclick="rotate(90)" class="bg-blue-600 text-white px-4 py-2 rounded">
+            <i class="fa fa-rotate-right"></i> 右转 90°
+        </button>
+        <button onclick="rotate(180)" class="bg-gray-700 text-white px-4 py-2 rounded">
+            180°
+        </button>
+        <button onclick="download()" class="bg-green-600 text-white px-4 py-2 rounded">
+            <i class="fa fa-download"></i> 下载
+        </button>
+    </div>
+
+    <p class="text-center text-sm text-gray-500 mb-4">
+        当前旋转角度：<strong id="angle">0</strong>°
+    </p>
+
+    <!-- 预览 -->
+    <div class="grid md:grid-cols-2 gap-6">
+        <div>
+            <h3 class="font-semibold mb-2">原图</h3>
+            <img id="origin" class="max-h-80 mx-auto border rounded">
+        </div>
+        <div>
+            <h3 class="font-semibold mb-2">旋转后</h3>
+            <canvas id="canvas" class="max-h-80 mx-auto border rounded"></canvas>
+        </div>
+    </div>
+
+</div>
+
+<script>
+let img = new Image();
+let angle = 0;
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+/* 选择文件 */
+document.getElementById('drop').onclick = () => file.click();
+document.getElementById('file').onchange = e => load(e.target.files[0]);
+
+/* 拖放 */
+const drop = document.getElementById('drop');
+drop.ondragover = e => e.preventDefault();
+drop.ondrop = e => {
+    e.preventDefault();
+    load(e.dataTransfer.files[0]);
+};
+
+function load(file) {
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+        angle = 0;
+        draw();
+        document.getElementById('origin').src = url;
+    };
+    img.src = url;
+}
+
+/* 旋转 */
+function rotate(deg) {
+    angle = (angle + deg + 360) % 360;
+    document.getElementById('angle').textContent = angle;
+    draw();
+}
+
+/* 绘制 */
+function draw() {
+    const rad = angle * Math.PI / 180;
+    const w = img.width;
+    const h = img.height;
+
+    if (angle === 90 || angle === 270) {
+        canvas.width = h;
+        canvas.height = w;
+    } else {
+        canvas.width = w;
+        canvas.height = h;
+    }
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.save();
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.rotate(rad);
+    ctx.drawImage(img, -w / 2, -h / 2);
+    ctx.restore();
+}
+
+/* 下载 */
+function download() {
+    const a = document.createElement('a');
+    a.download = 'rotated-' + angle + 'deg.png';
+    a.href = canvas.toDataURL('image/png');
+    a.click();
+}
+</script>
+
+</body>
+</html>

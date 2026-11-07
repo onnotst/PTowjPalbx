@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>曼德布洛特集合 - 自动绘制版</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background: #f5f5f5;
+      min-height: 100vh;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    h1 { color: #2c3e50; font-size: 2em; }
+    .panel {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      max-width: 1000px;
+      width: 100%;
+    }
+    .canvas-container { text-align: center; }
+    canvas {
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      max-width: 100%;
+    }
+    .controls {
+      margin-top: 15px;
+      display: flex;
+      justify-content: center;
+    }
+    button {
+      padding: 10px 20px;
+      background: #3498db;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 1em;
+    }
+    button:hover { background: #2980b9; }
+    button:disabled { background: #95a5a6; cursor: not-allowed; }
+    .status {
+      margin-top: 15px;
+      text-align: center;
+      color: #666;
+      font-size: 1em;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>曼德布洛特集合 - 自动绘制</h1>
+  </header>
+
+  <div class="panel">
+    <div class="canvas-container">
+      <canvas id="mandelbrotCanvas" width="1000" height="1000"></canvas>
+      <div class="status" id="status">正在计算曼德布洛特集合...</div>
+      <div class="controls">
+        <button id="saveBtn" disabled>保存图像</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // DOM元素
+    const canvas = document.getElementById('mandelbrotCanvas');
+    const ctx = canvas.getContext('2d');
+    const statusDiv = document.getElementById('status');
+    const saveBtn = document.getElementById('saveBtn');
+
+    // 固定配置（无需手动设置）
+    const WIDTH = 1000;    // 画布宽度
+    const HEIGHT = 1000;   // 画布高度
+    const MAX_ITER = 1000; // 固定迭代次数
+    const COLOR_MULTIPLIER = 20; // 颜色倍数
+    // 固定视图范围（曼德布洛特集合核心区域）
+    const VIEW_BOUNDS = {
+      minReal: -2.0,
+      maxReal: 1.0,
+      minImag: -1.5,
+      maxImag: 1.5
+    };
+
+    // 复数类（核心计算）
+    class Complex {
+      constructor(real, imag) {
+        this.real = real;
+        this.imag = imag;
+      }
+
+      get magnitude() {
+        return Math.sqrt(this.real * this.real + this.imag * this.imag);
+      }
+
+      add(other) {
+        return new Complex(this.real + other.real, this.imag + other.imag);
+      }
+
+      multiply(other) {
+        return new Complex(
+          this.real * other.real - this.imag * this.imag,
+          this.real * other.imag + this.imag * other.real
+        );
+      }
+    }
+
+    // 颜色计算（红色渐变，集合内为黑色）
+    function getColor(iter) {
+      if (iter >= MAX_ITER) return { r: 255, g: 255, b: 255 }; // 集合内为黑色
+      const v = Math.min(iter * COLOR_MULTIPLIER, 255);
+      return { r: v, g: 0, b: 0 }; // 红色系渐变
+    }
+
+    // 自动计算并绘制曼德布洛特集合
+    async function drawMandelbrot() {
+      const imageData = ctx.createImageData(WIDTH, HEIGHT);
+      const data = imageData.data;
+      const { minReal, maxReal, minImag, maxImag } = VIEW_BOUNDS;
+      const realRange = maxReal - minReal;
+      const imagRange = maxImag - minImag;
+      const startTime = performance.now();
+
+      // 逐像素计算
+      for (let y = 0; y < HEIGHT; y++) {
+        const imag = maxImag - (y / (HEIGHT - 1)) * imagRange;
+        for (let x = 0; x < WIDTH; x++) {
+          const real = minReal + (x / (WIDTH - 1)) * realRange;
+          const c = new Complex(real, imag);
+          let z = new Complex(0, 0);
+          let iter = 0;
+
+          // 迭代判断
+          while (z.magnitude <= 2 && iter < MAX_ITER) {
+            z = z.multiply(z).add(c);
+            iter++;
+          }
+
+          // 设置像素颜色
+          const color = getColor(iter);
+          const idx = 4 * (y * WIDTH + x);
+          data[idx] = color.r;
+          data[idx + 1] = color.g;
+          data[idx + 2] = color.b;
+          data[idx + 3] = 255;
+        }
+
+        // 每10行更新一次状态（避免频繁DOM操作）
+        if (y % 10 === 0) {
+          const progress = ((y / HEIGHT) * 100).toFixed(1);
+          statusDiv.textContent = `计算中: ${progress}%`;
+          await new Promise(requestAnimationFrame);
+        }
+      }
+
+      // 绘制图像
+      ctx.putImageData(imageData, 0, 0);
+      const endTime = performance.now();
+      const calcTime = ((endTime - startTime) / 1000).toFixed(2);
+
+      // 更新状态和按钮
+      statusDiv.textContent = `计算完成！耗时 ${calcTime} 秒 | 迭代次数: ${MAX_ITER}`;
+      saveBtn.disabled = false;
+    }
+
+    // 保存图像功能
+    saveBtn.addEventListener('click', () => {
+      const link = document.createElement('a');
+      link.download = `mandelbrot_${Date.now()}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      statusDiv.textContent = '图像已保存！';
+    });
+
+    // 页面加载后自动绘制
+    window.addEventListener('load', drawMandelbrot);
+  </script>
+</body>
+</html>

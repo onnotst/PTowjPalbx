@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <script>
+        navigator.serviceWorker.register('coi-serviceworker.js')
+    </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>视频旋转工具 - 稳定版</title>
+    <!-- Tailwind CSS -->
+    <script src="https://fastly.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Font Awesome -->
+    <link href="https://fastly.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    
+    <!-- 使用稳定的 0.11.x 版本 -->
+    <!--<script src="https://fastly.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>-->
+    <!--<script src="https://fastly.jsdelivr.net/npm/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js"></script>-->
+    
+    <!-- 使用 unpkg 国内镜像（由国内加速） -->
+    <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
+    <script src="https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js"></script>
+
+
+    <style>
+        .video-preview {
+            transition: all 0.3s ease;
+        }
+        .video-preview:hover {
+            transform: scale(1.02);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        .rotate-btn {
+            transition: all 0.2s ease;
+        }
+        .rotate-btn:hover {
+            transform: translateY(-2px);
+        }
+        .file-selected {
+            border-color: #10b981 !important;
+            background-color: #f0fdf4 !important;
+        }
+        .upload-preview {
+            transition: all 0.3s ease;
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .badge {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background-color: #10b981;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .progress-bar {
+            height: 4px;
+            background-color: #e5e7eb;
+            border-radius: 2px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background-color: #3b82f6;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        .spinner {
+            border: 3px solid rgba(59, 130, 246, 0.3);
+            border-radius: 50%;
+            border-top: 3px solid #3b82f6;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .warning-box {
+            background-color: #fffbeb;
+            border: 1px solid #fde68a;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+            color: #78350f;
+        }
+        /* FFmpeg加载状态样式 */
+        .ffmpeg-status {
+            position: fixed;
+            top: 4rem;
+            right: 1rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            max-width: 320px;
+            animation: slideInRight 0.3s ease-out;
+        }
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .ffmpeg-status.fade-out {
+            animation: slideOutRight 0.3s ease-in forwards;
+        }
+        @keyframes slideOutRight {
+            to { transform: translateX(100%); opacity: 0; }
+        }
+        .ffmpeg-status i {
+            margin-right: 0.5rem;
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen py-8 px-4 sm:px-6 lg:px-8">
+    <!-- FFmpeg加载状态容器 -->
+    <div id="ffmpegLoadingStatus" class="ffmpeg-status" style="display: none;">
+        <i class="fa fa-cog"></i>
+        <span class="status-text">正在准备视频处理引擎...</span>
+    </div>
+
+    <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
+        <!-- 头部 -->
+        <div class="bg-blue-600 text-white p-6 flex flex-col md:flex-row justify-between items-center">
+            <div>
+                <h1 class="text-2xl md:text-3xl font-bold flex items-center">
+                    <i class="fa fa-film mr-3"></i>视频旋转工具
+                </h1>
+                <p class="mt-2 opacity-90">纯前端处理 | 无需上传 | 支持多次旋转 | 稳定可靠</p>
+            </div>
+            <button id="resetBtn" class="mt-4 md:mt-0 bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-md transition-colors flex items-center text-sm">
+                <i class="fa fa-refresh mr-1"></i> 重置所有操作
+            </button>
+        </div>
+
+        <!-- 主要内容 -->
+        <div class="p-6">
+            <!-- 兼容性提示 -->
+            <div class="warning-box flex items-start">
+                <i class="fa fa-exclamation-triangle mt-1 mr-2 text-amber-500"></i>
+                <div>
+                    <p class="font-medium">重要提示</p>
+                    <p class="text-sm mt-1">1. 推荐使用 Chrome 浏览器以获得最佳体验 | 2. 视频大小建议不超过50MB | 3. 处理时间取决于视频大小和设备性能 | 4. 首次使用会加载必要组件，请耐心等待</p>
+                </div>
+            </div>
+
+            <!-- 错误提示 -->
+            <div id="errorAlert" class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6 flex items-center fade-in hidden">
+                <i class="fa fa-exclamation-circle mr-2"></i>
+                <span id="errorMessage"></span>
+            </div>
+
+            <!-- 成功提示 -->
+            <div id="successAlert" class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-6 flex items-center fade-in hidden">
+                <i class="fa fa-check-circle mr-2"></i>
+                <span id="successMessage"></span>
+            </div>
+
+            <!-- 上传表单 -->
+            <div class="mb-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- 视频上传 -->
+                    <div>
+                        <label class="block text-gray-700 font-medium mb-2">选择视频</label>
+                        <div class="relative" id="uploadContainer">
+                            <label class="flex items-center justify-center w-full h-48 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors" id="dropArea">
+                                <div class="flex flex-col items-center justify-center pt-5 pb-6" id="uploadPrompt">
+                                    <i class="fa fa-cloud-upload text-3xl text-gray-400 mb-2"></i>
+                                    <p class="mb-2 text-sm text-gray-600"><span class="font-semibold">点击上传</span> 或拖放文件</p>
+                                    <p class="text-xs text-gray-500">支持 MP4 格式（建议不超过50MB）</p>
+                                </div>
+                                <!-- 上传预览 -->
+                                <div id="uploadPreview" class="absolute inset-0 flex items-center justify-center p-4 hidden">
+                                    <video id="previewVideo" class="max-w-[100px] max-h-[100px] object-contain upload-preview" controls muted></video>
+                                    <span class="badge"><i class="fa fa-check"></i></span>
+                                </div>
+                                <input type="file" id="videoInput" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" accept="video/mp4">
+                            </label>
+                            
+                            <!-- 已选择文件信息 -->
+                            <div id="fileInfo" class="mt-3 hidden fade-in">
+                                <div class="bg-gray-50 p-3 rounded-md flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <i class="fa fa-file-video-o text-green-500 mr-2"></i>
+                                        <span id="fileName" class="text-sm text-gray-700 truncate max-w-xs"></span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span id="fileSize" class="text-xs text-gray-500"></span>
+                                        <button type="button" id="removeFile" class="text-red-500 hover:text-red-700 text-sm">
+                                            <i class="fa fa-times"></i> 移除
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 旋转选项 -->
+                    <div class="flex flex-col justify-center">
+                        <label class="block text-gray-700 font-medium mb-3">选择旋转角度</label>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3" id="rotationButtons">
+                            <button type="button" class="rotate-btn bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-3 rounded-md transition-colors" data-rotation="90" disabled>
+                                <i class="fa fa-rotate-right mr-1"></i>90°
+                            </button>
+                            <button type="button" class="rotate-btn bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-3 rounded-md transition-colors" data-rotation="180" disabled>
+                                <i class="fa fa-rotate-right mr-1"></i>180°
+                            </button>
+                            <button type="button" class="rotate-btn bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-3 rounded-md transition-colors" data-rotation="270" disabled>
+                                <i class="fa fa-rotate-left mr-1"></i>270°
+                            </button>
+                            <button type="button" class="rotate-btn bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 px-3 rounded-md transition-colors" data-rotation="0" disabled>
+                                <i class="fa fa-refresh mr-1"></i>重置
+                            </button>
+                        </div>
+                        
+                        <!-- 旋转角度错误提示 -->
+                        <div id="rotationError" class="mt-2 text-red-500 text-sm hidden">
+                            <i class="fa fa-exclamation-circle mr-1"></i>请选择旋转角度
+                        </div>
+                        
+                        <input type="hidden" id="rotation" value="0">
+                        
+                        <!-- 当前旋转状态 -->
+                        <div id="rotationStatus" class="mt-4 bg-blue-50 p-2 rounded-md text-sm text-blue-700 flex items-center hidden">
+                            <i class="fa fa-info-circle mr-1"></i>
+                            <span>当前累计旋转：<strong id="currentRotation">0</strong>°（支持继续旋转）</span>
+                        </div>
+                        
+                        <!-- 处理按钮和进度 -->
+                        <div class="mt-6">
+                            <button id="rotateButton" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-md transition-colors flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                                <i class="fa fa-cogs mr-2"></i>开始旋转
+                            </button>
+                            
+                            <!-- 进度条 -->
+                            <div id="progressContainer" class="hidden mt-4">
+                                <div class="flex justify-between text-sm text-gray-600 mb-1">
+                                    <span>处理进度</span>
+                                    <span id="progressPercent">0%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div id="progressFill" class="progress-fill"></div>
+                                </div>
+                                <div id="progressText" class="text-xs text-gray-500 mt-1 text-center">
+                                    准备处理...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 视频预览区域 -->
+            <div class="mt-8">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                    <i class="fa fa-play-circle mr-2"></i>视频对比预览
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- 原视频预览 -->
+                    <div>
+                        <h3 class="text-gray-600 font-medium mb-2 flex items-center">
+                            <i class="fa fa-file-video-o mr-2"></i>原视频
+                        </h3>
+                        <div id="originalVideoContainer" class="bg-gray-50 p-4 rounded-lg border border-gray-200 flex items-center justify-center">
+                            <div id="originalVideoPlaceholder" class="text-center text-gray-400 py-8">
+                                <i class="fa fa-film text-4xl mb-2"></i>
+                                <p>请上传视频后查看原视频</p>
+                            </div>
+                            <video id="originalVideo" class="max-w-full max-h-64 object-contain hidden" controls></video>
+                        </div>
+                    </div>
+
+                    <!-- 旋转后视频预览 -->
+                    <div>
+                        <h3 class="text-gray-600 font-medium mb-2 flex items-center">
+                            <i class="fa fa-refresh mr-2"></i>旋转后视频
+                            <span id="rotatedBadge" class="ml-2 text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded hidden">0°</span>
+                        </h3>
+                        <div id="rotatedVideoContainer" class="bg-gray-50 p-4 rounded-lg border border-gray-200 flex items-center justify-center relative">
+                            <div id="rotatedVideoPlaceholder" class="text-center text-gray-400 py-8">
+                                <i class="fa fa-film text-4xl mb-2"></i>
+                                <p>旋转后视频将显示在这里</p>
+                            </div>
+                            <video id="rotatedVideo" class="max-w-full max-h-64 object-contain hidden" controls></video>
+                            
+                            <!-- 下载按钮 -->
+                            <div id="downloadContainer" class="absolute bottom-3 right-3 flex gap-2 hidden">
+                                <a id="downloadBtn" href="#" class="bg-green-600 hover:bg-green-700 text-white text-sm py-1 px-3 rounded-md transition-colors flex items-center">
+                                    <i class="fa fa-download mr-1"></i> 下载视频
+                                </a>
+                                <button id="rotateAgainBtn" class="bg-blue-600 hover:bg-blue-700 text-white text-sm py-1 px-3 rounded-md transition-colors flex items-center">
+                                    <i class="fa fa-repeat mr-1"></i> 继续旋转
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部 -->
+        <div class="bg-gray-50 border-t border-gray-200 p-4 text-center text-gray-600 text-sm">
+            <p>© 2025 视频旋转工具 | 基于 FFmpeg.js 稳定版开发 | 纯前端处理，保护隐私</p>
+        </div>
+    </div>
+
+    <script>
+    // DOM元素
+    const videoInput = document.getElementById('videoInput');
+    const dropArea = document.getElementById('dropArea');
+    const uploadPrompt = document.getElementById('uploadPrompt');
+    const uploadPreview = document.getElementById('uploadPreview');
+    const previewVideo = document.getElementById('previewVideo');
+    const fileInfo = document.getElementById('fileInfo');
+    const fileName = document.getElementById('fileName');
+    const fileSize = document.getElementById('fileSize');
+    const removeFile = document.getElementById('removeFile');
+    const rotationButtons = document.querySelectorAll('.rotate-btn');
+    const rotationInput = document.getElementById('rotation');
+    const rotationError = document.getElementById('rotationError');
+    const rotateButton = document.getElementById('rotateButton');
+    const resetBtn = document.getElementById('resetBtn');
+    const rotateAgainBtn = document.getElementById('rotateAgainBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressFill = document.getElementById('progressFill');
+    const progressPercent = document.getElementById('progressPercent');
+    const progressText = document.getElementById('progressText');
+    const originalVideoContainer = document.getElementById('originalVideoContainer');
+    const originalVideoPlaceholder = document.getElementById('originalVideoPlaceholder');
+    const originalVideo = document.getElementById('originalVideo');
+    const rotatedVideoContainer = document.getElementById('rotatedVideoContainer');
+    const rotatedVideoPlaceholder = document.getElementById('rotatedVideoPlaceholder');
+    const rotatedVideo = document.getElementById('rotatedVideo');
+    const downloadContainer = document.getElementById('downloadContainer');
+    const rotatedBadge = document.getElementById('rotatedBadge');
+    const rotationStatus = document.getElementById('rotationStatus');
+    const currentRotation = document.getElementById('currentRotation');
+    const errorAlert = document.getElementById('errorAlert');
+    const errorMessage = document.getElementById('errorMessage');
+    const successAlert = document.getElementById('successAlert');
+    const successMessage = document.getElementById('successMessage');
+    const ffmpegLoadingStatus = document.getElementById('ffmpegLoadingStatus');
+
+    // 全局变量
+    let originalFile = null;
+    let rotatedBlob = null;
+    let totalRotation = 0;
+    let isProcessing = false;
+    let currentInputBlob = null;
+    let ffmpeg = null;
+    let isFFmpegLoaded = false;
+    let ffmpegLoadingStatusText = '';
+
+    // 更新FFmpeg加载状态显示
+    function updateFFmpegLoadingStatus(customMessage = null) {
+        const statusText = customMessage || ffmpegLoadingStatusText;
+        
+        if (!ffmpegLoadingStatus) return;
+        
+        const statusSpan = ffmpegLoadingStatus.querySelector('.status-text');
+        if (statusSpan) {
+            statusSpan.textContent = statusText;
+        }
+        
+        // 显示状态容器
+        ffmpegLoadingStatus.style.display = 'flex';
+        ffmpegLoadingStatus.classList.remove('fade-out');
+    }
+
+    // 隐藏FFmpeg加载状态
+    function hideFFmpegLoadingStatus() {
+        if (!ffmpegLoadingStatus) return;
+        
+        ffmpegLoadingStatus.classList.add('fade-out');
+        setTimeout(() => {
+            if (ffmpegLoadingStatus && ffmpegLoadingStatus.parentNode) {
+                ffmpegLoadingStatus.style.display = 'none';
+            }
+        }, 300);
+    }
+
+    // 初始化FFmpeg - 添加详细状态
+    async function initFFmpeg() {
+        // 如果已经加载完成，直接返回
+        if (isFFmpegLoaded && ffmpeg) {
+            console.log('FFmpeg already loaded, returning existing instance');
+            return ffmpeg;
+        }
+
+        // 如果正在加载中，等待完成
+        if (isProcessing && ffmpeg) {
+            console.log('FFmpeg is loading, waiting...');
+            let waitTime = 0;
+            const maxWaitTime = 60000; // 最大等待60秒
+            
+            while ((isProcessing && !isFFmpegLoaded) && (waitTime < maxWaitTime)) {
+                await new Promise(resolve => setTimeout(resolve, 500));
+                waitTime += 500;
+                
+                if (waitTime % 5000 === 0) {
+                    console.log(`Still waiting for FFmpeg... ${waitTime/1000}s`);
+                }
+            }
+            
+            if (!isFFmpegLoaded) {
+                throw new Error('FFmpeg loading timeout');
+            }
+            
+            return ffmpeg;
+        }
+
+        try {
+            isProcessing = true;
+            const { createFFmpeg } = FFmpeg;
+            
+            console.log('Creating FFmpeg instance...');
+            ffmpeg = createFFmpeg({
+                log: true,
+                corePath: 'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js',
+            });
+
+            // 设置加载进度回调
+            ffmpeg.setLogger(({ type, message }) => {
+                console.log('FFmpeg log:', type, message);
+                
+                // 解析加载进度信息
+                if (message.includes('Downloading')) {
+                    ffmpegLoadingStatusText = '正在下载核心文件...';
+                    updateFFmpegLoadingStatus();
+                } else if (message.includes('Loading') || message.includes('Unpacking')) {
+                    ffmpegLoadingStatusText = '正在解压核心文件...';
+                    updateFFmpegLoadingStatus();
+                } else if (message.includes('ready')) {
+                    ffmpegLoadingStatusText = '初始化完成';
+                    updateFFmpegLoadingStatus();
+                } else if (message.includes('worker')) {
+                    ffmpegLoadingStatusText = '启动处理引擎...';
+                    updateFFmpegLoadingStatus();
+                }
+            });
+
+            console.log('Loading FFmpeg core...');
+            updateFFmpegLoadingStatus('正在加载视频处理引擎...');
+            
+            // 设置超时控制
+            const loadPromise = ffmpeg.load();
+            const timeoutPromise = new Promise((_, reject) => {
+                setTimeout(() => reject(new Error('FFmpeg loading timeout after 60 seconds')), 60000);
+            });
+            
+            await Promise.race([loadPromise, timeoutPromise]);
+            
+            isFFmpegLoaded = true;
+            isProcessing = false;
+            ffmpegLoadingStatusText = '视频处理引擎已就绪';
+            updateFFmpegLoadingStatus();
+            
+            console.log('FFmpeg loaded successfully');
+            
+            // 3秒后隐藏加载提示
+            setTimeout(() => {
+                hideFFmpegLoadingStatus();
+            }, 3000);
+            
+            return ffmpeg;
+            
+        } catch (error) {
+            isProcessing = false;
+            isFFmpegLoaded = false;
+            console.error('Failed to initialize FFmpeg:', error);
+            
+            let errorMsg = '视频处理引擎加载失败：';
+            if (error.message.includes('timeout')) {
+                errorMsg += '加载超时，请检查网络连接后刷新页面重试';
+            } else if (error.message.includes('network')) {
+                errorMsg += '网络错误，请检查网络连接后重试';
+            } else {
+                errorMsg += error.message || '未知错误，请刷新页面后重试';
+            }
+            
+            ffmpegLoadingStatusText = '加载失败';
+            updateFFmpegLoadingStatus(errorMsg);
+            
+            // 5秒后隐藏错误消息
+            setTimeout(() => {
+                hideFFmpegLoadingStatus();
+            }, 5000);
+            
+            throw new Error(errorMsg);
+        }
+    }
+
+    // 文件选择后反馈
+    videoInput.addEventListener('change', function(e) {
+        if (e.target.files.length > 0) {
+            const file = e.target.files[0];
+            handleFileSelection(file);
+        }
+    });
+
+    // 拖放功能
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropArea.addEventListener(eventName, highlight, false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, unhighlight, false);
+    });
+
+    function highlight() {
+        dropArea.classList.add('border-blue-500', 'bg-blue-50');
+    }
+
+    function unhighlight() {
+        dropArea.classList.remove('border-blue-500', 'bg-blue-50');
+        if (originalFile || previewVideo.src) {
+            dropArea.classList.add('file-selected');
+        }
+    }
+
+    dropArea.addEventListener('drop', handleDrop, false);
+
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        if (files.length) {
+            const file = files[0];
+            if (file.type === 'video/mp4') {
+                handleFileSelection(file);
+            } else {
+                showError('请选择MP4格式的视频文件');
+            }
+        }
+    }
+
+    // 处理文件选择
+    function handleFileSelection(file) {
+        const maxSize = 50 * 1024 * 1024;
+        if (file.size > maxSize) {
+            showError('视频文件过大，建议选择50MB以内的MP4视频');
+            return;
+        }
+
+        originalFile = file;
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            currentInputBlob = new Blob([e.target.result], { type: 'video/mp4' });
+            
+            const videoURL = URL.createObjectURL(file);
+            previewVideo.src = videoURL;
+            originalVideo.src = videoURL;
+            originalVideoPlaceholder.classList.add('hidden');
+            originalVideo.classList.remove('hidden');
+        };
+        reader.readAsArrayBuffer(file);
+
+        fileName.textContent = file.name;
+        fileSize.textContent = formatFileSize(file.size);
+        fileInfo.classList.remove('hidden');
+        dropArea.classList.add('file-selected');
+        uploadPrompt.classList.add('hidden');
+        uploadPreview.classList.remove('hidden');
+
+        rotationButtons.forEach(btn => {
+            btn.disabled = false;
+        });
+
+        resetRotationSelection();
+        hideAlerts();
+    }
+
+    // 移除文件
+    removeFile.addEventListener('click', resetAll);
+
+    // 重置所有
+    resetBtn.addEventListener('click', resetAll);
+
+    function resetAll() {
+        if (ffmpeg) {
+            try {
+                ffmpeg.exit();
+            } catch (e) {
+                console.log('FFmpeg exit error:', e);
+            }
+            ffmpeg = null;
+            isFFmpegLoaded = false;
+        }
+
+        videoInput.value = '';
+        originalFile = null;
+        rotatedBlob = null;
+        currentInputBlob = null;
+        totalRotation = 0;
+
+        previewVideo.src = '';
+        originalVideo.src = '';
+        rotatedVideo.src = '';
+        downloadBtn.href = '';
+        
+        fileInfo.classList.add('hidden');
+        dropArea.classList.remove('file-selected');
+        uploadPrompt.classList.remove('hidden');
+        uploadPreview.classList.add('hidden');
+        
+        originalVideoPlaceholder.classList.remove('hidden');
+        originalVideo.classList.add('hidden');
+        rotatedVideoPlaceholder.classList.remove('hidden');
+        rotatedVideo.classList.add('hidden');
+        downloadContainer.classList.add('hidden');
+        rotatedBadge.classList.add('hidden');
+        rotationStatus.classList.add('hidden');
+        
+        rotationButtons.forEach(btn => {
+            btn.disabled = true;
+            btn.classList.remove('bg-blue-600', 'text-white');
+            btn.classList.add('bg-gray-200', 'text-gray-800');
+        });
+        
+        rotationInput.value = '0';
+        rotationError.classList.add('hidden');
+        rotateButton.disabled = true;
+        rotateButton.innerHTML = '<i class="fa fa-cogs mr-2"></i>开始旋转';
+        progressContainer.classList.add('hidden');
+        
+        hideAlerts();
+    }
+
+    // 旋转角度选择
+    rotationButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const rotation = this.getAttribute('data-rotation');
+            
+            rotationButtons.forEach(b => {
+                b.classList.remove('bg-blue-600', 'text-white');
+                b.classList.add('bg-gray-200', 'text-gray-800');
+            });
+            
+            if (rotation !== '0') {
+                this.classList.remove('bg-gray-200', 'text-gray-800');
+                this.classList.add('bg-blue-600', 'text-white');
+                rotationError.classList.add('hidden');
+            } else {
+                totalRotation = 0;
+                rotationStatus.classList.add('hidden');
+                rotatedBadge.classList.add('hidden');
+                rotatedVideo.src = '';
+                rotatedVideoPlaceholder.classList.remove('hidden');
+                rotatedVideo.classList.add('hidden');
+                downloadContainer.classList.add('hidden');
+                rotationError.classList.add('hidden');
+                
+                if (originalFile) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        currentInputBlob = new Blob([e.target.result], { type: 'video/mp4' });
+                    };
+                    reader.readAsArrayBuffer(originalFile);
+                }
+            }
+            
+            rotationInput.value = rotation;
+            checkButtonStatus();
+        });
+    });
+
+    // 重置旋转选择
+    function resetRotationSelection() {
+        rotationButtons.forEach(btn => {
+            btn.classList.remove('bg-blue-600', 'text-white');
+            btn.classList.add('bg-gray-200', 'text-gray-800');
+        });
+        rotationInput.value = '0';
+        rotationError.classList.add('hidden');
+        checkButtonStatus();
+    }
+
+    // 检查按钮状态
+    function checkButtonStatus() {
+        const hasVideo = !!originalFile;
+        const hasRotation = rotationInput.value !== '0';
+        
+        rotateButton.disabled = !(hasVideo && hasRotation && !isProcessing);
+        
+        if (totalRotation > 0) {
+            rotateButton.innerHTML = '<i class="fa fa-cogs mr-2"></i>继续旋转';
+            rotationStatus.classList.remove('hidden');
+            currentRotation.textContent = totalRotation;
+        } else {
+            rotateButton.innerHTML = '<i class="fa fa-cogs mr-2"></i>开始旋转';
+        }
+    }
+
+    // 旋转视频 - 修复版本
+    rotateButton.addEventListener('click', async function() {
+        const rotation = parseInt(rotationInput.value);
+        if (rotation === 0) {
+            rotationError.classList.remove('hidden');
+            return;
+        }
+
+        totalRotation = (totalRotation + rotation) % 360;
+        if (totalRotation < 0) totalRotation += 360;
+
+        progressContainer.classList.remove('hidden');
+        progressFill.style.width = '0%';
+        progressPercent.textContent = '0%';
+        progressText.textContent = '正在准备处理环境...';
+        
+        isProcessing = true;
+        rotationButtons.forEach(btn => btn.disabled = true);
+        rotateButton.disabled = true;
+        rotateButton.innerHTML = '<div class="spinner"></div>处理中...';
+        hideAlerts();
+
+        try {
+            // 确保FFmpeg已加载
+            console.log('Ensuring FFmpeg is loaded...');
+            const ffmpegInstance = await initFFmpeg();
+            
+            // 检查FFmpeg是否真正就绪
+            if (!ffmpegInstance.isLoaded()) {
+                throw new Error('FFmpeg is not ready');
+            }
+            
+            console.log('FFmpeg is ready, starting processing...');
+            updateProgress(10);
+
+            progressText.textContent = '正在读取视频文件...';
+            updateProgress(20);
+            
+            // 使用 FileReader + ffmpeg.FS().writeFile()
+            const arrayBuffer = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = (e) => reject(e);
+                reader.readAsArrayBuffer(currentInputBlob);
+            });
+            
+            const inputData = new Uint8Array(arrayBuffer);
+            ffmpegInstance.FS('writeFile', 'input.mp4', inputData);
+            updateProgress(30);
+
+            let filter = '';
+            switch (rotation) {
+                case 90:
+                    filter = 'transpose=1';
+                    break;
+                case 180:
+                    filter = 'transpose=1,transpose=1';
+                    break;
+                case 270:
+                    filter = 'transpose=2';
+                    break;
+            }
+
+            progressText.textContent = '正在旋转视频...（请耐心等待）';
+            updateProgress(40);
+            
+            await ffmpegInstance.run(
+                '-i', 'input.mp4',
+                '-vf', filter,
+                '-c:v', 'libx264',
+                '-c:a', 'aac',
+                '-preset', 'medium',
+                '-crf', '23',
+                '-y',
+                'output.mp4'
+            );
+
+            updateProgress(90);
+            progressText.textContent = '处理完成，正在生成视频...';
+            const outputData = ffmpegInstance.FS('readFile', 'output.mp4');
+
+            rotatedBlob = new Blob([outputData.buffer], { type: 'video/mp4' });
+            const videoURL = URL.createObjectURL(rotatedBlob);
+            
+            rotatedVideo.src = videoURL;
+            rotatedVideoPlaceholder.classList.add('hidden');
+            rotatedVideo.classList.remove('hidden');
+            downloadContainer.classList.remove('hidden');
+            rotatedBadge.classList.remove('hidden');
+            rotatedBadge.textContent = `${totalRotation}°`;
+            rotationStatus.classList.remove('hidden');
+            currentRotation.textContent = totalRotation;
+
+            const originalName = originalFile.name.replace(/\.mp4$/, "");
+            const downloadFileName = `${originalName}_rotated_${totalRotation}deg.mp4`;
+            downloadBtn.href = videoURL;
+            downloadBtn.download = downloadFileName;
+
+            currentInputBlob = rotatedBlob;
+
+            showSuccess(`视频旋转成功！当前累计旋转角度：${totalRotation}°`);
+
+            updateProgress(100);
+            progressText.textContent = '处理完成！';
+
+        } catch (error) {
+            console.error('视频旋转失败：', error);
+            let errorMsg = '处理失败：';
+            
+            if (error.message.includes('No such file or directory')) {
+                errorMsg += '视频文件读取失败，请尝试重新上传';
+            } else if (error.message.includes('exitCode')) {
+                errorMsg += '视频处理失败，可能是视频编码格式不支持，请尝试其他MP4视频';
+            } else if (error.message.includes('memory')) {
+                errorMsg += '内存不足，请关闭其他程序或尝试更小的视频文件';
+            } else if (error.message.includes('not ready')) {
+                errorMsg += '视频处理引擎未就绪，请刷新页面重试';
+            } else {
+                errorMsg += error.message || '未知错误，请刷新页面后重试';
+            }
+            
+            showError(errorMsg);
+        } finally {
+            isProcessing = false;
+            rotationButtons.forEach(btn => {
+                if (originalFile) btn.disabled = false;
+            });
+            rotateButton.innerHTML = '<i class="fa fa-cogs mr-2"></i>继续旋转';
+            checkButtonStatus();
+            
+            try {
+                if (ffmpeg) {
+                    ffmpeg.FS('unlink', 'input.mp4');
+                    ffmpeg.FS('unlink', 'output.mp4');
+                }
+            } catch (e) {
+                console.log('清理临时文件失败：', e);
+            }
+        }
+    });
+
+    // 继续旋转按钮
+    rotateAgainBtn.addEventListener('click', function() {
+        resetRotationSelection();
+        document.querySelector('#rotationButtons').scrollIntoView({
+            behavior: 'smooth'
+        });
+    });
+
+    // 更新进度
+    function updateProgress(percent) {
+        // 如果有FFmpeg加载状态显示，先隐藏它
+        if (ffmpegLoadingStatus && ffmpegLoadingStatus.style.display !== 'none' && percent > 0) {
+            hideFFmpegLoadingStatus();
+        }
+        
+        progressFill.style.width = `${percent}%`;
+        progressPercent.textContent = `${percent}%`;
+    }
+
+    // 格式化文件大小
+    function formatFileSize(bytes) {
+        if (bytes < 1024) return bytes + ' B';
+        else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+        else return (bytes / 1048576).toFixed(1) + ' MB';
+    }
+
+    // 显示错误提示
+    function showError(message) {
+        errorMessage.textContent = message;
+        errorAlert.classList.remove('hidden');
+        setTimeout(() => {
+            errorAlert.classList.add('fade-in');
+        }, 10);
+    }
+
+    // 显示成功提示
+    function showSuccess(message) {
+        successMessage.textContent = message;
+        successAlert.classList.remove('hidden');
+        setTimeout(() => {
+            successAlert.classList.add('fade-in');
+        }, 10);
+        setTimeout(() => {
+            successAlert.classList.add('hidden');
+        }, 3000);
+    }
+
+    // 隐藏所有提示
+    function hideAlerts() {
+        errorAlert.classList.add('hidden');
+        successAlert.classList.add('hidden');
+        errorAlert.classList.remove('fade-in');
+        successAlert.classList.remove('fade-in');
+    }
+
+    // 页面卸载时清理资源
+    window.addEventListener('beforeunload', function() {
+        if (ffmpeg) {
+            try {
+                ffmpeg.exit();
+            } catch (e) {}
+        }
+    });
+
+    // 页面加载时预加载FFmpeg - 增强版本
+    document.addEventListener('DOMContentLoaded', function() {
+        // 显示初始加载状态
+        updateFFmpegLoadingStatus('正在准备视频处理引擎...');
+        
+        // 检查浏览器兼容性
+        checkBrowserCompatibility();
+        
+        // 延迟一点开始加载FFmpeg，让页面先渲染完成
+        setTimeout(() => {
+            initFFmpeg().then(() => {
+                console.log('FFmpeg preload completed successfully');
+            }).catch(error => {
+                console.error('Preload FFmpeg failed:', error);
+                // 错误已经在initFFmpeg中处理了
+            });
+        }, 500);
+    });
+
+    // 检查浏览器兼容性
+    function checkBrowserCompatibility() {
+        const userAgent = navigator.userAgent.toLowerCase();
+        const isChrome = userAgent.includes('chrome') && !userAgent.includes('edge');
+        const isEdge = userAgent.includes('edge');
+
+        if (!isChrome && !isEdge) {
+            showError('检测到您使用的浏览器可能不兼容，强烈建议使用 Chrome 浏览器以获得最佳体验');
+        }
+    }
+    </script>
+</body>
+</html>

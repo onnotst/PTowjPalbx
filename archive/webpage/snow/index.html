@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>冰结构分形 - 科赫雪花版</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background: linear-gradient(135deg, #e0f7fa, #b2ebf2); /* 渐变冰雪背景 */
+      min-height: 100vh;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    h1 { 
+      color: #0f5189; 
+      font-size: 2.2em; 
+      text-shadow: 0 3px 6px rgba(0,0,0,0.15);
+    }
+    .panel {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      max-width: 1000px;
+      width: 100%;
+    }
+    .canvas-container { 
+      text-align: center; 
+      overflow: auto; /* 适配小屏幕滚动 */
+    }
+    canvas {
+      border: 2px solid #81c7f5;
+      border-radius: 8px;
+      max-width: 100%;
+      background: #fafdff;
+      box-shadow: 0 6px 15px rgba(0,0,0,0.08);
+    }
+    .controls {
+      margin-top: 20px;
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+    }
+    button {
+      padding: 12px 24px;
+      background: linear-gradient(to right, #2196f3, #0d47a1);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1em;
+      transition: all 0.3s;
+      font-weight: 500;
+    }
+    button:hover { 
+      background: linear-gradient(to right, #1976d2, #083378);
+      transform: translateY(-2px);
+    }
+    button:disabled { 
+      background: #b0bec5; 
+      cursor: not-allowed;
+      transform: none;
+    }
+    .status {
+      margin-top: 20px;
+      text-align: center;
+      color: #37474f;
+      font-size: 1.1em;
+      line-height: 1.6;
+    }
+    .progress-bar {
+      width: 80%;
+      height: 8px;
+      background: #e0e0e0;
+      border-radius: 4px;
+      margin: 15px auto;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(to right, #64b5f6, #1565c0);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>冰结构分形 - 科赫雪花绘制</h1>
+  </header>
+
+  <div class="panel">
+    <div class="canvas-container">
+      <canvas id="iceCanvas" width="1000" height="1000"></canvas>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <div class="status" id="status">正在初始化冰晶生成...</div>
+      <div class="controls">
+        <button id="regenerateBtn" disabled>重新生成冰晶</button>
+        <button id="saveBtn" disabled>保存高清冰晶图像</button>
+      </div>
+      <img 
+        src="0dc41c80ce3749f0b4fcb9962b0ecd59.jpeg" 
+        alt="自然的雪花1" 
+        style="width: 100%; max-width: 1000px; height: auto; margin-top: 20px">
+      <img 
+        src="downloaded-image.png" 
+        alt="自然的雪花2" 
+        style="width: 100%; max-width: 1000px; height: auto; margin-top: 20px">
+      <img 
+        src="20251226124847h1_c8cfeda541eba753747226e0564ad976_compressed.jpg" 
+        alt="AI生成的雪花1" 
+        style="width: 100%; max-width: 1000px; height: auto; margin-top: 20px">
+      <img 
+        src="20251226124847h2_fa9e82798e282e7d43f0eb0d35ef4944_compressed.jpg" 
+        alt="AI生成的雪花2" 
+        style="width: 100%; max-width: 1000px; height: auto; margin-top: 20px">
+    </div>
+  </div>
+
+  <script>
+    // DOM元素
+    const canvas = document.getElementById('iceCanvas');
+    const ctx = canvas.getContext('2d');
+    const statusDiv = document.getElementById('status');
+    const progressFill = document.getElementById('progressFill');
+    const saveBtn = document.getElementById('saveBtn');
+    const regenerateBtn = document.getElementById('regenerateBtn');
+
+    // 增强版配置（高分辨率+高迭代）
+    const CONFIG = {
+      WIDTH: 1000,                 // 画布宽高提升至1200px
+      HEIGHT: 1000,
+      CENTER_X: 500,               // 雪花中心
+      CENTER_Y: 500,
+      BASE_LENGTH: 300,            // 基础边长增大，让冰晶更饱满
+      ITERATION_LEVEL: 7,          // 迭代次数提升至7次（精细度大幅提升）
+      ICE_COLORS: [                // 扩展渐变颜色，增加层次感
+        '#f0f8ff', '#e0f7fa', '#b2ebf2', '#80deea', '#4dd0e1', 
+        '#26c6da', '#00bcd4', '#00acc1', '#0097a7', '#00838f'
+      ],
+      BRANCH_ANGLES: [30, 90, 150, 210, 270, 330], // 六瓣雪花角度
+      SUB_BRANCH_ANGLES: [20, 40], // 次级分支角度，增加冰晶复杂度
+      LINE_WIDTH_BASE: 0.8         // 基础线宽，高迭代下更细腻
+    };
+
+    // 弧度转换
+    function toRadians(degrees) {
+      return degrees * Math.PI / 180;
+    }
+
+    // 优化的冰晶分支绘制（支持次级分支，更逼真）
+    function drawIceBranch(x1, y1, length, angle, iteration, colorIndex, progressCallback) {
+      // 进度更新
+      progressCallback();
+      
+      if (iteration === 0) {
+        // 最底层迭代，绘制渐变线段
+        const x2 = x1 + length * Math.cos(toRadians(angle));
+        const y2 = y1 + length * Math.sin(toRadians(angle));
+        
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.strokeStyle = CONFIG.ICE_COLORS[colorIndex % CONFIG.ICE_COLORS.length];
+        // 迭代层级越低，线条越粗，高迭代层级用细线条
+        ctx.lineWidth = Math.max(CONFIG.LINE_WIDTH_BASE, (iteration + 1) * CONFIG.LINE_WIDTH_BASE);
+        ctx.stroke();
+        return;
+      }
+
+      // 分形迭代：主分支分为3段，中间段生成双次级分支
+      length /= 3;
+      // 第一段主分支
+      drawIceBranch(x1, y1, length, angle, iteration - 1, colorIndex, progressCallback);
+      const x2 = x1 + length * Math.cos(toRadians(angle));
+      const y2 = y1 + length * Math.sin(toRadians(angle));
+      
+      // 左侧次级分支（双角度，增加复杂度）
+      CONFIG.SUB_BRANCH_ANGLES.forEach(subAngle => {
+        drawIceBranch(x2, y2, length, angle + subAngle, iteration - 1, colorIndex + 1, progressCallback);
+      });
+      const x3 = x2 + length * Math.cos(toRadians(angle + 60));
+      const y3 = y2 + length * Math.sin(toRadians(angle + 60));
+      
+      // 右侧次级分支（双角度）
+      CONFIG.SUB_BRANCH_ANGLES.forEach(subAngle => {
+        drawIceBranch(x3, y3, length, angle - subAngle, iteration - 1, colorIndex + 1, progressCallback);
+      });
+      const x4 = x3 + length * Math.cos(toRadians(angle - 60));
+      const y4 = y3 + length * Math.sin(toRadians(angle - 60));
+      
+      // 最后一段主分支
+      drawIceBranch(x4, y4, length, angle, iteration - 1, colorIndex, progressCallback);
+    }
+
+    // 绘制完整冰晶雪花
+    function drawIceFractal(progressCallback) {
+      // 清空画布
+      ctx.clearRect(0, 0, CONFIG.WIDTH, CONFIG.HEIGHT);
+      
+      // 绘制六个主分支（六瓣雪花）
+      CONFIG.BRANCH_ANGLES.forEach((angle, index) => {
+        drawIceBranch(
+          CONFIG.CENTER_X,
+          CONFIG.CENTER_Y,
+          CONFIG.BASE_LENGTH,
+          angle,
+          CONFIG.ITERATION_LEVEL,
+          index * 2, // 颜色索引间隔，让分支颜色更区分
+          progressCallback
+        );
+      });
+
+      // 绘制雪花中心（多层渐变圆点，更立体）
+      for (let r = 8; r > 0; r -= 2) {
+        ctx.beginPath();
+        ctx.arc(CONFIG.CENTER_X, CONFIG.CENTER_Y, r, 0, Math.PI * 2);
+        ctx.fillStyle = CONFIG.ICE_COLORS[r];
+        ctx.fill();
+      }
+    }
+
+    // 计算总迭代步数（用于进度条）
+    function calculateTotalSteps(iteration) {
+      if (iteration === 0) return 1;
+      return 1 + 4 * calculateTotalSteps(iteration - 1); // 每级4个分支
+    }
+    const TOTAL_STEPS = calculateTotalSteps(CONFIG.ITERATION_LEVEL) * CONFIG.BRANCH_ANGLES.length;
+    let currentStep = 0;
+
+    // 进度更新函数
+    function updateProgress() {
+      currentStep++;
+      const progress = (currentStep / TOTAL_STEPS) * 100;
+      progressFill.style.width = `${progress}%`;
+      statusDiv.textContent = `生成冰晶中：${progress.toFixed(1)}%（迭代层级 ${CONFIG.ITERATION_LEVEL}）`;
+    }
+
+    // 自动生成冰结构分形
+    async function generateIceFractal() {
+      currentStep = 0;
+      progressFill.style.width = '0%';
+      statusDiv.textContent = `准备生成高分辨率冰晶（${CONFIG.WIDTH}×${CONFIG.HEIGHT}，迭代${CONFIG.ITERATION_LEVEL}次）...`;
+      
+      // 禁用按钮
+      saveBtn.disabled = true;
+      regenerateBtn.disabled = true;
+      
+      const startTime = performance.now();
+      
+      // 使用requestAnimationFrame避免主线程阻塞
+      await new Promise(resolve => {
+        requestAnimationFrame(() => {
+          drawIceFractal(updateProgress);
+          resolve();
+        });
+      });
+      
+      // 计算耗时
+      const endTime = performance.now();
+      const genTime = ((endTime - startTime) / 1000).toFixed(2);
+      
+      // 更新状态和按钮
+      statusDiv.textContent = `冰晶生成完成！耗时 ${genTime} 秒 | 分辨率：${CONFIG.WIDTH}×${CONFIG.HEIGHT} | 迭代层级：${CONFIG.ITERATION_LEVEL}`;
+      saveBtn.disabled = false;
+      regenerateBtn.disabled = false;
+    }
+
+    // 保存高清图像
+    saveBtn.addEventListener('click', () => {
+      // 生成高清PNG，设置质量参数
+      const link = document.createElement('a');
+      link.download = `ice_fractal_${CONFIG.WIDTH}x${CONFIG.HEIGHT}_iter${CONFIG.ITERATION_LEVEL}_${Date.now()}.png`;
+      link.href = canvas.toDataURL('image/png', 1.0); // 1.0为最高质量
+      link.click();
+      statusDiv.textContent = '高清冰晶图像已保存！';
+    });
+
+    // 重新生成冰晶
+    regenerateBtn.addEventListener('click', generateIceFractal);
+
+    // 页面加载后自动生成
+    window.addEventListener('load', generateIceFractal);
+  </script>
+</body>
+</html>

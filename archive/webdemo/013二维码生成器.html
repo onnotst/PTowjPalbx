@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <link rel="shortcut icon" href="/assets/favicon.ico" />
+    <title>二维码生成器（批量）</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; background: #f0f0f0; text-align: center; }
+        h1 { margin: 40px 0; font-size: 36px; color: #333; }
+
+        textarea {
+            width: 100%;
+            max-width: 500px;
+            height: 140px;
+            padding: 10px;
+            font-size: 16px;
+            resize: vertical;
+        }
+
+        button {
+            width: 140px;
+            height: 40px;
+            margin-top: 10px;
+            background: #3399ff;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover { background: #33ccff; }
+
+        .container { width: 90%; max-width: 900px; margin: 0 auto; }
+
+        .qrcode-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .qrcode-card {
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,.1);
+            width: 240px;
+        }
+
+        .qrcode-card canvas,
+        .qrcode-card img {
+            margin: 10px 0;
+        }
+
+        .qrcode-text {
+            font-size: 14px;
+            color: #555;
+            word-break: break-all;
+            margin-bottom: 10px;
+        }
+
+        .download {
+            color: #3399ff;
+            text-decoration: none;
+            font-size: 14px;
+        }
+
+        .history-section {
+            margin-top: 50px;
+            border-top: 1px solid #ddd;
+            padding-top: 20px;
+        }
+
+        .history-item {
+            background: #fff;
+            max-width: 600px;
+            margin: 10px auto;
+            padding: 10px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .history-text { flex: 1; font-size: 14px; color: #666; word-break: break-all; }
+        .history-date { font-size: 12px; color: #999; }
+        .delete-btn { background: none; border: none; color: red; cursor: pointer; }
+    </style>
+    <script src="/assets/js/qrcode.min.js"></script>
+</head>
+<body>
+
+<div class="container">
+    <h1>二维码生成器（批量）</h1>
+
+    <textarea id="text" placeholder="输入内容，一行一个"></textarea>
+    <br>
+    <button onclick="generateQR()">生成二维码</button>
+
+    <div class="qrcode-grid" id="qrcode-grid"></div>
+
+    <div class="history-section">
+        <h2>生成历史（最多30条，保留30天）</h2>
+        <div id="history-container"></div>
+    </div>
+</div>
+
+<script>
+const MAX_HISTORY = 30;
+const STORAGE_KEY = 'qrcode_history';
+const EXPIRY_DAYS = 30;
+
+document.addEventListener('DOMContentLoaded', loadHistory);
+
+function generateQR() {
+    const input = document.getElementById('text');
+    const lines = input.value
+        .split('\n')
+        .map(v => v.trim())
+        .filter(Boolean);
+
+    if (lines.length === 0) {
+        alert('请输入至少一个内容');
+        return;
+    }
+
+    const grid = document.getElementById('qrcode-grid');
+    grid.innerHTML = '';
+
+    lines.forEach(text => {
+        createQRCard(text, grid);
+        addToHistory(text);
+    });
+
+    input.value = '';
+}
+
+function createQRCard(text, container) {
+    const card = document.createElement('div');
+    card.className = 'qrcode-card';
+
+    const qrDiv = document.createElement('div');
+    new QRCode(qrDiv, {
+        text,
+        width: 200,
+        height: 200,
+        correctLevel: QRCode.CorrectLevel.H
+    });
+
+    const label = document.createElement('div');
+    label.className = 'qrcode-text';
+    label.innerText = text;
+
+    const download = document.createElement('a');
+    download.className = 'download';
+    download.innerText = '下载二维码';
+
+    setTimeout(() => {
+        const canvas = qrDiv.querySelector('canvas');
+        if (canvas) {
+            download.href = canvas.toDataURL('image/png');
+            download.download = `qrcode-${Date.now()}.png`;
+        }
+    }, 100);
+
+    card.appendChild(qrDiv);
+    card.appendChild(label);
+    card.appendChild(download);
+    container.appendChild(card);
+}
+
+/* ===== 历史记录（保持不变，仅逐条添加） ===== */
+function addToHistory(text) {
+    const now = new Date();
+    const expiry = new Date();
+    expiry.setDate(now.getDate() + EXPIRY_DAYS);
+
+    let history = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    history.unshift({
+        text,
+        date: now.toISOString(),
+        expiry: expiry.toISOString()
+    });
+
+    history = history.slice(0, MAX_HISTORY);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+    renderHistory(history);
+}
+
+function loadHistory() {
+    let history = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    const now = new Date();
+    history = history.filter(item => new Date(item.expiry) > now);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+    renderHistory(history);
+}
+
+function renderHistory(history) {
+    const box = document.getElementById('history-container');
+    box.innerHTML = '';
+
+    history.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'history-item';
+
+        const qr = document.createElement('div');
+        new QRCode(qr, {
+            text: item.text,
+            width: 80,
+            height: 80
+        });
+
+        const text = document.createElement('div');
+        text.className = 'history-text';
+        text.innerText = item.text;
+
+        const date = document.createElement('div');
+        date.className = 'history-date';
+        date.innerText = new Date(item.date).toLocaleString();
+
+        const del = document.createElement('button');
+        del.className = 'delete-btn';
+        del.innerText = '×';
+        del.onclick = () => deleteHistoryItem(item.date);
+
+        div.appendChild(qr);
+        div.appendChild(text);
+        div.appendChild(date);
+        div.appendChild(del);
+        box.appendChild(div);
+    });
+}
+
+function deleteHistoryItem(date) {
+    let history = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    history = history.filter(item => item.date !== date);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(history));
+    renderHistory(history);
+}
+</script>
+
+</body>
+</html>

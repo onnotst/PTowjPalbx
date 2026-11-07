@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>曼德布洛特集合绘制器</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+      color: #333;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 30px;
+      padding: 20px;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    h1 {
+      color: #2c3e50;
+      font-size: 2.5em;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      color: #7f8c8d;
+      font-size: 1.1em;
+    }
+
+    .content {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 30px;
+      margin-bottom: 30px;
+    }
+
+    .panel {
+      flex: 1;
+      min-width: 300px;
+      background: rgba(255, 255, 255, 0.95);
+      padding: 25px;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    }
+
+    .panel h2 {
+      color: #2c3e50;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #3498db;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+
+    select, input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      font-size: 1em;
+      transition: all 0.3s;
+    }
+
+    select:focus, input:focus {
+      border-color: #3498db;
+      box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+      outline: none;
+    }
+
+    .row {
+      display: flex;
+      gap: 15px;
+    }
+
+    .row > div {
+      flex: 1;
+    }
+
+    .custom-resolution {
+      display: none;
+      margin-top: 15px;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      background: #3498db;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 1.1em;
+      cursor: pointer;
+      transition: background 0.3s;
+      font-weight: 600;
+      margin-top: 10px;
+    }
+
+    button:hover:not(:disabled) {
+      background: #2980b9;
+    }
+
+    button:disabled {
+      background: #95a5a6;
+      cursor: not-allowed;
+    }
+
+    .canvas-container {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    canvas {
+      max-width: 100%;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .progress {
+      margin-top: 15px;
+      font-weight: bold;
+      color: #2c3e50;
+      font-size: 1.1em;
+    }
+
+    .status {
+      margin-top: 20px;
+      padding: 15px;
+      background: #ecf0f1;
+      border-radius: 5px;
+      font-family: Consolas, monospace;
+      min-height: 100px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .color-controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .color-input-group {
+      flex: 1;
+    }
+
+    .color-preview {
+      width: 40px;
+      height: 40px;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+    }
+
+    .range-info {
+      font-size: 0.8em;
+      color: #666;
+      margin-top: 4px;
+    }
+
+    .background-control {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .background-preview {
+      width: 40px;
+      height: 40px;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: white;
+      font-size: 0.9em;
+    }
+
+    @media (max-width: 768px) {
+      .content {
+        flex-direction: column;
+      }
+      
+      .row {
+        flex-direction: column;
+        gap: 10px;
+      }
+      
+      .color-controls, .background-control {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>曼德布洛特集合绘制器</h1>
+      <p class="subtitle">探索数学之美：生成令人惊叹的分形图案</p>
+    </header>
+
+    <div class="content">
+      <div class="panel">
+        <h2>控制面板</h2>
+        
+        <div class="form-group">
+          <label for="resolution">分辨率</label>
+          <select id="resolution">
+            <option value="800x600">800 × 600（预览）</option>
+            <option value="1920x1080">1920 × 1080（全高清）</option>
+            <option value="1000x1000" selected>1000 × 1000（默认）</option>
+            <option value="3000x3000">3000 × 3000（高清）</option>
+            <option value="5000x5000">5000 × 5000（超清晰）</option>
+          </select>
+        </div>
+
+        <div class="custom-resolution" id="customResolution">
+          <div class="row">
+            <div>
+              <label for="customWidth">宽度</label>
+              <input type="number" id="customWidth" placeholder="如 5000" min="1" />
+            </div>
+            <div>
+              <label for="customHeight">高度</label>
+              <input type="number" id="customHeight" placeholder="如 4000" min="1" />
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="maxIter">最大迭代次数 (50-5000)</label>
+          <input type="number" id="maxIter" value="1000" min="50" max="5000" />
+        </div>
+
+        <div class="form-group">
+          <label>视图范围（复平面）</label>
+          <div class="row">
+            <div>
+              <label for="minReal">实部最小值</label>
+              <input type="number" id="minReal" value="-2.0" step="0.1" />
+            </div>
+            <div>
+              <label for="maxReal">实部最大值</label>
+              <input type="number" id="maxReal" value="2.0" step="0.1" />
+            </div>
+          </div>
+          <div class="row">
+            <div>
+              <label for="minImag">虚部最小值</label>
+              <input type="number" id="minImag" value="-2.0" step="0.1" />
+            </div>
+            <div>
+              <label for="maxImag">虚部最大值</label>
+              <input type="number" id="maxImag" value="2.0" step="0.1" />
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>分段颜色设置</label>
+          <div class="color-controls">
+            <div class="color-input-group">
+              <label for="colorMultiplierR">红色倍数 (1-20)</label>
+              <input type="range" id="colorMultiplierR" value="9" min="1" max="20" />
+              <div class="range-info">当前值: <span id="redValue">9</span></div>
+            </div>
+            <div class="color-preview" id="colorPreviewR"></div>
+          </div>
+          <div class="color-controls">
+            <div class="color-input-group">
+              <label for="colorMultiplierG">绿色倍数 (1-20)</label>
+              <input type="range" id="colorMultiplierG" value="7" min="1" max="20" />
+              <div class="range-info">当前值: <span id="greenValue">7</span></div>
+            </div>
+            <div class="color-preview" id="colorPreviewG"></div>
+          </div>
+          <div class="color-controls">
+            <div class="color-input-group">
+              <label for="colorMultiplierB">蓝色倍数 (1-20)</label>
+              <input type="range" id="colorMultiplierB" value="5" min="1" max="20" />
+              <div class="range-info">当前值: <span id="blueValue">5</span></div>
+            </div>
+            <div class="color-preview" id="colorPreviewB"></div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>背景颜色设置</label>
+          
+          <!-- 集合内部颜色 -->
+          <div class="background-control">
+            <div class="color-input-group">
+              <label for="innerBackgroundColor">集合内部颜色</label>
+              <input type="color" id="innerBackgroundColor" value="#000000" />
+            </div>
+            <div class="background-preview" id="innerBackgroundPreview"></div>
+          </div>
+          
+          <!-- 画布背景颜色 -->
+          <div class="background-control">
+            <div class="color-input-group">
+              <label for="canvasBackgroundColor">画布背景颜色</label>
+              <input type="color" id="canvasBackgroundColor" value="#FFFFFF" />
+            </div>
+            <div class="background-preview" id="canvasBackgroundPreview"></div>
+          </div>
+        </div>
+
+        <button id="startBtn">开始计算</button>
+        
+        <div class="status" id="status">
+          准备就绪。选择参数后点击"开始计算"。
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>分形视图</h2>
+        <div class="canvas-container">
+          <canvas id="mandelbrotCanvas" width="800" height="600"></canvas>
+          <div class="progress" id="progress"></div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <p>曼德布洛特集合绘制器 &copy; 2023 | 数学可视化工具</p>
+    </footer>
+  </div>
+
+  <script>
+    // 获取DOM元素
+    const resolutionSelect = document.getElementById('resolution');
+    const customResolution = document.getElementById('customResolution');
+    const customWidthInput = document.getElementById('customWidth');
+    const customHeightInput = document.getElementById('customHeight');
+    const maxIterInput = document.getElementById('maxIter');
+    const minRealInput = document.getElementById('minReal');
+    const maxRealInput = document.getElementById('maxReal');
+    const minImagInput = document.getElementById('minImag');
+    const maxImagInput = document.getElementById('maxImag');
+    const colorMultiplierR = document.getElementById('colorMultiplierR');
+    const colorMultiplierG = document.getElementById('colorMultiplierG');
+    const colorMultiplierB = document.getElementById('colorMultiplierB');
+    const innerBackgroundColorInput = document.getElementById('innerBackgroundColor');
+    const canvasBackgroundColorInput = document.getElementById('canvasBackgroundColor');
+    const startBtn = document.getElementById('startBtn');
+    const statusDiv = document.getElementById('status');
+    const canvas = document.getElementById('mandelbrotCanvas');
+    const ctx = canvas.getContext('2d');
+    const progressDiv = document.getElementById('progress');
+
+    // 显示值的元素
+    const redValue = document.getElementById('redValue');
+    const greenValue = document.getElementById('greenValue');
+    const blueValue = document.getElementById('blueValue');
+
+    let isComputing = false;
+
+    // 设置默认时间
+    function setDefaultTime() {
+      const now = new Date();
+      const timeString = now.toLocaleTimeString();
+      statusDiv.textContent = `准备就绪。当前时间: ${timeString}`;
+    }
+    
+    setDefaultTime();
+    setInterval(setDefaultTime, 1000);
+
+    // 日志函数
+    function logStatus(text) {
+      statusDiv.textContent = text;
+    }
+
+    // 格式化时间
+    function formatTime(ms) {
+      if (ms < 1000) return ms.toFixed(1) + ' ms';
+      const s = ms / 1000;
+      if (s < 60) return s.toFixed(2) + ' s';
+      const m = Math.floor(s / 60);
+      const rest = (s - m * 60).toFixed(1);
+      return m + ' min ' + rest + ' s';
+    }
+
+    // 设置画布尺寸
+    function setCanvasSize(w, h) {
+      canvas.width = w;
+      canvas.height = h;
+    }
+
+    // 解析分辨率
+    function parseResolution() {
+      const val = resolutionSelect.value;
+      if (val === 'custom') {
+        const w = parseInt(customWidthInput.value, 10);
+        const h = parseInt(customHeightInput.value, 10);
+        if (!Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0) {
+          throw new Error('请输入有效的自定义分辨率');
+        }
+        return { width: w, height: h };
+      }
+      const [wStr, hStr] = val.split('x');
+      const w = parseInt(wStr, 10);
+      const h = parseInt(hStr, 10);
+      if (!Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0) {
+        throw new Error('分辨率解析失败');
+      }
+      return { width: w, height: h };
+    }
+
+    // 十六进制颜色转RGB
+    function hexToRgb(hex) {
+      const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+      } : { r: 0, g: 0, b: 0 };
+    }
+
+    // 填充画布背景
+    function fillCanvasBackground(color) {
+      ctx.fillStyle = color;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    // 根据迭代次数获取分段颜色
+    function getBandedColor(iter, innerBackgroundColor) {
+      if (iter >= parseInt(maxIterInput.value)) {
+        return hexToRgb(innerBackgroundColor); // 使用自定义内部背景色
+      }
+
+      const n = iter % 256;
+      return {
+        r: (n * parseInt(colorMultiplierR.value)) % 256,
+        g: (n * parseInt(colorMultiplierG.value)) % 256,
+        b: (n * parseInt(colorMultiplierB.value)) % 256
+      };
+    }
+
+    // 计算曼德布洛特集合
+    async function computeMandelbrot(width, height, maxIter, bounds) {
+      const imageData = ctx.createImageData(width, height);
+      const data = imageData.data;
+
+      const { minReal, maxReal, minImag, maxImag } = bounds;
+      const realRange = maxReal - minReal;
+      const imagRange = maxImag - minImag;
+
+      const startTime = performance.now();
+      let lastUpdate = startTime;
+
+      // 先填充画布背景色
+      fillCanvasBackground(canvasBackgroundColorInput.value);
+
+      for (let y = 0; y < height; y++) {
+        const imag = maxImag - (y / (height - 1)) * imagRange;
+        
+        for (let x = 0; x < width; x++) {
+          const real = minReal + (x / (width - 1)) * realRange;
+
+          let zr = 0, zi = 0;
+          let iter = 0;
+          
+          // 迭代计算
+          while (zr * zr + zi * zi <= 4 && iter < maxIter) {
+            const temp = zr * zr - zi * zi + real;
+            zi = 2 * zr * zi + imag;
+            zr = temp;
+            iter++;
+          }
+
+          // 设置像素颜色 - 使用分段颜色和自定义内部背景色
+          const color = getBandedColor(iter, innerBackgroundColorInput.value);
+          const idx = 4 * (y * width + x);
+          data[idx] = color.r;
+          data[idx + 1] = color.g;
+          data[idx + 2] = color.b;
+          data[idx + 3] = 255;
+        }
+
+        // 更新进度
+        const now = performance.now();
+        if (now - lastUpdate > 200) {
+          lastUpdate = now;
+          const progress = ((y + 1) / height * 100).toFixed(1);
+          progressDiv.textContent = `计算中: ${progress}%`;
+          await new Promise(requestAnimationFrame);
+        }
+      }
+
+      const endTime = performance.now();
+      return { 
+        imageData, 
+        time: endTime - startTime,
+        pixels: width * height
+      };
+    }
+
+    // 更新颜色预览
+    function updateColorPreviews() {
+      const r = parseInt(colorMultiplierR.value) * 20;
+      const g = parseInt(colorMultiplierG.value) * 20;
+      const b = parseInt(colorMultiplierB.value) * 20;
+      
+      document.getElementById('colorPreviewR').style.backgroundColor = `rgb(${Math.min(r, 255)}, 0, 0)`;
+      document.getElementById('colorPreviewG').style.backgroundColor = `rgb(0, ${Math.min(g, 255)}, 0)`;
+      document.getElementById('colorPreviewB').style.backgroundColor = `rgb(0, 0, ${Math.min(b, 255)})`;
+      document.getElementById('innerBackgroundPreview').style.backgroundColor = innerBackgroundColorInput.value;
+      document.getElementById('canvasBackgroundPreview').style.backgroundColor = canvasBackgroundColorInput.value;
+      
+      // 更新显示的值
+      redValue.textContent = colorMultiplierR.value;
+      greenValue.textContent = colorMultiplierG.value;
+      blueValue.textContent = colorMultiplierB.value;
+    }
+
+    // 分辨率选择事件
+    resolutionSelect.addEventListener('change', () => {
+      if (resolutionSelect.value === 'custom') {
+        customResolution.style.display = 'block';
+      } else {
+        customResolution.style.display = 'none';
+      }
+    });
+
+    // 颜色倍数变化时更新预览
+    colorMultiplierR.addEventListener('input', updateColorPreviews);
+    colorMultiplierG.addEventListener('input', updateColorPreviews);
+    colorMultiplierB.addEventListener('input', updateColorPreviews);
+    innerBackgroundColorInput.addEventListener('input', updateColorPreviews);
+    canvasBackgroundColorInput.addEventListener('input', updateColorPreviews);
+
+    // 开始计算按钮事件
+    startBtn.addEventListener('click', async () => {
+      if (isComputing) return;
+      
+      let resolution;
+      try {
+        resolution = parseResolution();
+      } catch (e) {
+        logStatus('错误: ' + e.message);
+        return;
+      }
+
+      const maxIter = parseInt(maxIterInput.value, 10);
+      if (!Number.isFinite(maxIter) || maxIter < 50 || maxIter > 5000) {
+        logStatus('错误: 最大迭代次数必须在50-5000之间');
+        return;
+      }
+
+      const minReal = parseFloat(minRealInput.value);
+      const maxReal = parseFloat(maxRealInput.value);
+      const minImag = parseFloat(minImagInput.value);
+      const maxImag = parseFloat(maxImagInput.value);
+      
+      if (![minReal, maxReal, minImag, maxImag].every(Number.isFinite)) {
+        logStatus('错误: 视图范围输入无效');
+        return;
+      }
+      
+      if (minReal >= maxReal || minImag >= maxImag) {
+        logStatus('错误: 实部/虚部的最小值必须小于最大值');
+        return;
+      }
+
+      const width = resolution.width;
+      const height = resolution.height;
+      const totalPixels = width * height;
+
+      logStatus(
+        `开始计算...\n` +
+        `分辨率: ${width} × ${height}\n` +
+        `像素总数: ${totalPixels.toLocaleString()}\n` +
+        `最大迭代次数: ${maxIter}\n` +
+        `颜色设置: R×${colorMultiplierR.value}, G×${colorMultiplierG.value}, B×${colorMultiplierB.value}\n` +
+        `内部背景: ${innerBackgroundColorInput.value}\n` +
+        `画布背景: ${canvasBackgroundColorInput.value}`
+      );
+
+      setCanvasSize(width, height);
+      startBtn.disabled = true;
+      isComputing = true;
+      progressDiv.textContent = '初始化...';
+
+      const bounds = { minReal, maxReal, minImag, maxImag };
+
+      try {
+        const result = await computeMandelbrot(width, height, maxIter, bounds);
+        
+        // 将计算结果显示在画布上
+        ctx.putImageData(result.imageData, 0, 0);
+        progressDiv.textContent = '计算完成!';
+        
+        logStatus(
+          `计算完成!\n` +
+          `分辨率: ${width} × ${height}\n` +
+          `计算时间: ${formatTime(result.time)}\n` +
+          `平均每百万像素: ${(result.time / (result.pixels / 1000000)).toFixed(2)} ms`
+        );
+      } catch (e) {
+        logStatus('计算错误: ' + e.message);
+        progressDiv.textContent = '';
+      } finally {
+        startBtn.disabled = false;
+        isComputing = false;
+      }
+    });
+
+    // 初始化颜色预览
+    updateColorPreviews();
+  </script>
+</body>
+</html>

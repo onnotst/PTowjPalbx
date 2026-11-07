@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文本转HTML工具</title>
+    <link rel="icon" href="/assets/favicon.ico">
+    <!-- 引入 SheetJS 库 -->
+    <script src="/assets/xlsx.full.min.js"></script>
+    <style>
+        /* 保持原有的 CSS 样式不变 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: #007bff;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 1.8em;
+            margin-bottom: 5px;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 20px;
+        }
+
+        .input-section, .output-section {
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .section-title {
+            font-size: 1.2em;
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .tab-buttons {
+            display: flex;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px;
+            background: #6c757d;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .tab-btn.active {
+            background: #007bff;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        textarea {
+            width: 100%;
+            height: 180px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 13px;
+            resize: vertical;
+        }
+
+        .table-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        .btn {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+        }
+
+        .btn:hover {
+            background: #0056b3;
+        }
+
+        .btn-convert {
+            background: #28a745;
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        .btn-copy {
+            background: #17a2b8;
+        }
+
+        .btn-clear {
+            background: #dc3545;
+        }
+
+        .btn-download {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .btn-parse-table {
+            background: #20c997;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .output-area {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 12px;
+            min-height: 250px;
+            font-family: monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            overflow-y: auto;
+            max-height: 350px;
+        }
+
+        .preview-area {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 12px;
+            margin-top: 15px;
+            min-height: 150px;
+        }
+
+        .controls {
+            text-align: center;
+            margin: 15px 0;
+        }
+
+        .output-controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 15px 0 25px 0;
+            flex-wrap: wrap;
+        }
+
+        .table-info {
+            background: #e9ecef;
+            padding: 12px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+
+        .column-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin: 8px 0;
+        }
+
+        .column-tag {
+            background: #007bff;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+        }
+
+        .process-controls {
+            background: #fff3cd;
+            padding: 12px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            margin: 5px 0;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            margin-right: 6px;
+        }
+
+        .encoding-warning {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 8px;
+            border-radius: 4px;
+            margin: 8px 0;
+            font-size: 12px;
+        }
+
+        .success-tip {
+            background: #d4edda;
+            color: #155724;
+            padding: 8px;
+            border-radius: 4px;
+            margin: 8px 0;
+            font-size: 12px;
+        }
+
+        .table-paste-container {
+            margin-bottom: 15px;
+        }
+
+        .paste-reminder {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 8px;
+        }
+
+        .visual-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            max-height: 200px;
+            overflow-y: auto;
+            display: block;
+        }
+
+        .visual-table th, .visual-table td {
+            border: 1px solid #ddd;
+            padding: 8px 10px;
+            text-align: left;
+            font-size: 12px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 200px;
+        }
+
+        .visual-table th {
+            background-color: #007bff;
+            color: white;
+            font-weight: normal;
+        }
+
+        .visual-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        .visual-table tr:hover {
+            background-color: #e9ecef;
+        }
+
+        .table-paste-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 13px;
+            margin-bottom: 8px;
+            min-height: 80px;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .file-input {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .file-input-button {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        .file-input-button:hover {
+            background: #0056b3;
+        }
+
+        .file-name {
+            margin-top: 5px;
+            font-size: 12px;
+            color: #666;
+        }
+        /* 之前的 CSS 样式保持不变，添加新的样式 */
+        .export-options {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+        
+        .export-option {
+            margin: 5px 0;
+        }
+        
+        .export-option label {
+            margin-left: 5px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>文本转HTML工具</h1>
+            <p>Body列转Body_html - 格式: &lt;p&gt;111&lt;br&gt;222&lt;br&gt;333&lt;/p&gt;</p>
+            <p>可以将文本内容导入Textpattern数据库做准备</p>
+        </div>
+
+        <div class="main-content">
+            <!-- 输入区域 -->
+            <div class="input-section">
+                <h2 class="section-title">输入内容</h2>
+                
+                <div class="tab-buttons">
+                    <button class="tab-btn active" onclick="switchTab('text')">文本输入</button>
+                    <button class="tab-btn" onclick="switchTab('table')">智能表格</button>
+                </div>
+
+                <!-- 文本输入标签页 -->
+                <div id="text-tab" class="tab-content active">
+                    <textarea id="textInput" placeholder="请输入文本内容，例如：&#10;111&#10;222&#10;444555&#10;&#10;会转换为：&lt;p&gt;111&lt;br&gt;222&lt;br&gt;444555&lt;/p&gt;"></textarea>
+                    <div class="encoding-warning">
+                        💡 提示：整段文本中的换行会变成&lt;br&gt;，不同段落才会用&lt;p&gt;分开
+                    </div>
+                </div>
+
+                <!-- 智能表格标签页 -->
+                <div id="table-tab" class="tab-content">
+                    <h4>Excel文件上传（推荐）</h4>
+                    
+                    <div class="file-input-wrapper">
+                        <input type="file" id="excelFile" class="file-input" accept=".xlsx,.xls" onchange="handleExcelUpload(event)">
+                        <button class="file-input-button">📁 选择Excel文件 (.xlsx, .xls)</button>
+                        <div class="file-name" id="fileName">未选择文件</div>
+                    </div>
+                    
+                    <div class="success-tip">
+                        ✅ 优势：完美支持Excel格式，自动处理换行符、中文编码，无需担心格式问题
+                    </div>
+                    
+                    <div class="table-info" id="tableInfo" style="display:none;">
+                        <div>总行数: <span id="rowCount">0</span> | 总列数: <span id="colCount">0</span></div>
+                        <div>列名: <div id="columnNames" class="column-list"></div></div>
+                        <div id="bodyColumnInfo"></div>
+                    </div>
+
+                    <div class="process-controls" id="processControls" style="display:none;">
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="hasHeader" checked>
+                            <label for="hasHeader">第一行是标题行</label>
+                        </div>
+                        <div class="checkbox-group">
+                            <input type="checkbox" id="createNewColumn" checked>
+                            <label for="createNewColumn">创建Body_html列</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <button class="btn btn-convert" onclick="convertToHTML()">转换</button>
+                    <button class="btn btn-clear" onclick="clearAll()">清空</button>
+                    
+                    <button class="btn btn-copy" onclick="copyToClipboard()">复制结果</button>
+                    <!-- 修改下载按钮为下拉式 -->
+                    <!--<div style="display: inline-block; position: relative;">-->
+                    <!--    <button class="btn btn-download" onclick="toggleExportMenu()">下载文件 ▼</button>-->
+                    <!--    <div id="exportMenu" style="display: none; position: absolute; top: 100%; left: 0; background: white; border: 1px solid #ddd; border-radius: 5px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); z-index: 1000; min-width: 120px;">-->
+                    <!--        <div class="export-option" onclick="downloadExcel('xlsx')">-->
+                    <!--            <button class="btn" style="background: #28a745; width: 100%; margin: 0; padding: 8px 12px; font-size: 12px;">下载 Excel (.xlsx)</button>-->
+                    <!--        </div>-->
+                    <!--        <div class="export-option" onclick="downloadExcel('xls')">-->
+                    <!--            <button class="btn" style="background: #17a2b8; width: 100%; margin: 0; padding: 8px 12px; font-size: 12px;">下载 Excel (.xls)</button>-->
+                    <!--        </div>-->
+                    <!--    </div>-->
+                    <!--</div>-->
+                    <button class="btn btn-download" onclick="downloadExcel('xlsx')">下载 Excel (.xlsx)</button>
+                </div>
+            </div>
+
+            <!-- 输出区域 -->
+            <div class="output-section">
+                <h2 class="section-title">处理结果</h2>
+                
+                <div id="htmlOutput" class="output-area">处理结果将显示在这里...</div>
+                
+                <h3 style="margin-top: 20px;">预览效果</h3>
+                <div id="previewArea" class="preview-area">预览效果将显示在这里...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentTableData = null;
+        let currentHeaders = null;
+        let hasBodyColumn = false;
+        let workbookData = null;
+        let convertedData = null; // 保存转换后的数据用于导出
+
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.getElementById(tabName + '-tab').classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // 切换导出菜单显示
+        function toggleExportMenu() {
+            const menu = document.getElementById('exportMenu');
+            menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+        }
+
+        // 点击其他地方关闭导出菜单
+        document.addEventListener('click', function(event) {
+            const exportButton = event.target.closest('.btn-download');
+            const exportMenu = document.getElementById('exportMenu');
+            
+            if (!exportButton && !exportMenu.contains(event.target)) {
+                exportMenu.style.display = 'none';
+            }
+        });
+
+        // Excel文件上传处理
+        function handleExcelUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            document.getElementById('fileName').textContent = `已选择: ${file.name}`;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { 
+                        header: 1, 
+                        defval: '',
+                        raw: false 
+                    });
+                    
+                    workbookData = {
+                        workbook: workbook,
+                        sheetName: firstSheetName,
+                        jsonData: jsonData
+                    };
+                    
+                    processExcelData(jsonData);
+                    
+                } catch (error) {
+                    alert('Excel文件读取失败：' + error.message);
+                    console.error('Excel读取错误:', error);
+                }
+            };
+            
+            reader.readAsArrayBuffer(file);
+        }
+
+        // 处理Excel数据
+        function processExcelData(jsonData) {
+            if (!jsonData || jsonData.length === 0) {
+                alert('Excel文件中没有数据');
+                return;
+            }
+
+            const hasHeader = document.getElementById('hasHeader').checked;
+            
+            const data = [];
+            let headers = [];
+            
+            console.log('Excel数据行数:', jsonData.length);
+
+            if (hasHeader) {
+                headers = jsonData[0].map(h => String(h || '').trim());
+                
+                for (let i = 1; i < jsonData.length; i++) {
+                    if (jsonData[i] && jsonData[i].some(cell => cell !== '' && cell !== null && cell !== undefined)) {
+                        const row = jsonData[i].map(cell => {
+                            if (cell === null || cell === undefined) return '';
+                            return String(cell).trim();
+                        });
+                        data.push(row);
+                    }
+                }
+            } else {
+                const maxCols = Math.max(...jsonData.map(row => row.length));
+                headers = Array.from({ length: maxCols }, (_, i) => `Column${i + 1}`);
+                
+                for (let i = 0; i < jsonData.length; i++) {
+                    if (jsonData[i] && jsonData[i].some(cell => cell !== '' && cell !== null && cell !== undefined)) {
+                        const row = jsonData[i].map(cell => {
+                            if (cell === null || cell === undefined) return '';
+                            return String(cell).trim();
+                        });
+                        while (row.length < maxCols) {
+                            row.push('');
+                        }
+                        data.push(row);
+                    }
+                }
+            }
+
+            const bodyIndex = headers.findIndex(h => h.toLowerCase() === 'body');
+            hasBodyColumn = bodyIndex !== -1;
+
+            currentTableData = data;
+            currentHeaders = headers;
+
+            document.getElementById('rowCount').textContent = data.length;
+            document.getElementById('colCount').textContent = headers.length;
+            
+            const columnNamesDiv = document.getElementById('columnNames');
+            columnNamesDiv.innerHTML = '';
+            headers.forEach(header => {
+                const span = document.createElement('span');
+                span.className = 'column-tag';
+                span.textContent = header;
+                if (header.toLowerCase() === 'body') {
+                    span.style.backgroundColor = '#dc3545';
+                }
+                columnNamesDiv.appendChild(span);
+            });
+
+            const bodyInfoDiv = document.getElementById('bodyColumnInfo');
+            if (hasBodyColumn) {
+                bodyInfoDiv.innerHTML = `<div style="color: green; margin-top: 8px;">✅ 发现Body列(第${bodyIndex + 1}列)，可以进行转换</div>`;
+            } else {
+                bodyInfoDiv.innerHTML = `<div style="color: red; margin-top: 8px;">❌ 未找到Body列，请检查Excel文件格式</div>`;
+            }
+
+            document.getElementById('tableInfo').style.display = 'block';
+            document.getElementById('processControls').style.display = 'block';
+
+            alert(`Excel文件解析成功！\n共识别 ${data.length} 行数据，${headers.length} 列\n${hasBodyColumn ? '✅ 发现Body列，可以开始转换' : '⚠️ 未找到Body列'}`);
+        }
+
+        // 核心转换函数
+        function convertTextToHTML(text) {
+            if (!text || !text.trim()) return '';
+            
+            const htmlContent = text.trim().replace(/\r\n/g, '<br>').replace(/\n/g, '<br>').replace(/\r/g, '<br>');
+            return '<p>' + htmlContent + '</p>';
+        }
+
+        function convertToHTML() {
+            const inputText = document.getElementById('textInput').value.trim();
+            if (!inputText && !currentTableData) {
+                alert('请输入要转换的内容或上传Excel文件');
+                return;
+            }
+
+            let htmlResult = '';
+            let previewResult = '';
+
+            const isTableData = currentTableData && hasBodyColumn;
+
+            if (isTableData) {
+                const createNewColumn = document.getElementById('createNewColumn').checked;
+                
+                let outputHeaders = [...currentHeaders];
+                let bodyHtmlIndex = currentHeaders.findIndex(h => h.toLowerCase() === 'body_html');
+
+                if (!createNewColumn && bodyHtmlIndex === -1) {
+                    bodyHtmlIndex = currentHeaders.findIndex(h => h.toLowerCase() === 'body');
+                } else if (createNewColumn && bodyHtmlIndex === -1) {
+                    outputHeaders.push('Body_html');
+                    bodyHtmlIndex = outputHeaders.length - 1;
+                }
+
+                const outputData = [];
+                
+                // 添加标题行
+                if (document.getElementById('hasHeader').checked) {
+                    outputData.push(outputHeaders);
+                }
+                
+                console.log('处理表格数据行数:', currentTableData.length);
+                
+                // 处理数据行
+                for (let i = 0; i < currentTableData.length; i++) {
+                    const row = [...currentTableData[i]];
+                    
+                    if (bodyHtmlIndex >= 0) {
+                        const bodyIndex = currentHeaders.findIndex(h => h.toLowerCase() === 'body');
+                        const bodyContent = row[bodyIndex] || '';
+                        
+                        if (bodyContent && bodyContent.trim()) {
+                            const htmlContent = convertTextToHTML(bodyContent);
+                            row[bodyHtmlIndex] = htmlContent;
+                        } else {
+                            row[bodyHtmlIndex] = '';
+                        }
+                    }
+
+                    outputData.push(row);
+                }
+
+                // 保存转换后的数据用于导出
+                convertedData = outputData;
+
+                // 生成CSV格式的文本显示（保持原有显示逻辑）
+                outputData.forEach((row, rowIndex) => {
+                    const formattedRow = row.map((cell, index) => {
+                        if (cell.includes('<p>') || cell.includes('<br>') || cell.includes(',')) {
+                            return '"' + cell + '"';
+                        }
+                        return cell;
+                    });
+                    htmlResult += formattedRow.join(',') + '\n';
+                });
+
+                previewResult = '<h4>转换结果预览</h4><div style="font-size:12px;">共处理 ' + currentTableData.length + ' 行数据</div>';
+                
+                document.getElementById('htmlOutput').textContent = htmlResult;
+                document.getElementById('previewArea').innerHTML = previewResult;
+                
+            } else {
+                if (!inputText) {
+                    alert('请输入要转换的文本内容');
+                    return;
+                }
+                
+                const htmlResult = convertTextToHTML(inputText);
+                previewResult = '<h4>文本预览</h4>' + htmlResult;
+                
+                document.getElementById('htmlOutput').textContent = htmlResult;
+                document.getElementById('previewArea').innerHTML = previewResult;
+                
+                // 文本模式下也保存数据用于导出
+                convertedData = [[htmlResult]];
+            }
+        }
+
+        // Excel导出功能
+        function downloadExcel(format) {
+            if (!convertedData || convertedData.length === 0) {
+                alert('没有可导出的数据，请先进行转换');
+                return;
+            }
+
+            try {
+                // 创建工作簿
+                const wb = XLSX.utils.book_new();
+                
+                // 准备工作表数据
+                const wsData = convertedData;
+                
+                // 创建工作表
+                const ws = XLSX.utils.aoa_to_sheet(wsData);
+                
+                // 设置列宽（可选）
+                const colWidths = [];
+                if (wsData.length > 0) {
+                    for (let i = 0; i < wsData[0].length; i++) {
+                        let maxLength = 10; // 最小宽度
+                        for (let j = 0; j < wsData.length; j++) {
+                            const cellValue = String(wsData[j][i] || '');
+                            maxLength = Math.max(maxLength, cellValue.length);
+                        }
+                        colWidths.push({ wch: Math.min(maxLength + 2, 50) }); // 限制最大宽度
+                    }
+                    ws['!cols'] = colWidths;
+                }
+                
+                // 添加工作表到工作簿
+                XLSX.utils.book_append_sheet(wb, ws, "转换结果");
+                
+                // 生成文件名
+                const timestamp = new Date().toISOString().slice(0, 19).replace(/[:-]/g, '');
+                const extension = format === 'xlsx' ? 'xlsx' : 'xls';
+                const filename = `converted_body_html_${timestamp}.${extension}`;
+                
+                // 导出文件
+                if (format === 'xlsx') {
+                    XLSX.writeFile(wb, filename, { bookType: 'xlsx', type: 'binary' });
+                } else {
+                    XLSX.writeFile(wb, filename, { bookType: 'biff8', type: 'binary' });
+                }
+                
+                // 关闭导出菜单
+                document.getElementById('exportMenu').style.display = 'none';
+                
+                alert(`Excel文件导出成功！\n文件名: ${filename}`);
+                
+            } catch (error) {
+                alert('Excel导出失败：' + error.message);
+                console.error('Excel导出错误:', error);
+            }
+        }
+
+        function copyToClipboard() {
+            const htmlOutput = document.getElementById('htmlOutput').textContent;
+            if (!htmlOutput || htmlOutput === '处理结果将显示在这里...') {
+                alert('没有可复制的内容');
+                return;
+            }
+
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(htmlOutput).then(() => {
+                    alert('已成功复制到剪贴板');
+                }).catch(() => {
+                    fallbackCopyToClipboard(htmlOutput);
+                });
+            } else {
+                fallbackCopyToClipboard(htmlOutput);
+            }
+        }
+
+        function fallbackCopyToClipboard(text) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                alert('已成功复制到剪贴板');
+            } catch (err) {
+                alert('复制失败，请手动复制');
+            }
+            document.body.removeChild(textArea);
+        }
+
+        function clearAll() {
+            document.getElementById('textInput').value = '';
+            document.getElementById('excelFile').value = '';
+            document.getElementById('fileName').textContent = '未选择文件';
+            document.getElementById('htmlOutput').textContent = '处理结果将显示在这里...';
+            document.getElementById('previewArea').innerHTML = '预览效果将显示在这里...';
+            
+            document.getElementById('tableInfo').style.display = 'none';
+            document.getElementById('processControls').style.display = 'none';
+            
+            currentTableData = null;
+            currentHeaders = null;
+            hasBodyColumn = false;
+            workbookData = null;
+            convertedData = null;
+        }
+    </script>
+</body>
+</html>
