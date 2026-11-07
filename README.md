@@ -9,6 +9,8 @@ coi-serviceworker.js <!-- 不得删除，这个用来处理跨域信息 -->
         navigator.serviceWorker.register('/coi-serviceworker.js') <!-- 必须在head的最前面 -->
     </script>
 </head>
+favicon.ico <!-- 必须在根目录 -->
+coi-serviceworker.js <!-- 不得删除，这个用来处理显示图标，防止每页都要指定 -->
 
 
 ## 0. 配置你的系统用户信息（单个用户使用）
