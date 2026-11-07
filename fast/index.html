@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>平稳导航 - 简单高效的导航页</title>
+    <link rel="shortcut icon" href="favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body{
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        .item .no-logo {
+            border: 1px solid #e4ecf3;
+            box-shadow: 2px 1px 3px 1px #888888;
+            border-radius: 6px;
+            padding: 6px;
+            margin: 0 0 0.6% 0.7%;
+            float: left;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            transition: all .3s;
+            color: cadetblue;
+        }
+        .wp-block-pullquote-text{
+            margin:0 0.7% 1em;
+            text-align:left;
+            overflow-wrap:break-word;
+            box-sizing:border-box;
+            border-style:none;
+            border-width:0px;
+            border-radius:65px;
+            color: #888888;
+            font-size: small;
+        }
+        .wp-block-pullquote{
+            margin:0 0 1em;
+            text-align:left;
+            overflow-wrap:break-word;
+            box-sizing:border-box;
+            border-style:none;
+            border-width:0px;
+            border-radius:65px;
+            color: #888888;
+            font-size: small;
+        }
+        .normal-text{
+            margin:0 0 1em;padding:0em 0;overflow-wrap:break-word;box-sizing:border-box;border-style:none;color: cadetblue;
+        }
+        .normal-text-txt-small{ font-size: small; }
+        .normal-text-txt{ font-size: x-large; }
+        .normal-text-title{ font-size: xx-large; }
+        .hidelight{ background-color: yellow; }
+        .hight1light{ background-color: #e9e9e9; }
+        .hight2light{ background-color: #94e2ce; }
+        .hight3light{ background-color: #bfb4f9; }
+        .hight4light{ background-color: #9bff44; }
+        .hight5light{ background-color: #7bcc36; }
+        .hight6light { background-color: #a0d2eb; }
+        .hight7light { background-color: #ffc2d1; }
+        .hight8light { background-color: #ffb347; }
+        .hight9light { background-color: #4169e1; color: white; }
+        .hight10light { background-color: #ffd700; }
+        #j001 { margin-top: 10px; margin-bottom: 0px; }
+        #j002 { margin-top: 10px; margin-bottom: 0px; }
+        .container {
+            width: 80%;
+            margin: 20px auto;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        
+        /* ===== 手机端适配 ===== */
+        @media (max-width: 768px) {
+            body {
+                padding: 12px;
+                margin: 0 auto;
+            }
+            h1 {
+                font-size: 1.4rem;
+                margin-bottom: 20px;
+            }
+            .item .no-logo {
+                float: left;
+                display: block;
+                max-height: none;
+                text-align: center;
+                width: 48%;
+                margin: 0 0 0.6% 0.7%;
+                max-width: 320px;
+            }
+        }
+        .div-button{
+            display: none;
+        }
+    </style>
+<script type="text/javascript" src="https://myhkw.cn/player/js/jquery.min.js"></script>
+</head>
+<body>
+    <div id="content-container">
+        <!-- 内容将通过JavaScript动态加载 -->
+    </div>
+    
+    <div class="div-button">
+        <figure class="wp-block-pullquote">
+            <blockquote>
+                <a target='_blank' href='edit-index.php'>
+                    <div class='item'>
+                        <div class='no-logo hight1light'>编辑文件</div>
+                    </div>
+                </a>
+                <a target='_blank' href='edit-config.php'>
+                    <div class='item'>
+                        <div class='no-logo hight1light'>编辑配置</div>
+                    </div>
+                </a>
+                <a target='_blank' href='edit-sort.php'>
+                    <div class='item'>
+                        <div class='no-logo hight1light'>编辑顺序</div>
+                    </div>
+                </a>
+                <a target='_blank' href='edit-color.php'>
+                    <div class='item'>
+                        <div class='no-logo hight1light'>编辑颜色</div>
+                    </div>
+                </a>
+            </blockquote>
+        </figure>
+    </div>
+
+    <script>
+	    // 检测 PHP 是否真正执行
+		fetch('php-check.php')
+		    .then(res => res.text())
+		    .then(text => {
+		        if (text.trim() === 'ok') {
+		            document.querySelector('.div-button').style.display = 'block';
+		        }
+		    })
+		    .catch(() => {}); // 不显示，保持隐藏
+        // 加载配置文件并渲染内容
+        fetch('config.json')
+            .then(response => response.json())
+            .then(data => {
+                const container = document.getElementById('content-container');
+                
+                // 按order排序
+                data.sections.sort((a, b) => a.order - b.order);
+                
+                data.sections.forEach(section => {
+                    if (section.type === 'quote') {
+                        container.innerHTML += `
+                            <div id="${section.id}">
+                                <figure class="wp-block-pullquote-text">
+                                    <blockquote>
+                                        <p>${section.content}</p>
+                                    </blockquote>
+                                </figure>
+                            </div>
+                        `;
+                    } else if (section.type === 'links') {
+                        // 对链接按order排序
+                        section.links.sort((a, b) => a.order - b.order);
+                        
+                        let linksHTML = '';
+                        section.links.forEach(link => {
+                            linksHTML += `
+                                <a target='_blank' href='${link.url}'>
+                                    <div class='item'>
+                                        <div class='no-logo ${link.color}'>${link.name}</div>
+                                    </div>
+                                </a>
+                            `;
+                        });
+                        
+                        container.innerHTML += `
+                            <div id="${section.id}">
+                                <figure class="wp-block-pullquote">
+                                    <blockquote>
+                                        ${linksHTML}
+                                    </blockquote>
+                                </figure>
+                            </div>
+                            <div style="clear: both;"></div>
+                        `;
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('加载配置文件失败:', error);
+                document.getElementById('content-container').innerHTML = 
+                    '<p style="text-align:center;color:red;">加载内容失败，请检查配置文件</p>';
+            });
+    </script>
+    <script type="text/javascript" id="myhk" src="https://myhkw.cn/api/player/176396840995" key="176396840995" m="1"></script>
+</body>
+</html>
