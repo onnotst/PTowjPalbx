@@ -1,0 +1,31 @@
+# 默认行为：自动处理文本文件的换行符
+* text=auto
+
+# 明确指定常见文本类型
+*.html text eol=lf
+*.css  text eol=lf
+*.js   text eol=lf
+*.json text eol=lf
+*.md   text eol=lf
+*.svg  text eol=lf
+*.txt  text eol=lf
+*.php  text eol=lf
+
+# 脚本文件必须是 LF
+*.sh   text eol=lf
+
+# Windows 批处理用 CRLF
+*.bat  text eol=crlf
+*.cmd  text eol=crlf
+
+# 二进制文件不要动
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.woff binary
+*.woff2 binary
+*.ttf  binary
+*.eot  binary
+*.mp4  binary
+*.mp3  binary
