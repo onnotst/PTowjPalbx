@@ -1,6 +1,15 @@
 # PTowjPalbx 我的网站
 我的网页（纯静态资源）
 
+# 警告
+coi-serviceworker.js <!-- 必须在根目录 -->
+coi-serviceworker.js <!-- 不得删除，这个用来处理跨域信息 -->
+<head>
+    <script>
+        navigator.serviceWorker.register('/coi-serviceworker.js') <!-- 必须在head的最前面 -->
+    </script>
+</head>
+
 
 ## 0. 配置你的系统用户信息（单个用户使用）
 git config --global user.name "onnotst"
