@@ -21,66 +21,37 @@ if (typeof window === 'undefined') {
         }
     });
 
-    const NULL_BODY_STATUS = new Set([101, 103, 204, 205, 304]);
-    
     self.addEventListener("fetch", function (event) {
         const r = event.request;
-    
-        // 避免死循环
         if (r.cache === "only-if-cached" && r.mode !== "same-origin") {
             return;
         }
-    
-        // 导航请求直接放行
-        if (r.mode === "navigate") {
-            return;
-        }
-    
         const request = (coepCredentialless && r.mode === "no-cors")
-            ? new Request(r, { credentials: "omit" })
+            ? new Request(r, {
+                credentials: "omit",
+            })
             : r;
-    
         event.respondWith(
-            fetch(request).then((response) => {
-                // 状态码 0（ opaque response）直接返回
-                if (response.status === 0) {
-                    return response;
-                }
-    
-                // ✅ 204 / 304 等：不能带 body
-                if (NULL_BODY_STATUS.has(response.status)) {
-                    return new Response(null, {
+            fetch(request)
+                .then((response) => {
+                    if (response.status === 0) {
+                        return response;
+                    }
+                    const newHeaders = new Headers(response.headers);
+                    newHeaders.set("Cross-Origin-Embedder-Policy",
+                        coepCredentialless ? "credentialless" : "require-corp"
+                    );
+                    if (!coepCredentialless) {
+                        newHeaders.set("Cross-Origin-Resource-Policy", "cross-origin");
+                    }
+                    newHeaders.set("Cross-Origin-Opener-Policy", "same-origin");
+                    return new Response(response.body, {
                         status: response.status,
                         statusText: response.statusText,
-                        headers: response.headers
+                        headers: newHeaders,
                     });
-                }
-    
-                // ✅ 正常响应：加 COI Header
-                const newHeaders = new Headers(response.headers);
-                newHeaders.set(
-                    "Cross-Origin-Embedder-Policy",
-                    coepCredentialless ? "credentialless" : "require-corp"
-                );
-    
-                if (!coepCredentialless) {
-                    newHeaders.set("Cross-Origin-Resource-Policy", "cross-origin");
-                }
-    
-                newHeaders.set("Cross-Origin-Opener-Policy", "same-origin");
-    
-                return new Response(response.body, {
-                    status: response.status,
-                    statusText: response.statusText,
-                    headers: newHeaders
-                });
-            }).catch((e) => {
-                console.error("[coi-serviceworker] fetch failed:", e);
-                // ⚠️ 必须返回 Response，否则会报你现在的错
-                return new Response("Service Worker fetch failed", {
-                    status: 500
-                });
-            })
+                })
+                .catch((e) => console.info(e))
         );
     });
 
