@@ -1,0 +1,111 @@
+
+tufu4.png
+size: 512,512
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+guaiwuhuidaoguiji_0000
+  rotate: true
+  xy: 310, 208
+  size: 137, 150
+  orig: 193, 150
+  offset: 56, 0
+  index: -1
+guaiwuhuidaoguiji_0001
+  rotate: true
+  xy: 146, 2
+  size: 192, 81
+  orig: 193, 150
+  offset: 1, 69
+  index: -1
+guaiwuhuidaoguiji_0002
+  rotate: true
+  xy: 111, 316
+  size: 193, 142
+  orig: 193, 150
+  offset: 0, 8
+  index: -1
+guaiwuhuidaoguiji_0004
+  rotate: true
+  xy: 2, 3
+  size: 182, 142
+  orig: 193, 150
+  offset: 0, 7
+  index: -1
+guaiwuhuidaoguiji_0006
+  rotate: true
+  xy: 229, 44
+  size: 151, 142
+  orig: 193, 150
+  offset: 0, 7
+  index: -1
+guaiwuhuidaoguiji_0008
+  rotate: false
+  xy: 393, 372
+  size: 93, 137
+  orig: 193, 150
+  offset: 0, 12
+  index: -1
+x0
+  rotate: false
+  xy: 111, 196
+  size: 83, 118
+  orig: 83, 118
+  offset: 0, 0
+  index: -1
+x1
+  rotate: false
+  xy: 373, 128
+  size: 76, 78
+  orig: 76, 78
+  offset: 0, 0
+  index: -1
+x2
+  rotate: false
+  xy: 373, 59
+  size: 60, 67
+  orig: 60, 67
+  offset: 0, 0
+  index: -1
+x3
+  rotate: false
+  xy: 373, 7
+  size: 49, 50
+  orig: 49, 50
+  offset: 0, 0
+  index: -1
+x4
+  rotate: true
+  xy: 2, 187
+  size: 322, 107
+  orig: 322, 107
+  offset: 0, 0
+  index: -1
+x5
+  rotate: false
+  xy: 255, 347
+  size: 136, 162
+  orig: 136, 162
+  offset: 0, 0
+  index: -1
+x6
+  rotate: false
+  xy: 196, 214
+  size: 72, 100
+  orig: 72, 100
+  offset: 0, 0
+  index: -1
+x7
+  rotate: false
+  xy: 196, 197
+  size: 49, 15
+  orig: 49, 15
+  offset: 0, 0
+  index: -1
+x8
+  rotate: false
+  xy: 255, 331
+  size: 53, 14
+  orig: 53, 14
+  offset: 0, 0
+  index: -1

@@ -1,0 +1,48 @@
+
+eff_Trap_Hit.png
+size: 365,317
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+bd0001
+  rotate: true
+  xy: 259, 176
+  size: 139, 104
+  orig: 180, 142
+  offset: 19, 0
+  index: -1
+bd0002
+  rotate: false
+  xy: 86, 12
+  size: 171, 121
+  orig: 180, 142
+  offset: 2, 9
+  index: -1
+bd0003
+  rotate: true
+  xy: 114, 137
+  size: 178, 116
+  orig: 180, 142
+  offset: 0, 20
+  index: -1
+bd0004
+  rotate: true
+  xy: 2, 135
+  size: 180, 110
+  orig: 180, 142
+  offset: 0, 30
+  index: -1
+bd0005
+  rotate: true
+  xy: 259, 2
+  size: 172, 87
+  orig: 180, 142
+  offset: 8, 55
+  index: -1
+tx
+  rotate: true
+  xy: 2, 3
+  size: 130, 82
+  orig: 132, 95
+  offset: 1, 10
+  index: -1

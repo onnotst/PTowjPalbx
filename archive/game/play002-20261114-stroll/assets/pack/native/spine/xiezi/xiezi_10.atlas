@@ -1,0 +1,104 @@
+
+xiezi.png
+size: 512,256
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+xiezizhuaji_0000
+  rotate: true
+  xy: 263, 11
+  size: 95, 85
+  orig: 97, 85
+  offset: 2, 0
+  index: -1
+xiezizhuaji_0001
+  rotate: true
+  xy: 89, 8
+  size: 96, 85
+  orig: 97, 85
+  offset: 0, 0
+  index: -1
+xiezizhuaji_0002
+  rotate: true
+  xy: 176, 9
+  size: 96, 85
+  orig: 97, 85
+  offset: 0, 0
+  index: -1
+xiezizhuaji_0004
+  rotate: true
+  xy: 300, 163
+  size: 88, 84
+  orig: 97, 85
+  offset: 0, 0
+  index: -1
+xiezizhuaji_0006
+  rotate: false
+  xy: 350, 32
+  size: 69, 76
+  orig: 97, 85
+  offset: 1, 1
+  index: -1
+xiezizhuaji_0008
+  rotate: true
+  xy: 209, 108
+  size: 46, 58
+  orig: 97, 85
+  offset: 0, 0
+  index: -1
+xz0
+  rotate: true
+  xy: 2, 106
+  size: 145, 95
+  orig: 145, 95
+  offset: 0, 0
+  index: -1
+xz1
+  rotate: false
+  xy: 209, 156
+  size: 89, 95
+  orig: 89, 95
+  offset: 0, 0
+  index: -1
+xz2
+  rotate: false
+  xy: 2, 2
+  size: 85, 102
+  orig: 85, 102
+  offset: 0, 0
+  index: -1
+xz3
+  rotate: true
+  xy: 368, 112
+  size: 49, 61
+  orig: 49, 61
+  offset: 0, 0
+  index: -1
+xz4
+  rotate: false
+  xy: 386, 197
+  size: 38, 54
+  orig: 38, 54
+  offset: 0, 0
+  index: -1
+xz5
+  rotate: true
+  xy: 269, 111
+  size: 43, 55
+  orig: 43, 55
+  offset: 0, 0
+  index: -1
+xz6
+  rotate: false
+  xy: 99, 107
+  size: 108, 144
+  orig: 108, 144
+  offset: 0, 0
+  index: -1
+xz7
+  rotate: false
+  xy: 326, 110
+  size: 40, 51
+  orig: 40, 51
+  offset: 0, 0
+  index: -1

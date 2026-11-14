@@ -1,0 +1,97 @@
+
+eff_Cannon.png
+size: 1024,1024
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+01
+  rotate: false
+  xy: 2, 304
+  size: 300, 300
+  orig: 300, 300
+  offset: 0, 0
+  index: -1
+02
+  rotate: false
+  xy: 304, 304
+  size: 300, 300
+  orig: 300, 300
+  offset: 0, 0
+  index: -1
+03
+  rotate: false
+  xy: 606, 304
+  size: 300, 300
+  orig: 300, 300
+  offset: 0, 0
+  index: -1
+04
+  rotate: false
+  xy: 2, 2
+  size: 300, 300
+  orig: 300, 300
+  offset: 0, 0
+  index: -1
+05
+  rotate: false
+  xy: 304, 2
+  size: 300, 300
+  orig: 300, 300
+  offset: 0, 0
+  index: -1
+06
+  rotate: false
+  xy: 606, 2
+  size: 300, 300
+  orig: 300, 300
+  offset: 0, 0
+  index: -1
+1_00000
+  rotate: true
+  xy: 2, 788
+  size: 180, 240
+  orig: 180, 240
+  offset: 0, 0
+  index: -1
+1_00001
+  rotate: true
+  xy: 244, 788
+  size: 180, 240
+  orig: 180, 240
+  offset: 0, 0
+  index: -1
+1_00002
+  rotate: true
+  xy: 486, 788
+  size: 180, 240
+  orig: 180, 240
+  offset: 0, 0
+  index: -1
+1_00003
+  rotate: true
+  xy: 728, 788
+  size: 180, 240
+  orig: 180, 240
+  offset: 0, 0
+  index: -1
+1_00004
+  rotate: true
+  xy: 2, 606
+  size: 180, 240
+  orig: 180, 240
+  offset: 0, 0
+  index: -1
+1_00005
+  rotate: true
+  xy: 244, 606
+  size: 180, 240
+  orig: 180, 240
+  offset: 0, 0
+  index: -1
+1_00006
+  rotate: true
+  xy: 486, 606
+  size: 180, 240
+  orig: 180, 240
+  offset: 0, 0
+  index: -1

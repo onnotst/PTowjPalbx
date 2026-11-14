@@ -1,0 +1,97 @@
+
+yuren.png
+size: 1024,1024
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+guaiwuhuidaoguiji_0000
+  rotate: false
+  xy: 718, 194
+  size: 259, 285
+  orig: 366, 285
+  offset: 106, 0
+  index: -1
+guaiwuhuidaoguiji_0001
+  rotate: false
+  xy: 657, 865
+  size: 362, 154
+  orig: 366, 285
+  offset: 3, 131
+  index: -1
+guaiwuhuidaoguiji_0002
+  rotate: false
+  xy: 2, 184
+  size: 366, 269
+  orig: 366, 285
+  offset: 0, 15
+  index: -1
+guaiwuhuidaoguiji_0003
+  rotate: false
+  xy: 2, 184
+  size: 366, 269
+  orig: 366, 285
+  offset: 0, 15
+  index: -1
+guaiwuhuidaoguiji_0004
+  rotate: false
+  xy: 309, 750
+  size: 346, 269
+  orig: 366, 285
+  offset: 0, 14
+  index: -1
+guaiwuhuidaoguiji_0005
+  rotate: false
+  xy: 370, 211
+  size: 346, 267
+  orig: 366, 285
+  offset: 0, 16
+  index: -1
+guaiwuhuidaoguiji_0006
+  rotate: false
+  xy: 309, 480
+  size: 287, 268
+  orig: 366, 285
+  offset: 0, 14
+  index: -1
+guaiwuhuidaoguiji_0007
+  rotate: false
+  xy: 598, 481
+  size: 287, 267
+  orig: 366, 285
+  offset: 0, 15
+  index: -1
+yr0
+  rotate: false
+  xy: 370, 22
+  size: 193, 187
+  orig: 193, 187
+  offset: 0, 0
+  index: -1
+yr1
+  rotate: false
+  xy: 887, 574
+  size: 132, 289
+  orig: 132, 289
+  offset: 0, 0
+  index: -1
+yr2
+  rotate: true
+  xy: 565, 28
+  size: 164, 291
+  orig: 164, 291
+  offset: 0, 0
+  index: -1
+yr3
+  rotate: false
+  xy: 2, 36
+  size: 347, 146
+  orig: 347, 146
+  offset: 0, 0
+  index: -1
+yr4
+  rotate: false
+  xy: 2, 455
+  size: 305, 564
+  orig: 305, 579
+  offset: 0, 15
+  index: -1

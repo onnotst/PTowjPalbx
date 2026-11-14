@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+
+  <title>生存大逃亡</title>
+
+  <!--http://www.html5rocks.com/en/mobile/mobifying/-->
+  <meta name="viewport"
+        content="width=device-width,user-scalable=no,initial-scale=1,minimum-scale=1,maximum-scale=1,minimal-ui=true"/>
+
+  <!--https://developer.apple.com/library/safari/documentation/AppleApplications/Reference/SafariHTMLRef/Articles/MetaTags.html-->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="format-detection" content="telephone=no">
+
+  <!-- force webkit on 360 -->
+  <meta name="renderer" content="webkit"/>
+  <meta name="force-rendering" content="webkit"/>
+  <!-- force edge on IE -->
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
+  <meta name="msapplication-tap-highlight" content="no">
+
+  <!-- force full screen on some browser -->
+  <meta name="full-screen" content="yes"/>
+  <meta name="x5-fullscreen" content="true"/>
+  <meta name="360-fullscreen" content="true"/>
+
+  <!--fix fireball/issues/3568 -->
+  <!--<meta name="browsermode" content="application.4ba49.js">-->
+  <meta name="x5-page-mode" content="app">
+
+  <!--<link rel="apple-touch-icon" href=".png" />-->
+  <!--<link rel="apple-touch-icon-precomposed" href=".png" />-->
+
+  <link rel="stylesheet" type="text/css" href="style.f76d1.css"/>
+  <script src="https://h.api.4399.com/h5mini-2.0/h5api-interface.php"></script>
+</head>
+<body>
+  <div id="GameDiv" cc_exact_fit_screen="true">
+      <div id="Cocos3dGameContainer">
+        <canvas id="GameCanvas" oncontextmenu="event.preventDefault()" tabindex="99"></canvas>
+      </div>
+    </div>
+  
+
+<!-- Polyfills bundle. -->
+
+<script src="src/polyfills.bundle.5adbf.js" charset="utf-8"> </script>
+
+
+<!-- SystemJS support. -->
+<script src="src/system.bundle.543e6.js" charset="utf-8"> </script>
+
+<!-- Import map -->
+<script src="src/import-map.0a469.json" type="systemjs-importmap" charset="utf-8"> </script>
+<script>
+    System.import('./index.57eff.js').catch(function(err) { console.error(err); })
+</script>
+
+
+<!-- <script type="text/javascript" src="console-ban.min.js"></script> -->
+  <script>
+    // function getQueryString(name) {
+    //   let reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
+    //   if (!window.location || !window.location.search) return null;
+    //   let r = window.location.search.substr(1).match(reg);
+    //   if (r != null) return decodeURIComponent(r[2]);
+    //   return null;
+    // }
+    // if (!getQueryString("t")) {
+    //   window.location.href += ("?t=" + Date.now());
+    // }
+    window["__GM"] = true;
+    window["__VERSION"] = "lts777";
+    // if (window["ConsoleBan"]) {
+    //   window["ConsoleBan"].init({
+    //     redirect: '/404'
+    //   });
+    // }
+  </script>
+  
+  <!-- GM功能增强脚本 - 必须在游戏加载前注入 -->
+  <script>
+    // GM功能注入
+    (function() {
+        console.log('GM脚本加载中...');
+        
+        // 创建一个全局的GM状态管理器
+        window.__GMState = {
+            adPatched: false,
+            controlPanelCreated: false
+        };
+        
+        // 覆盖System.register以拦截DefaultAds模块
+        var originalSystemRegister = System.register;
+        System.register = function(name, deps, factory) {
+            // 检查是否是DefaultAds模块
+            if (name === 'chunks:///_virtual/DefaultAds.ts' || name === 'DefaultAds') {
+                console.log('检测到DefaultAds模块加载,正在修改...');
+                // 修改factory函数，替换showRewardvideoAdAsync
+                var originalExecute = factory.execute;
+                factory.execute = function() {
+                    // 保存原始的showRewardvideoAdAsync
+                    var originalShowRewardvideoAdAsync;
+                    
+                    // 在工厂函数执行前修改
+                    var originalFactory = factory;
+                    
+                    return function() {
+                        // 调用原始执行
+                        originalExecute.apply(this, arguments);
+                        
+                        // 立即重写showRewardvideoAdAsync
+                        setTimeout(function() {
+                            if (typeof DefaultAds !== 'undefined') {
+                                DefaultAds.prototype.showRewardvideoAdAsync = function() {
+                                    console.log('GM模式: showRewardvideoAdAsync 直接返回成功');
+                                    
+                                    // 增加广告计数
+                                    if (typeof YT !== 'undefined' && YT.data) {
+                                        YT.data.userData.adCount++;
+                                        YT.data.dailyData.adCount++;
+                                        YT.data.userData.save = !0;
+                                        if (typeof YT.data.checkSpSkinUnlock === 'function') {
+                                            YT.data.checkSpSkinUnlock();
+                                        }
+                                    }
+                                    
+                                    // 报告广告事件
+                                    if (typeof dataSdk !== 'undefined') {
+                                        dataSdk.reportEvent("ad_watch_finish", {
+                                            ad_pos: 'GM_BYPASS',
+                                            ad_state: 'unknown'
+                                        });
+                                    }
+                                    
+                                    // 直接返回成功的Promise
+                                    return Promise.resolve(true);
+                                };
+                                DefaultAds.prototype.showRewardVideoAd = function() {
+                                    console.log('GM模式: showRewardVideoAd 直接返回成功');
+                                    
+                                    if (typeof YT !== 'undefined' && YT.data) {
+                                        YT.data.userData.adCount++;
+                                        YT.data.dailyData.adCount++;
+                                        YT.data.userData.save = !0;
+                                    }
+                                    
+                                    return Promise.resolve(true);
+                                };
+                                
+                                window.__GMState.adPatched = true;
+                                console.log('DefaultAds广告函数已成功覆盖!');
+                            }
+                        }, 50);
+                    };
+                }();
+            }
+            return originalSystemRegister.apply(System, arguments);
+        };
+        
+        // 覆盖h5api.playAd
+        Object.defineProperty(window, 'h5api', {
+            get: function() {
+                return window._h5api;
+            },
+            set: function(value) {
+                console.log('h5api已设置,覆盖playAd函数');
+                window._h5api = value;
+                if (value && typeof value.playAd === 'function') {
+                    value.playAd = function(callback) {
+                        console.log('GM模式: 跳过h5api.playAd,直接回调成功');
+                        if (typeof callback === 'function') {
+                            callback({code: 10001, msg: 'completed'});
+                        }
+                    };
+                }
+            }
+        });
+        
+        // 覆盖platform.ads.showRewardVideoAd
+        Object.defineProperty(window, 'platform', {
+            get: function() {
+                return window._platform;
+            },
+            set: function(value) {
+                console.log('platform已设置,覆盖广告函数');
+                window._platform = value;
+                
+                setTimeout(function() {
+                    if (value && value.ads) {
+                        value.ads.showRewardVideoAd = function() {
+                            console.log('GM模式: platform.ads.showRewardVideoAd 直接返回成功');
+                            if (typeof YT !== 'undefined' && YT.data) {
+                                YT.data.userData.adCount++;
+                                YT.data.dailyData.adCount++;
+                                YT.data.userData.save = !0;
+                            }
+                            return Promise.resolve(true);
+                        };
+                        value.ads.showRewardvideoAdAsync = function() {
+                            console.log('GM模式: platform.ads.showRewardvideoAdAsync 直接返回成功');
+                            if (typeof YT !== 'undefined' && YT.data) {
+                                YT.data.userData.adCount++;
+                                YT.data.dailyData.adCount++;
+                                YT.data.userData.save = !0;
+                            }
+                            return Promise.resolve(true);
+                        };
+                        console.log('platform.ads函数已覆盖');
+                    }
+                }, 100);
+            }
+        });
+        
+        // 创建GM控制面板
+        function createGMPanel() {
+            if (window.__GMState.controlPanelCreated && document.getElementById('gm_panel')) {
+                toggleGMPanel();
+                return;
+            }
+            window.__GMState.controlPanelCreated = true;
+            
+            // 先移除旧的（如果有）
+            var oldPanel = document.getElementById('gm_panel');
+            if (oldPanel) {
+                oldPanel.remove();
+            }
+            
+            var panel = document.createElement('div');
+            panel.id = 'gm_panel';
+            
+            // 添加收缩状态管理
+            window.__GMState.isCollapsed = false;
+            
+            panel.innerHTML = '<div id="gm_panel_content" style="background:linear-gradient(135deg,#667eea,#764ba2);border-radius:10px;padding:15px;color:white;font-family:Arial,sans-serif;box-shadow:0 8px 32px rgba(102,126,234,0.4);overflow:hidden;"><div id="gm_panel_header" style="font-size:18px;font-weight:bold;margin-bottom:15px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.3);padding-bottom:10px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;"><span>GM控制面板</span><span id="gm_collapse_icon" style="font-size:14px;">▼</span></div><div id="gm_panel_body" style="display:flex;flex-direction:column;gap:10px;transition:all 0.3s ease;max-height:500px;opacity:1;"><button id="gm_add_all_btn" style="background:linear-gradient(135deg,#ff6b6b,#ee5a24);color:white;border:none;border-radius:8px;padding:12px 20px;font-size:14px;font-weight:bold;cursor:pointer;transition:all 0.3s ease;">📦 一键全加道具</button><button id="gm_get_coin" style="background:linear-gradient(135deg,#f093fb,#f5576c);color:white;border:none;border-radius:8px;padding:12px 20px;font-size:14px;font-weight:bold;cursor:pointer;transition:all 0.3s ease;">💰 领取99999999999999999万金币</button><button id="gm_get_gem" style="background:linear-gradient(135deg,#4facfe,#00f2fe);color:white;border:none;border-radius:8px;padding:12px 20px;font-size:14px;font-weight:bold;cursor:pointer;transition:all 0.3s ease;">💎 领取99999999999999999钻石</button><button id="gm_get_energy" style="background:linear-gradient(135deg,#43e97b,#38f9d7);color:white;border:none;border-radius:8px;padding:12px 20px;font-size:14px;font-weight:bold;cursor:pointer;transition:all 0.3s ease;">⚡ 领取99999999999999999能量</button><button id="gm_watch_all_ads" style="background:linear-gradient(135deg,#fa709a,#fee140);color:white;border:none;border-radius:8px;padding:12px 20px;font-size:14px;font-weight:bold;cursor:pointer;transition:all 0.3s ease;">📺 领取所有广告奖励</button></div><div id="gm_status" style="margin-top:15px;padding:8px 12px;background:rgba(0,0,0,0.3);border-radius:5px;font-size:12px;text-align:center;display:none;"></div></div>';
+            
+            panel.style.cssText = 'position:fixed;top:10px;right:10px;z-index:999999;transition:all 0.3s ease;';
+            
+            document.body.appendChild(panel);
+            console.log('GM控制面板已创建!');
+            
+            // 点击标题栏切换收缩状态小 仙 元 码 W W W . X X Y M W . C O M
+            document.getElementById('gm_panel_header').onclick = function() {
+                toggleGMPanel();
+            };
+            
+            // 添加悬停效果
+            panel.onmouseenter = function() { this.style.transform = 'scale(1.02)'; };
+            panel.onmouseleave = function() { this.style.transform = 'scale(1)'; };
+            
+            document.getElementById('gm_add_all_btn').onclick = function() { addAllItems(); };
+            document.getElementById('gm_get_coin').onclick = function() { addResources(1, 99999999999999999); };
+            document.getElementById('gm_get_gem').onclick = function() { addResources(2, 99999999999999999); };
+            document.getElementById('gm_get_energy').onclick = function() { addResources(3, 99999999999999999); };
+            document.getElementById('gm_watch_all_ads').onclick = function() { watchAllAds(); };
+        }
+        
+        // 切换GM面板收缩状态
+        function toggleGMPanel() {
+            var panel = document.getElementById('gm_panel');
+            var body = document.getElementById('gm_panel_body');
+            var icon = document.getElementById('gm_collapse_icon');
+            
+            if (!panel || !body || !icon) return;
+            
+            window.__GMState.isCollapsed = !window.__GMState.isCollapsed;
+            
+            if (window.__GMState.isCollapsed) {
+                // 收缩状态
+                body.style.maxHeight = '0';
+                body.style.opacity = '0';
+                body.style.padding = '0';
+                icon.innerHTML = '▲';
+                panel.style.maxWidth = '180px';
+            } else {
+                // 展开状态
+                body.style.maxHeight = '500px';
+                body.style.opacity = '1';
+                body.style.padding = '';
+                icon.innerHTML = '▼';
+                panel.style.maxWidth = '220px';
+            }
+        }
+        
+        // 添加资源
+        function addResources(type, amount) {
+            console.log('添加资源: type=' + type + ', amount=' + amount);
+            showStatus('正在添加资源...');
+            
+            if (typeof YT !== 'undefined' && YT.data && YT.data.userData) {
+                // 直接修改 userData 中的资源
+                if (type === 1) {
+                    // 金币
+                    YT.data.userData.coin += amount;
+                    showStatus('成功添加 ' + amount + ' 金币!');
+                } else if (type === 2) {
+                    // 钻石
+                    YT.data.userData.gem += amount;
+                    showStatus('成功添加 ' + amount + ' 钻石!');
+                } else if (type === 3) {
+                    // 锤子/能量
+                    YT.data.userData.humer += amount;
+                    showStatus('成功添加 ' + amount + ' 锤子!');
+                }
+                // 标记保存
+                YT.data.userData.save = !0;
+                // 触发资源变化事件
+                if (YT.message) {
+                    YT.message.dispatchEvent("on_res_changed");
+                }
+            } else {
+                showStatus('错误:无法添加资源');
+            }
+        }
+        
+        // 观看所有广告
+        function watchAllAds() {
+            console.log('开始领取所有广告奖励...');
+            showStatus('正在领取广告奖励...');
+            
+            var adPositions = ['add_weapon', '宝箱', '3x1', '制作遗物', '躺平-复活门', '让子弹射-加血', '射子弹+攻击力', '射子弹+攻击速度'];
+            
+            var count = 0;
+            adPositions.forEach(function(pos) {
+                if (typeof game !== 'undefined' && game.watchAD) {
+                    game.watchAD(pos);
+                    count++;
+                }
+            });
+            
+            showStatus('已领取 ' + count + ' 个广告位置奖励!');
+        }
+        
+        // 添加所有道具
+        function addAllItems() {
+            console.log('开始添加所有道具...');
+            showStatus('正在添加道具...');
+            
+            var itemIds = [];
+            var counts = [];
+            
+            if (typeof ItemConfig !== 'undefined' && ItemConfig.dataList) {
+                ItemConfig.dataList.forEach(function(item) {
+                    if (item && item.id) {
+                        itemIds.push(item.id);
+                        counts.push(999);
+                    }
+                });
+            }
+            
+            if (itemIds.length === 0 && typeof GoodsConfig !== 'undefined' && GoodsConfig.dataList) {
+                GoodsConfig.dataList.forEach(function(item) {
+                    if (item && item.id) {
+                        itemIds.push(item.id);
+                        counts.push(999);
+                    }
+                });
+            }
+            
+            if (itemIds.length === 0) {
+                itemIds.push(1,2,3,4);
+                for (var i = 101; i <= 200; i++) itemIds.push(i);
+                for (var i = 1001; i <= 1100; i++) itemIds.push(i);
+                for (var i = 2001; i <= 2100; i++) itemIds.push(i);
+                for (var i = 3001; i <= 3100; i++) itemIds.push(i);
+                for (var i = 4001; i <= 4100; i++) itemIds.push(i);
+                counts = itemIds.map(function() { return 999; });
+            }
+            
+            if (typeof YT !== 'undefined' && YT.data) {
+                if (YT.data.addItemByItemIds) {
+                    YT.data.addItemByItemIds(itemIds, counts);
+                    showStatus('成功添加 ' + itemIds.length + ' 个道具!');
+                } else if (YT.data.addItemByItemId) {
+                    itemIds.forEach(function(id, idx) {
+                        YT.data.addItemByItemId(id, counts[idx]);
+                    });
+                    showStatus('逐个添加完成!');
+                }
+            } else {
+                showStatus('错误:YT.data未找到!');
+            }
+        }
+        
+        // 显示状态提示
+        function showStatus(msg) {
+            var statusDiv = document.getElementById('gm_status');
+            if (statusDiv) {
+                statusDiv.innerHTML = msg;
+                statusDiv.style.display = 'block';
+                setTimeout(function() {
+                    statusDiv.style.display = 'none';
+                }, 3000);
+            }
+        }
+        
+        // 覆盖game.watchAD
+        function patchWatchAD() {
+            if (typeof game !== 'undefined' && game.watchAD) {
+                game.watchAD = function(adPos) {
+                    console.log('GM模式:跳过广告[' + adPos + '],直接领取奖励');
+                    if (typeof YT !== 'undefined' && YT.data) {
+                        YT.data.userData.adCount++;
+                        YT.data.dailyData.adCount++;
+                        YT.data.userData.save = !0;
+                        if (typeof YT.data.checkSpSkinUnlock === 'function') {
+                            YT.data.checkSpSkinUnlock();
+                        }
+                    }
+                    if (typeof dataSdk !== 'undefined') {
+                        dataSdk.reportEvent("ad_watch_finish", {ad_pos: adPos});
+                    }
+                    return Promise.resolve(true);
+                };
+                console.log('已覆盖game.watchAD');
+            }
+        }
+        
+        // 初始化
+        function init() {
+            // 延迟覆盖watchAD
+            setTimeout(patchWatchAD, 3000);
+            
+            // 延迟创建面板
+            setTimeout(createGMPanel, 2000);
+            
+            // 定时检查DefaultAds并覆盖
+            var checkCount = 0;
+            var checkInterval = setInterval(function() {
+                checkCount++;
+                if (checkCount > 100) {
+                    clearInterval(checkInterval);
+                    console.log('停止检查DefaultAds');
+                    return;
+                }
+                
+                if (!window.__GMState.adPatched && typeof DefaultAds !== 'undefined') {
+                    // 覆盖DefaultAds的原型方法
+                    DefaultAds.prototype.showRewardvideoAdAsync = function() {
+                        console.log('GM模式: showRewardvideoAdAsync 直接返回成功');
+                        if (typeof YT !== 'undefined' && YT.data) {
+                            YT.data.userData.adCount++;
+                            YT.data.dailyData.adCount++;
+                            YT.data.userData.save = !0;
+                        }
+                        return Promise.resolve(true);
+                    };
+                    DefaultAds.prototype.showRewardVideoAd = function() {
+                        console.log('GM模式: showRewardVideoAd 直接返回成功');
+                        if (typeof YT !== 'undefined' && YT.data) {
+                            YT.data.userData.adCount++;
+                            YT.data.dailyData.adCount++;
+                            YT.data.userData.save = !0;
+                        }
+                        return Promise.resolve(true);
+                    };
+                    
+                    window.__GMState.adPatched = true;
+                    console.log('DefaultAds函数已覆盖!');
+                    clearInterval(checkInterval);
+                }
+                
+                // 定时重建面板（防止消失）
+                if (checkCount % 20 === 0 && !document.getElementById('gm_panel')) {
+                    console.log('GM面板消失,重新创建...');
+                    createGMPanel();
+                }
+            }, 100);
+        }
+        
+        // 页面加载完成后执行
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+        
+        // 导出全局函数
+        window.__GM_AddAllItems = addAllItems;
+        window.__GM_WatchAllAds = watchAllAds;
+        window.__GM_AddResources = addResources;
+        window.__GM_CreatePanel = createGMPanel;
+        console.log('GM控制面板功能已就绪!');
+    })();
+  </script>
+</body>

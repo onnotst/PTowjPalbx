@@ -1,0 +1,76 @@
+
+shuyao.png
+size: 2048,1024
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+10
+  rotate: true
+  xy: 1304, 351
+  size: 164, 352
+  orig: 165, 353
+  offset: 0, 0
+  index: -1
+11
+  rotate: false
+  xy: 736, 399
+  size: 372, 293
+  orig: 373, 293
+  offset: 0, 0
+  index: -1
+12
+  rotate: true
+  xy: 2, 2
+  size: 690, 732
+  orig: 690, 732
+  offset: 0, 0
+  index: -1
+13
+  rotate: true
+  xy: 1283, 111
+  size: 182, 379
+  orig: 182, 379
+  offset: 0, 0
+  index: -1
+14
+  rotate: true
+  xy: 1304, 517
+  size: 175, 362
+  orig: 175, 363
+  offset: 0, 0
+  index: -1
+5
+  rotate: true
+  xy: 1027, 105
+  size: 188, 254
+  orig: 190, 256
+  offset: 1, 1
+  index: -1
+6
+  rotate: true
+  xy: 1658, 354
+  size: 161, 205
+  orig: 163, 207
+  offset: 1, 1
+  index: -1
+7
+  rotate: false
+  xy: 736, 72
+  size: 289, 325
+  orig: 289, 326
+  offset: 0, 1
+  index: -1
+8
+  rotate: false
+  xy: 1110, 295
+  size: 192, 397
+  orig: 192, 398
+  offset: 0, 1
+  index: -1
+9
+  rotate: true
+  xy: 1668, 576
+  size: 116, 209
+  orig: 118, 211
+  offset: 1, 1
+  index: -1

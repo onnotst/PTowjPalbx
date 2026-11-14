@@ -1,0 +1,13 @@
+
+guizi_01.png
+size: 512,256
+format: RGBA8888
+filter: Linear,Linear
+repeat: none
+guizi_01
+  rotate: false
+  xy: 2, 2
+  size: 259, 157
+  orig: 259, 167
+  offset: 0, 0
+  index: -1
