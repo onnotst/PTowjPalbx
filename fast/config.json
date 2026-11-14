@@ -19,7 +19,7 @@
                 },
                 {
                     "name": "随记",
-                    "url": "https://redirect.mblue.ltd/note",
+                    "url": "https://nav.mblue.ltd/note",
                     "color": "hight10light",
                     "order": 2
                 },
@@ -31,13 +31,13 @@
                 },
                 {
                     "name": "文件",
-                    "url": "https://dofiles.mblue.ltd/",
+                    "url": "https://cloudreve.mblue.ltd/",
                     "color": "hight6light",
                     "order": 4
                 },
                 {
-                    "name": "信心",
-                    "url": "https://wault.mblue.ltd/",
+                    "name": "疑惑",
+                    "url": "https://whylt.mblue.ltd/",
                     "color": "hight6light",
                     "order": 5
                 },
@@ -52,8 +52,19 @@
                     "url": "https://all.209901.xyz/",
                     "color": "hight6light",
                     "order": 7
+                },
+                {
+                    "name": "下载接口",
+                    "url": "https://fast.mblue.ltd/",
+                    "color": "hight10light",
+                    "order": 8
+                },
+                {
+                    "name": "强制下载",
+                    "url": "https://why.mblue.ltd/archive/download/",
+                    "color": "hight10light",
+                    "order": 9
                 }
-
             ],
             "order": 2
         },
