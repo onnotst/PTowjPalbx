@@ -17,7 +17,7 @@ if (isset($_POST['action']) && $_POST['action'] == 'login') {
 /* ---------- 登出 ---------- */
 if (isset($_GET['action']) && $_GET['action'] == 'logout') {
     session_destroy();
-    header("Location: editpro.php");
+    header("Location: index.php");
     exit;
 }
 /* ---------- 保存 ---------- */

@@ -7,7 +7,7 @@ $valid_username = "onno";
 $valid_password = "Howtomakemoney1.";
 
 // 要编辑的文件
-$filename = "index.html";
+$filename = "config-fast.ini";
 
 // 初始化变量
 $error = '';
@@ -26,7 +26,7 @@ if (isset($_POST['action']) && $_POST['action'] == 'login') {
 // 处理登出
 if (isset($_GET['action']) && $_GET['action'] == 'logout') {
     session_destroy();
-    header("Location: edit.php");
+    header("Location: edit-fast.php");
     exit;
 }
 
@@ -180,7 +180,7 @@ if (isset($_SESSION['authenticated']) && file_exists($filename)) {
             
             <form method="post" class="editor">
                 <input type="hidden" name="action" value="save">
-                <textarea name="content" placeholder="在此编辑index.html的内容..."><?php echo isset($content) ? $content : ''; ?></textarea>
+                <textarea name="content" placeholder="在此编辑config-fast.ini的内容..."><?php echo isset($content) ? $content : ''; ?></textarea>
                 <button type="submit">保存更改</button>
             </form>
             
@@ -195,7 +195,7 @@ if (isset($_SESSION['authenticated']) && file_exists($filename)) {
                 <input type="password" name="password" placeholder="密码" required>
                 <button type="submit">登录</button>
                 <div class="xxxx-div">
-                    <a href="index.html" class="xxxx-a">返回导航页</a>
+                    <a href="fast.html" class="xxxx-a">返回导航页</a>
                 </div>
             </form>
             

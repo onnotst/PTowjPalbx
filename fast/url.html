@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>我的导航</title>
+<style>
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto;
+        background: #f5f7fa;
+        margin: 0;
+        padding: 20px 10px 80px;
+    }
+
+    h1 {
+        text-align: center;
+        color: #333;
+    }
+
+    .nav-list {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .quote {
+        max-width: 800px;
+        margin: 1px auto;
+        padding: 3px 3px;
+        text-align: center;
+        color: #666;
+        font-size: 15px;
+        line-height: 1.6;
+    }
+
+    .section-title {
+        max-width: 800px;
+        margin: 1px auto 1px;
+        font-size: 18px;
+        font-weight: 600;
+        color: #444;
+    }
+
+    .nav-item {
+        display: block;
+        padding: 1px 1px;
+        margin: 10px 0;
+        border-radius: 10px;
+        text-decoration: none;
+        color: #333;
+        font-size: 16px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        word-break: break-all;
+    }
+
+    /* 颜色类 */
+    .hidelight{ background-color: yellow; }
+    .hight1light { background-color: #e9e9e9; }
+    .hight2light { background-color: #94e2ce; }
+    .hight3light { background-color: #bfb4f9; }
+    .hight4light { background-color: #9bff44; }
+    .hight5light { background-color: #7bcc36; }
+    .hight6light { background-color: #a0d2eb; }
+    .hight7light { background-color: #ffc2d1; }
+    .hight8light { background-color: #ffb347; }
+    .hight9light { background-color: #4169e1; color: white; }
+    .hight10light { background-color: #ffd700; }
+    .hight11light { background-color: #a8e6cf; }
+    .hight12light { background-color: #ffb7b2; }
+    .hight13light { background-color: #c7ceea; }
+    .hight14light { background-color: #fff9b0; }
+    .hight15light { background-color: #87ceeb; }
+    .hight16light { background-color: #ff7f7f; }
+    .hight17light { background-color: #7fcdcd; }
+    .hight18light { background-color: #f7e7ce; }
+    .hight19light { background-color: #d3d3d3; }
+    .hight20light { background-color: #ff6b81; }
+    .hight21light { background-color: #48c9b0; }
+    .hight22light { background-color: #9b59b6; color: white; }
+    .hight23light { background-color: #b5c689; }
+    .hight24light { background-color: #fef9e7; }
+    .hight25light { background-color: #8e44ad; color: white; }
+    .hight26light { background-color: #e67e22; color: white; }
+    .hight27light { background-color: #2980b9; color: white; }
+    .hight28light { background-color: #2ecc71; }
+    .hight29light { background-color: #c0392b; color: white; }
+    .hight30light { background-color: #16a085; color: white; }
+
+    /* 底部按钮 */
+    .footer-buttons {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        margin: 0 auto;
+        border-radius: 10px;
+        width: 100%;
+        max-width: 800px;
+        display: flex;
+        justify-content: space-around;
+        background: #f5f7fa;
+        padding: 10px 0;
+    }
+
+    .footer-buttons a {
+        flex: 1;
+        margin: 0 6px;
+        text-align: center;
+        padding: 10px 0;
+        background: #10b981;
+        color: #fff;
+        border-radius: 8px;
+        text-decoration: none;
+        font-size: 14px;
+    }
+
+    .footer-buttons a:hover {
+        background: #059669;
+    }
+</style>
+</head>
+
+<body>
+
+<h1>我的导航</h1>
+
+<div id="navContainer" class="nav-list">
+    <div style="text-align:center;color:#999;">正在加载导航数据...</div>
+</div>
+
+<!-- 底部编辑按钮 -->
+<div class="footer-buttons">
+    <a href="edit-url.php">编辑文件</a>
+    <a href="edit-config.php">编辑配置</a>
+    <a href="edit-sort.php">编辑顺序</a>
+    <a href="edit-color.php">编辑颜色</a>
+</div>
+
+<script>
+fetch('config.json')
+    .then(res => res.json())
+    .then(data => {
+        const container = document.getElementById('navContainer');
+        container.innerHTML = '';
+
+        // 按 order 排序 sections
+        data.sections.sort((a, b) => a.order - b.order);
+
+        data.sections.forEach(section => {
+
+            // 引言
+            if (section.type === 'quote') {
+                container.innerHTML += `
+                    <div class="quote">
+                        ${section.content}
+                    </div>
+                `;
+            }
+
+            // 链接组
+            if (section.type === 'links') {
+                if (section.title) {
+                    container.innerHTML += `
+                        <div class="section-title">${section.title}</div>
+                    `;
+                }
+
+                section.links.sort((a, b) => a.order - b.order);
+
+                section.links.forEach(link => {
+                    container.innerHTML += `
+                        <a class="nav-item ${link.color}" href="${link.url}" target="_blank">
+                            ${link.name}  ${link.url}
+                        </a>
+                    `;
+                });
+            }
+        });
+    })
+    .catch(err => {
+        console.error(err);
+        document.getElementById('navContainer').innerHTML =
+            '<div style="text-align:center;color:red;">加载导航失败，请检查 config.json</div>';
+    });
+</script>
+
+</body>
+</html>

@@ -13,7 +13,27 @@ $colorStyles = [
     'hight7light' => '浅粉色 (#ffc2d1)',
     'hight8light' => '橙色 (#ffb347)',
     'hight9light' => '深蓝色 (#4169e1)',
-    'hight10light' => '金色 (#ffd700)'
+    'hight10light' => '金色 (#ffd700)',
+    'hight11light' => '薄荷绿 (#a8e6cf)',
+    'hight12light' => '蜜桃粉 (#ffb7b2)',
+    'hight13light' => '薰衣草紫 (#c7ceea)',
+    'hight14light' => '柠檬黄 (#fff9b0)',
+    'hight15light' => '天蓝色 (#87ceeb)',
+    'hight16light' => '珊瑚红 (#ff7f7f)',
+    'hight17light' => '草绿色 (#7fcdcd)',
+    'hight18light' => '香槟金 (#f7e7ce)',
+    'hight19light' => '烟灰色 (#d3d3d3)',
+    'hight20light' => '玫瑰红 (#ff6b81)',
+    'hight21light' => '湖蓝色 (#48c9b0)',
+    'hight22light' => '紫罗兰 (#9b59b6)',
+    'hight23light' => '橄榄绿 (#b5c689)',
+    'hight24light' => '奶白色 (#fef9e7)',
+    'hight25light' => '深紫色 (#8e44ad)',
+    'hight26light' => '赤陶色 (#e67e22)',
+    'hight27light' => '海蓝色 (#2980b9)',
+    'hight28light' => '浅绿色 (#2ecc71)',
+    'hight29light' => '深红色 (#c0392b)',
+    'hight30light' => '深青色 (#16a085)'
 ];
 
 // 处理表单提交
@@ -73,6 +93,26 @@ if (json_last_error() !== JSON_ERROR_NONE) {
         .hight8light { background-color: #ffb347; }
         .hight9light { background-color: #4169e1; color: white; }
         .hight10light { background-color: #ffd700; }
+        .hight11light { background-color: #a8e6cf; }
+        .hight12light { background-color: #ffb7b2; }
+        .hight13light { background-color: #c7ceea; }
+        .hight14light { background-color: #fff9b0; }
+        .hight15light { background-color: #87ceeb; }
+        .hight16light { background-color: #ff7f7f; }
+        .hight17light { background-color: #7fcdcd; }
+        .hight18light { background-color: #f7e7ce; }
+        .hight19light { background-color: #d3d3d3; }
+        .hight20light { background-color: #ff6b81; }
+        .hight21light { background-color: #48c9b0; }
+        .hight22light { background-color: #9b59b6; color: white; }
+        .hight23light { background-color: #b5c689; }
+        .hight24light { background-color: #fef9e7; }
+        .hight25light { background-color: #8e44ad; color: white; }
+        .hight26light { background-color: #e67e22; color: white; }
+        .hight27light { background-color: #2980b9; color: white; }
+        .hight28light { background-color: #2ecc71; }
+        .hight29light { background-color: #c0392b; color: white; }
+        .hight30light { background-color: #16a085; color: white; }
 
         * {
             margin: 0;
