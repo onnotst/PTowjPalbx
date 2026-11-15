@@ -112,18 +112,48 @@
                     "url": "https://nextcloud.mblue.ltd/",
                     "color": "",
                     "order": 17
+                },
+                {
+                    "name": "临时编辑",
+                    "url": "https://nav.mblue.ltd/my/editor/index.php",
+                    "color": "hight1light",
+                    "order": 18
+                },
+                {
+                    "name": "个人密码",
+                    "url": "https://nav.mblue.ltd/my/password/index.php",
+                    "color": "",
+                    "order": 19
+                },
+                {
+                    "name": "数据导航",
+                    "url": "https://nav.mblue.ltd/my/link/database/index.php",
+                    "color": "hight1light",
+                    "order": 20
+                },
+                {
+                    "name": "文件管理",
+                    "url": "https://nav.mblue.ltd/my/manage/",
+                    "color": "hight12light",
+                    "order": 21
+                },
+                {
+                    "name": "Github个人",
+                    "url": "https://github.com/onnotst/PTowjPalbx",
+                    "color": "",
+                    "order": 22
                 }
             ],
             "order": 2
         },
         {
-            "id": "j001",
+            "id": "j003",
             "type": "quote",
             "content": "洞察无常，解脱痛苦，无苦则甜。五蕴皆空象征世界的认知都是无常的。",
             "order": 3
         },
         {
-            "id": "j002",
+            "id": "j004",
             "type": "links",
             "title": "个人链接",
             "links": [
@@ -188,172 +218,178 @@
                     "order": 10
                 },
                 {
+                    "name": "笔记随记+",
+                    "url": "https://nav.mblue.ltd/my/archive/record/text/indexw3.php",
+                    "color": "hight8light",
+                    "order": 11
+                },
+                {
                     "name": "笔记文章",
                     "url": "https://nav.mblue.ltd/my/archive/record/text/indexw2.php",
                     "color": "hight8light",
-                    "order": 11
+                    "order": 12
                 },
                 {
                     "name": "笔记图文",
                     "url": "https://nav.mblue.ltd/my/archive/record/image/index.php",
                     "color": "hight8light",
-                    "order": 12
+                    "order": 13
                 },
                 {
                     "name": "笔记语音",
                     "url": "https://nav.mblue.ltd/my/archive/record/audio/index.php",
                     "color": "hight8light",
-                    "order": 13
+                    "order": 14
                 },
                 {
                     "name": "网络接口",
                     "url": "https://nav.mblue.ltd/my/api/",
                     "color": "",
-                    "order": 14
+                    "order": 15
                 },
                 {
                     "name": "下载接口",
                     "url": "https://fast.mblue.ltd/",
                     "color": "hight7light",
-                    "order": 15
+                    "order": 16
                 },
                 {
                     "name": "强制下载",
                     "url": "https://nav.mblue.ltd/my/download/",
                     "color": "hight7light",
-                    "order": 16
+                    "order": 17
                 },
                 {
                     "name": "信息展示",
                     "url": "https://turso.mblue.ltd/",
                     "color": "",
-                    "order": 17
+                    "order": 18
                 },
                 {
                     "name": "网站导航",
                     "url": "https://where.mblue.ltd/",
                     "color": "",
-                    "order": 18
+                    "order": 19
                 },
                 {
                     "name": "公网接口",
                     "url": "https://ipinfo.mblue.ltd/",
                     "color": "",
-                    "order": 19
+                    "order": 20
                 },
                 {
                     "name": "几猫游戏",
                     "url": "https://nt.mblue.ltd/archive/game/play001-20261114-shoot",
                     "color": "hight1light",
-                    "order": 20
+                    "order": 21
                 },
                 {
                     "name": "转刀游戏",
                     "url": "https://nt.mblue.ltd/archive/game/play002-20261114-stroll",
                     "color": "hight1light",
-                    "order": 21
+                    "order": 22
                 },
                 {
                     "name": "源尧十三",
                     "url": "https://article.mblue.ltd/",
                     "color": "hight1light",
-                    "order": 22
+                    "order": 23
                 },
                 {
                     "name": "2FA验证",
                     "url": "https://nt.mblue.ltd/archive/page/2fa",
                     "color": "",
-                    "order": 23
+                    "order": 24
                 },
                 {
                     "name": "视图旋转",
                     "url": "https://nt.mblue.ltd/archive/page/rotate",
                     "color": "",
-                    "order": 24
+                    "order": 25
                 },
                 {
                     "name": "执迷搜索",
                     "url": "https://nav.mblue.ltd/my/search/",
                     "color": "hight10light",
-                    "order": 25
+                    "order": 26
                 },
                 {
                     "name": "收藏文本",
                     "url": "https://nt.mblue.ltd/archive/page/turso",
                     "color": "",
-                    "order": 26
+                    "order": 27
                 },
                 {
                     "name": "导航",
                     "url": "https://nav.mblue.ltd/",
                     "color": "hight3light",
-                    "order": 27
+                    "order": 28
                 },
                 {
                     "name": "西安",
                     "url": "https://xa.209901.xyz/",
                     "color": "hight3light",
-                    "order": 28
+                    "order": 29
                 },
                 {
                     "name": "执迷心情",
                     "url": "https://www.209901.xyz/",
                     "color": "hight6light",
-                    "order": 29
+                    "order": 30
                 },
                 {
                     "name": "执迷心情-西安",
                     "url": "https://xa.209901.xyz/",
                     "color": "hight6light",
-                    "order": 30
+                    "order": 31
                 },
                 {
                     "name": "执迷心情-美国",
                     "url": "https://us.209901.xyz/",
                     "color": "hight6light",
-                    "order": 31
+                    "order": 32
                 },
                 {
                     "name": "执迷心情-文件",
                     "url": "http://fly.209901.xyz:5212/",
                     "color": "hight6light",
-                    "order": 32
+                    "order": 33
                 },
                 {
                     "name": "执迷心情-聊天",
                     "url": "http://fly.209901.xyz:25776/",
                     "color": "hight6light",
-                    "order": 33
+                    "order": 34
                 },
                 {
                     "name": "执迷心情-青龙",
                     "url": "http://fly.209901.xyz:25777/",
                     "color": "hight6light",
-                    "order": 34
+                    "order": 35
                 },
                 {
                     "name": "执迷心情-图床",
                     "url": "http://fly.209901.xyz:25778/",
                     "color": "hight6light",
-                    "order": 35
+                    "order": 36
                 },
                 {
                     "name": "执迷心情-归档",
                     "url": "http://fly.209901.xyz:25779/",
                     "color": "hight6light",
-                    "order": 36
+                    "order": 37
                 }
             ],
             "order": 4
         },
         {
-            "id": "j001",
+            "id": "j005",
             "type": "quote",
             "content": "人心惟危，道心惟微，惟精惟一，允执厥中。夫大道冲虚，幽微寂寞，不可以心会，不可以言诠。",
             "order": 5
         },
         {
-            "id": "j002",
+            "id": "j006",
             "type": "links",
             "title": "工具链接",
             "links": [
@@ -589,7 +625,7 @@
             "order": 6
         },
         {
-            "id": "j001",
+            "id": "j007",
             "type": "quote",
             "content": "关于&网站<br>欢迎访问本导航网站。本站由个人自费搭建，旨在为我个人提供便利。<br>基于个人爱好，方便自己的工作、生活、记录人生等。",
             "content111111": "关于&网站<br>欢迎访问本导航网站。本站由个人自费搭建，旨在为我个人提供便利。<br>由于本站可能随时关闭，请您及时备份网站上的重要信息、图片和文字内容，以避免数据丢失。<br>我们尊重所有版权。如果您认为本站内容侵犯了您的版权，请与开发者联系，我们将及时处理并删除相关内容。<br>由于本站位于国外，这可能导致访问速度不稳定或偶尔出现卡顿。我们对此表示歉意，并将持续努力优化访问体验。<br>如您在使用过程中遇到任何问题，或有任何建议和意见，可通过电子邮件：admin@mblue.com联系。<br>我是田某，来自陕西省西安市，男，1994年6月出生，曾在安徽科技工程大学学习，之后到上海工作，期间接触编程，网站部署等。<br>基于个人爱好，将个人需要的服务或者内容进行半公开，方便自己的工作生活及记录人生。",

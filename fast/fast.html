@@ -56,15 +56,24 @@ body {
   color: inherit;
   display: block;
   overflow: hidden;
+  transition: background 0.15s, border-color 0.15s;
 }
 .card:active {
   background: #f0f0f0;
 }
+
+/* 颜色背景（通过 JS 内联 style 注入，这里只定义边框/背景的 fallback） */
+.card.has-color {
+  /* 具体颜色由 JS 通过 style 属性设置 */
+}
+
 .card-name {
   font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
 }
 .card-url {
   font-size: 11px;
@@ -80,7 +89,7 @@ body {
   height: 8px;
   border-radius: 50%;
   margin-right: 4px;
-  vertical-align: middle;
+  flex-shrink: 0;
 }
 .loading {
   padding: 20px;
@@ -93,18 +102,15 @@ body {
   text-align: center;
 }
 
-/* 呼吸闪烁动画 */
+/* 呼吸闪烁动画 —— 只在带 .blink 的 dot 上生效 */
 @keyframes breatheBlink {
   0%   { opacity: 1; transform: scale(1); }
   50%  { opacity: 0.35; transform: scale(0.8); }
   100% { opacity: 1; transform: scale(1); }
 }
-
-/* 开启闪烁的圆点 */
 .dot.blink {
   animation: breatheBlink 1.6s ease-in-out infinite;
 }
-
 </style>
 </head>
 <body>
@@ -115,118 +121,102 @@ body {
 </div>
 
 <script>
-const CONFIG_URL = 'config-fast.ini';
+const CONFIG_URL = 'config.json';
 
-/* ---------- 颜色解析（关键修复） ---------- */
-function getColor(val) {
-  if (!val) return '';
-  // #ffd700
-  const hex = val.match(/(#[0-9a-fA-F]{3,8})/);
-  if (hex) return hex[1];
-  // rgb / rgba
-  const rgb = val.match(/\((.*?)\)/);
-  return rgb ? rgb[1] : val;
-}
+/* ---------- 颜色映射表（和编辑器里 30 个对应） ---------- */
+const COLOR_MAP = {
+  'hight1light':'#f5f5f5','hight2light':'#b2dfdb','hight3light':'#e1bee7',
+  'hight4light':'#c8e6c9','hight5light':'#a5d6a7','hight6light':'#bbdefb',
+  'hight7light':'#f8bbd0','hight8light':'#ffccbc','hight9light':'#90caf9',
+  'hight10light':'#ffe082','hight11light':'#a7ffeb','hight12light':'#f8bbd0',
+  'hight13light':'#d1c4e9','hight14light':'#fff9c4','hight15light':'#b3e5fc',
+  'hight16light':'#ffab91','hight17light':'#c5e1a5','hight18light':'#fff8e1',
+  'hight19light':'#cfd8dc','hight20light':'#f48fb1','hight21light':'#80deea',
+  'hight22light':'#b39ddb','hight23light':'#c5e1a5','hight24light':'#fafafa',
+  'hight25light':'#ce93d8','hight26light':'#bcaaa4','hight27light':'#80cbc4',
+  'hight28light':'#c8e6c9','hight29light':'#ef9a9a','hight30light':'#4dd0e1'
+};
 
-/* ---------- 加载配置 ---------- */
+/* ---------- 加载 JSON 配置 ---------- */
 async function loadConfig() {
   try {
     const res = await fetch(CONFIG_URL);
-    if (!res.ok) throw new Error('无法加载配置');
-    const text = await res.text();
-    render(parseConfig(text));
+    if (!res.ok) throw new Error('无法加载 config.json');
+    const data = await res.json();
+    render(data);
   } catch (e) {
     document.getElementById('app').innerHTML =
-      `<div class="error">加载失败：${e.message}<br>请确认 config.txt 存在</div>`;
+      `<div class="error">加载失败：${e.message}<br>请确认 config.json 存在且格式正确</div>`;
   }
-}
-
-/* ---------- 解析配置 ---------- */
-function parseConfig(text) {
-  // 按 ###--- 或 ###-- 或 ###- 切分
-  const sections = text.split(/^###[-\-]+\s*$/m);
-  const groups = [];
-  let colors = {};
-  let colorMap = {};
-
-  for (const sec of sections) {
-    const trimmed = sec.trim();
-    if (!trimmed || trimmed.startsWith('//')) continue;
-
-    // 颜色定义（'hight01light':'...'）
-    if (/^'hight\d+light':/m.test(trimmed)) {
-      const lines = trimmed.split('\n');
-      for (const line of lines) {
-        const m = line.match(/'(hight\d+light)'\s*:\s*'([^']+)'/);
-        if (m) colors[m[1]] = m[2];
-      }
-      continue;
-    }
-
-    // 颜色映射（短信:hight10light）
-    // 关键：不再要求 ###--，只要不是链接就行
-    if (
-      /^[^\s:]+\s*:\s*hight\d+light\s*$/m.test(trimmed) &&
-      !trimmed.includes('http')
-    ) {
-      const lines = trimmed.split('\n');
-      for (const line of lines) {
-        const m = line.match(/^([^:]+?)\s*:\s*(hight\d+light)\s*$/);
-        if (m) colorMap[m[1]] = m[2];
-      }
-      continue;
-    }
-
-    // 链接组
-    const lines = trimmed.split('\n').filter(l => l.includes('：http'));
-    if (lines.length > 0) {
-      const items = lines.map(l => {
-        const idx = l.indexOf('：');
-        return {
-          name: l.slice(0, idx).trim(),
-          url: l.slice(idx + 1).trim()
-        };
-      });
-      groups.push(items);
-    }
-  }
-
-  return { groups, colors, colorMap };
 }
 
 /* ---------- 渲染页面 ---------- */
-function render({ groups, colors, colorMap }) {
+function render(data) {
   const app = document.getElementById('app');
-  if (groups.length === 0) {
-    app.innerHTML = '<div class="error">配置中未找到链接</div>';
+  const sections = data.sections || [];
+
+  if (sections.length === 0) {
+    app.innerHTML = '<div class="error">配置中未找到任何区块</div>';
     return;
   }
 
   let html = '';
-  groups.forEach((group, gi) => {
-    html += `<div class="group">
-      <div class="group-title">分组 ${gi + 1}</div>
-      <div class="grid">
-    `;
-    group.forEach(item => {
-      const colorKey = colorMap[item.name];
-      const colorVal = colors[colorKey];
-      const dot = colorVal
-        ? `<span class="dot blink" style="background:${getColor(colorVal)}"></span>`
-        : '';
-        
-      const bgStyle = colorVal
-        ? `background:${getColor(colorVal)}22; border-color:${getColor(colorVal)}66;`
-        : '';
 
-      html += `
-        <a class="card" href="${item.url}" target="_blank" style="${bgStyle}">
-          <div class="card-name">${dot}${item.name}</div>
-          <div class="card-url">${item.url.replace('https://', '').replace('http://', '')}</div>
-        </a>
+  sections.forEach((section, si) => {
+
+    // ===== quote 类型：渲染为分组标题 =====
+    // if (section.type === 'quote') {
+    //   const title = section.content
+    //     ? section.content.replace(/<[^>]*>/g, '').trim()
+    //     : `分组 ${si + 1}`;
+    //   html += `<div class="group">
+    //     <div class="group-title">${title}</div>
+    //     <div class="grid"></div>
+    //   </div>`;
+    //   return;
+    // }
+
+    // ===== links 类型：渲染为链接卡片组 =====
+    if (section.type === 'links') {
+      const groupTitle = section.title || `分组 ${si + 1}`;
+      html += `<div class="group">
+        <div class="group-title">${groupTitle}</div>
+        <div class="grid">
       `;
-    });
-    html += `</div></div>`;
+
+      if (section.links && section.links.length > 0) {
+        section.links.forEach(link => {
+          const name = link.name || '';
+          const url = link.url || '';
+          const colorKey = link.color || '';
+          const blink = link.blink === true || link.blink === 'true';
+
+          // 颜色处理
+          const colorVal = COLOR_MAP[colorKey] || '';
+          let dotHtml = '';
+          let cardStyle = '';
+
+          if (colorVal) {
+            // dot 颜色
+            dotHtml = `<span class="dot${blink ? ' blink' : ''}" style="background:${colorVal}"></span>`;
+            // 卡片背景：颜色 + 15% 透明度（hex → 加 22 后缀）
+            cardStyle = `background:${colorVal}22; border-color:${colorVal}66;`;
+          }
+
+          // URL 显示（去掉协议前缀）
+          const displayUrl = url.replace(/^https?:\/\//, '');
+
+          html += `
+            <a class="card" href="${url}" target="_blank" style="${cardStyle}">
+              <div class="card-name">${dotHtml}${name}</div>
+              <div class="card-url">${displayUrl}</div>
+            </a>
+          `;
+        });
+      }
+
+      html += `</div></div>`;
+    }
   });
 
   app.innerHTML = html;

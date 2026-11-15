@@ -87,6 +87,7 @@
         .hight28light { background-color: #2ecc71; }
         .hight29light { background-color: #c0392b; color: white; }
         .hight30light { background-color: #16a085; color: white; }
+        .hight99light { background-color: #eeeeee55 !important; color: rgba(200, 200, 200, 0.85) !important; }
         #j001 { margin-top: 10px; margin-bottom: 0px; }
         #j002 { margin-top: 10px; margin-bottom: 0px; }
         .container {
@@ -120,8 +121,13 @@
         .div-button{
             display: none;
         }
+        .musicheader {
+          display: none !important;
+          visibility: hidden !important;
+          height: 0 !important;
+          overflow: hidden !important;
+        }
     </style>
-<script type="text/javascript" src="https://myhkw.cn/player/js/jquery.min.js"></script>
 </head>
 <body>
     <div id="content-container">
@@ -131,9 +137,24 @@
     <div class="div-button">
         <figure class="wp-block-pullquote">
             <blockquote>
-                <a target='_blank' href='edit-index.php'>
+                <a target='_blank' href='index.html'>
                     <div class='item'>
-                        <div class='no-logo hight1light'>编辑文件</div>
+                        <div class='no-logo hight20light'>默认导航V1</div>
+                    </div>
+                </a>
+                <a target='_blank' href='url.html'>
+                    <div class='item'>
+                        <div class='no-logo hight2light'>默认导航V2</div>
+                    </div>
+                </a>
+                <a target='_blank' href='fast.html'>
+                    <div class='item'>
+                        <div class='no-logo hight3light'>默认导航V3</div>
+                    </div>
+                </a>
+                <a target='_blank' href='edit-add-url.php'>
+                    <div class='item'>
+                        <div class='no-logo hight1light'>编辑新增</div>
                     </div>
                 </a>
                 <a target='_blank' href='edit-config.php'>
@@ -149,6 +170,16 @@
                 <a target='_blank' href='edit-color.php'>
                     <div class='item'>
                         <div class='no-logo hight1light'>编辑颜色</div>
+                    </div>
+                </a>
+                <a target='_blank' href='edit-index.php'>
+                    <div class='item'>
+                        <div class='no-logo hight99light'>编辑文件</div>
+                    </div>
+                </a>
+                <a target='_blank' href='edit-config.php'>
+                    <div class='item'>
+                        <div class='no-logo hight99light'>编辑配置</div>
                     </div>
                 </a>
             </blockquote>
@@ -219,6 +250,35 @@
                     '<p style="text-align:center;color:red;">加载内容失败，请检查配置文件</p>';
             });
     </script>
-    <script type="text/javascript" id="myhk" src="https://myhkw.cn/api/player/176396840995" key="176396840995" m="1"></script>
+<script>
+(function () {
+  // 等 myhkplayer 出现后执行 UI 修改
+  function waitForPlayerAndModify() {
+    var player = document.getElementById('myhkplayer');
+    if (!player) {
+      // 还没出来，100ms 后再试
+      setTimeout(waitForPlayerAndModify, 50);
+      return;
+    }
+    // 2. 重设 myhkplayer 背景色
+    player.style.backgroundColor = 'rgba(22, 160, 133, 0.15)';
+    player.style.borderRadius = '8px';
+    player.style.overflow = 'hidden';
+
+    console.log('播放器 UI 已修改');
+  }
+
+  // 页面加载完后开始检测
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () {
+      waitForPlayerAndModify();
+    });
+  } else {
+    waitForPlayerAndModify();
+  }
+})();
+</script>
+<script type="text/javascript" src="jquery.min.js"></script>
+<script type="text/javascript" id="myhk" src="https://myhkw.cn/api/player/176396840995" key="176396840995" m="1"></script>
 </body>
 </html>
