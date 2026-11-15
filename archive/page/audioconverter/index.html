@@ -219,7 +219,7 @@ select {
 </div>
 
 <!-- 本地 ffmpeg UMD -->
-<script src="./assets/ffmpeg/ffmpeg.min.js"></script>
+<script src="https://nt.mblue.ltd/assets/ffmpeg/ffmpeg.min.js"></script>
 <script>
 const { createFFmpeg, fetchFile } = window.FFmpeg;
 
@@ -282,17 +282,17 @@ function getFFmpeg() {
     // 多线程：用 ffmpeg-core.js（多线程版）+ worker
     return createFFmpeg({
       mainName: 'main',
-      corePath: './assets/ffmpeg/ffmpeg-core.js',
-      wasmURL: './assets/ffmpeg/ffmpeg-core.wasm',
-      workerPath: './assets/ffmpeg/ffmpeg-core.worker.js',
+      corePath: 'https://nt.mblue.ltd/assets/ffmpeg/ffmpeg-core.js',
+      wasmURL: 'https://nt.mblue.ltd/assets/ffmpeg/ffmpeg-core.wasm',
+      workerPath: 'https://nt.mblue.ltd/assets/ffmpeg/ffmpeg-core.worker.js',
       log: true,
     });
   } else {
     // 单线程：用 ffmpeg-core.js（单线程版，不需要 worker）
     return createFFmpeg({
       mainName: 'main',
-      corePath: './assets/ffmpeg/ffmpeg-core.js',
-      wasmURL: './assets/ffmpeg/ffmpeg-core.wasm',
+      corePath: 'https://nt.mblue.ltd/assets/ffmpeg/ffmpeg-core.js',
+      wasmURL: 'https://nt.mblue.ltd/assets/ffmpeg/ffmpeg-core.wasm',
       log: false,
     });
   }
