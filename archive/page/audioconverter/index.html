@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>音频转 MP3 - ffmpeg.wasm 本地转换</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+  min-height: 100vh; padding: 20px; color: #eee;
+}
+
+.box {
+  max-width: 720px; margin: 0 auto;
+  background: rgba(255,255,255,0.06);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 16px; padding: 32px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+}
+
+h1 { font-size: 22px; margin-bottom: 4px; }
+.sub { font-size: 12px; color: #aaa; margin-bottom: 24px; }
+
+/* 模式切换 */
+.mode-row {
+  display: flex; gap: 8px; margin-bottom: 20px;
+}
+.mode-btn {
+  flex: 1; padding: 10px; border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 8px; background: transparent; color: #ccc;
+  cursor: pointer; font-size: 13px; transition: .2s;
+}
+.mode-btn.active {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff; border-color: transparent;
+}
+.mode-btn:hover:not(.active) { border-color: #667eea; color: #fff; }
+
+/* 拖拽区 */
+.drop {
+  border: 2px dashed rgba(255,255,255,0.25);
+  border-radius: 12px; padding: 40px 16px;
+  text-align: center; cursor: pointer;
+  transition: .3s; margin-bottom: 20px;
+}
+.drop:hover, .drop.over {
+  border-color: #667eea; background: rgba(102,126,234,0.08);
+}
+.drop p { font-size: 15px; }
+.drop .fmt { font-size: 11px; color: #888; margin-top: 6px; }
+
+/* 文件信息 */
+.file-info {
+  background: rgba(255,255,255,0.06);
+  border-radius: 8px; padding: 12px 16px;
+  margin-bottom: 16px; display: none;
+}
+.file-info.show { display: block; }
+.file-info .name { font-weight: 600; word-break: break-all; }
+.file-info .size { font-size: 12px; color: #aaa; margin-top: 4px; }
+
+/* 设置行 */
+.row { display: flex; gap: 12px; margin-bottom: 20px; }
+.row > div { flex: 1; }
+label { font-size: 12px; font-weight: 600; color: #bbb; display: block; margin-bottom: 6px; }
+select {
+  width: 100%; padding: 10px;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 8px; background: rgba(0,0,0,0.3);
+  color: #eee; font-size: 14px;
+}
+
+/* 按钮 */
+.btn {
+  width: 100%; padding: 14px; border: none; border-radius: 10px;
+  font-size: 15px; font-weight: 700; cursor: pointer;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: #fff; transition: .3s;
+}
+.btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(102,126,234,0.5); }
+.btn:disabled { opacity: .4; cursor: not-allowed; }
+
+/* 进度 */
+.prog-wrap { display: none; margin-top: 20px; }
+.prog-wrap.show { display: block; }
+.prog-bar {
+  height: 10px; background: rgba(255,255,255,0.1);
+  border-radius: 5px; overflow: hidden;
+}
+.prog-fill {
+  height: 100%; width: 0%;
+  background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  transition: width .3s;
+}
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+.prog-text { font-size: 12px; color: #aaa; text-align: center; margin-top: 8px; }
+
+/* 日志 */
+.log {
+  margin-top: 12px; max-height: 120px; overflow-y: auto;
+  font-size: 11px; color: #888; font-family: monospace;
+  background: rgba(0,0,0,0.3); border-radius: 6px; padding: 8px 12px;
+  display: none;
+}
+.log.show { display: block; }
+.log .line { margin: 2px 0; }
+.log .ok { color: #4caf50; }
+.log .err { color: #f44336; }
+
+/* 结果 */
+.result {
+  display: none; margin-top: 20px;
+  padding: 16px; background: rgba(76,175,80,0.12);
+  border: 1px solid rgba(76,175,80,0.3);
+  border-radius: 10px; text-align: center;
+}
+.result.show { display: block; }
+.result .stat { font-size: 13px; color: #a5d6a7; margin-bottom: 12px; }
+.result audio { width: 100%; margin-bottom: 12px; }
+.dl-btn {
+  display: inline-block; padding: 10px 24px;
+  background: #4caf50; color: #fff; text-decoration: none;
+  border-radius: 8px; font-weight: 600; font-size: 14px;
+}
+.dl-btn:hover { background: #388e3c; }
+
+/* 错误 */
+.err-box {
+  display: none; margin-top: 16px;
+  padding: 12px 16px; background: rgba(244,67,54,0.12);
+  border: 1px solid rgba(244,67,54,0.3);
+  border-radius: 8px; color: #ef9a9a; font-size: 13px;
+}
+.err-box.show { display: block; }
+
+/* 引擎状态 */
+.engine-status {
+  font-size: 11px; padding: 6px 12px; border-radius: 12px;
+  display: inline-block; margin-bottom: 16px;
+}
+.engine-status.unloaded { background: rgba(255,152,0,0.15); color: #ffb74d; }
+.engine-status.loaded { background: rgba(76,175,80,0.15); color: #81c784; }
+.engine-status.loading { background: rgba(102,126,234,0.15); color: #9fa8da; }
+</style>
+</head>
+<body>
+<div class="box">
+  <h1>🎵 音频转 MP3</h1>
+  <div class="sub">ffmpeg.wasm 本地转换 · 文件不上传 · 单/多线程可选</div>
+
+  <!-- 引擎状态 -->
+  <div class="engine-status unloaded" id="engStatus">⚡ 引擎未加载</div>
+
+  <!-- 单/多线程切换 -->
+  <div class="mode-row">
+    <button class="mode-btn active" data-mode="st" id="btnST">
+      🐌 单线程（兼容好·无需COOP/COEP）
+    </button>
+    <button class="mode-btn" data-mode="mt" id="btnMT">
+      🚀 多线程（快·需COOP/COEP头）
+    </button>
+  </div>
+
+  <div class="drop" id="drop">
+    <p>📂 点击选择，或拖拽音频/视频到这里</p>
+    <p class="fmt">MP3 · WAV · FLAC · OGG · M4A · OPUS · MP4 · MOV</p>
+  </div>
+  <input type="file" id="file" accept="audio/*,video/*" hidden>
+
+  <div class="file-info" id="fileInfo">
+    <div class="name" id="fileName"></div>
+    <div class="size" id="fileSize"></div>
+  </div>
+
+  <div class="row">
+    <div>
+      <label>比特率</label>
+      <select id="bitrate">
+        <option value="96k">96 kbps（最小）</option>
+        <option value="128k" selected>128 kbps</option>
+        <option value="192k">192 kbps（推荐）</option>
+        <option value="256k">256 kbps</option>
+        <option value="320k">320 kbps</option>
+      </select>
+    </div>
+    <div>
+      <label>声道</label>
+      <select id="ch">
+        <option value="1">单声道</option>
+        <option value="2" selected>立体声</option>
+      </select>
+    </div>
+  </div>
+
+  <button class="btn" id="go" disabled>开始转换</button>
+
+  <div class="prog-wrap" id="progWrap">
+    <div class="prog-bar"><div class="prog-fill" id="progFill"></div></div>
+    <div class="prog-text" id="progText">准备中...</div>
+  </div>
+
+  <div class="log" id="log"></div>
+
+  <div class="err-box" id="errBox"></div>
+
+  <div class="result" id="result">
+    <div class="stat" id="stat"></div>
+    <audio id="preview" controls></audio><br>
+    <a href="#" class="dl-btn" id="dl">⬇ 下载 MP3</a>
+  </div>
+</div>
+
+<!-- 本地 ffmpeg UMD -->
+<script src="./assets/ffmpeg/ffmpeg.min.js"></script>
+<script>
+const { createFFmpeg, fetchFile } = window.FFmpeg;
+
+// ===== DOM =====
+const drop = document.getElementById('drop');
+const fileInput = document.getElementById('file');
+const fileInfo = document.getElementById('fileInfo');
+const fileName = document.getElementById('fileName');
+const fileSize = document.getElementById('fileSize');
+const goBtn = document.getElementById('go');
+const progWrap = document.getElementById('progWrap');
+const progFill = document.getElementById('progFill');
+const progText = document.getElementById('progText');
+const logEl = document.getElementById('log');
+const errBox = document.getElementById('errBox');
+const result = document.getElementById('result');
+const engStatus = document.getElementById('engStatus');
+const btnST = document.getElementById('btnST');
+const btnMT = document.getElementById('btnMT');
+
+let currentFile = null;
+let mode = 'st'; // 'st' | 'mt'
+let ffmpeg = null;
+let isLoaded = false;
+
+// ===== 日志 =====
+function log(msg, type) {
+  logEl.classList.add('show');
+  const line = document.createElement('div');
+  line.className = 'line ' + (type || '');
+  line.textContent = '[' + new Date().toLocaleTimeString() + '] ' + msg;
+  logEl.appendChild(line);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+function clearLog() { logEl.innerHTML = ''; }
+
+// ===== 模式切换 =====
+btnST.onclick = () => {
+  mode = 'st'; btnST.classList.add('active'); btnMT.classList.remove('active');
+  unloadEngine();
+};
+btnMT.onclick = () => {
+  mode = 'mt'; btnMT.classList.add('active'); btnST.classList.remove('active');
+  unloadEngine();
+};
+
+function unloadEngine() {
+  if (ffmpeg && ffmpeg.isLoaded()) {
+    // ffmpeg.wasm 0.11 没有 unload，只能重建
+  }
+  ffmpeg = null;
+  isLoaded = false;
+  engStatus.className = 'engine-status unloaded';
+  engStatus.textContent = '⚡ 引擎未加载（模式切换）';
+}
+
+// ===== 创建 ffmpeg 实例（手动指定路径）=====
+function getFFmpeg() {
+  if (mode === 'mt') {
+    // 多线程：用 ffmpeg-core.js（多线程版）+ worker
+    return createFFmpeg({
+      mainName: 'main',
+      corePath: './assets/ffmpeg/ffmpeg-core.js',
+      wasmURL: './assets/ffmpeg/ffmpeg-core.wasm',
+      workerPath: './assets/ffmpeg/ffmpeg-core.worker.js',
+      log: true,
+    });
+  } else {
+    // 单线程：用 ffmpeg-core.js（单线程版，不需要 worker）
+    return createFFmpeg({
+      mainName: 'main',
+      corePath: './assets/ffmpeg/ffmpeg-core.js',
+      wasmURL: './assets/ffmpeg/ffmpeg-core.wasm',
+      log: false,
+    });
+  }
+}
+
+// ===== 加载引擎 =====
+async function loadEngine() {
+  if (isLoaded && ffmpeg) return ffmpeg;
+
+  engStatus.className = 'engine-status loading';
+  engStatus.textContent = '⏳ 加载中...';
+  log('初始化 ffmpeg ' + mode + ' 模式');
+
+  ffmpeg = getFFmpeg();
+
+  try {
+    await ffmpeg.load();
+    isLoaded = true;
+    engStatus.className = 'engine-status loaded';
+    engStatus.textContent = '✅ 引擎就绪';
+    log('引擎加载完成', 'ok');
+  } catch (e) {
+    engStatus.className = 'engine-status unloaded';
+    engStatus.textContent = '❌ 加载失败';
+    log('加载失败: ' + e.message, 'err');
+    throw e;
+  }
+
+  return ffmpeg;
+}
+
+// ===== 拖拽/选择 =====
+drop.onclick = () => fileInput.click();
+fileInput.onchange = e => pick(e.target.files[0]);
+drop.ondragover = e => { e.preventDefault(); drop.classList.add('over'); };
+drop.ondragleave = () => drop.classList.remove('over');
+drop.ondrop = e => {
+  e.preventDefault(); drop.classList.remove('over');
+  pick(e.dataTransfer.files[0]);
+};
+
+function pick(f) {
+  if (!f) return;
+  if (f.size > 300 * 1024 * 1024) {
+    errBox.textContent = '文件超过 300MB，浏览器可能内存不足';
+    errBox.classList.add('show');
+    return;
+  }
+  errBox.classList.remove('show');
+  currentFile = f;
+  fileName.textContent = f.name;
+  fileSize.textContent = (f.size / 1024 / 1024).toFixed(2) + ' MB';
+  fileInfo.classList.add('show');
+  result.classList.remove('show');
+  goBtn.disabled = false;
+  log('已选择: ' + f.name + ' (' + (f.size/1024/1024).toFixed(1) + 'MB)');
+}
+
+// ===== 转换 =====
+goBtn.onclick = async () => {
+  if (!currentFile) return;
+
+  goBtn.disabled = true;
+  result.classList.remove('show');
+  errBox.classList.remove('show');
+  clearLog();
+  progWrap.classList.add('show');
+  setProg(2, '加载引擎...');
+
+  try {
+    const ff = await loadEngine();
+
+    setProg(10, '写入文件到虚拟文件系统...');
+    log('写入 ' + currentFile.name);
+
+    const ext = (currentFile.name.match(/\.[^.]+$/) || ['.bin'])[0];
+    const inp = 'input' + ext;
+    const out = 'output.mp3';
+
+    // 清理旧文件（如果存在）
+    try { ff.FS('unlink', inp); } catch(e) {}
+    try { ff.FS('unlink', out); } catch(e) {}
+
+    ff.FS('writeFile', inp, await fetchFile(currentFile));
+
+    setProg(20, '开始编码 ' + mode + ' 模式...');
+    log('执行: ffmpeg -i ' + inp + ' -b:a ' + document.getElementById('bitrate').value + ' -ac ' + document.getElementById('ch').value + ' ' + out);
+
+    // 进度回调
+    let lastPct = 20;
+    ff.setProgress(ratio => {
+      const p = Math.min(95, 20 + Math.round(ratio * 75));
+      if (p > lastPct) { lastPct = p; setProg(p, '转码中... ' + p + '%'); }
+    });
+
+    await ff.run(
+      '-i', inp,
+      '-vn',
+      '-map', '0:a:0',
+      '-c:a', 'libmp3lame',
+      '-b:a', document.getElementById('bitrate').value,
+      '-ac', document.getElementById('ch').value,
+      out
+    );
+
+    setProg(96, '读取输出...');
+    log('读取 output.mp3', 'ok');
+
+    const data = ff.FS('readFile', out);
+    const blob = new Blob([data.buffer], { type: 'audio/mpeg' });
+
+    // 清理
+    try { ff.FS('unlink', inp); } catch(e) {}
+    try { ff.FS('unlink', out); } catch(e) {}
+
+    setProg(100, '完成！');
+
+    const url = URL.createObjectURL(blob);
+    document.getElementById('preview').src = url;
+    const dl = document.getElementById('dl');
+    dl.href = url;
+    dl.download = currentFile.name.replace(/\.[^.]+$/, '') + '.mp3';
+
+    const origMB = (currentFile.size / 1024 / 1024).toFixed(2);
+    const outMB = (blob.size / 1024 / 1024).toFixed(2);
+    const saved = currentFile.size - blob.size;
+    const pct = (blob.size / currentFile.size * 100).toFixed(0);
+
+    document.getElementById('stat').innerHTML =
+      `原 ${origMB} MB → 后 ${outMB} MB（${pct}%）` +
+      (saved > 0 ? ` · 省 ${(saved/1024).toFixed(0)} KB` : '');
+
+    result.classList.add('show');
+    log('转换完成: ' + outMB + 'MB', 'ok');
+
+    setTimeout(() => progWrap.classList.remove('show'), 1500);
+
+  } catch (e) {
+    log('失败: ' + (e.message || e), 'err');
+    errBox.textContent = '转换失败: ' + (e.message || e);
+    errBox.classList.add('show');
+    progWrap.classList.remove('show');
+  } finally {
+    goBtn.disabled = false;
+  }
+};
+
+function setProg(pct, text) {
+  progFill.style.width = pct + '%';
+  progText.textContent = text;
+}
+</script>
+</body>
+</html>
