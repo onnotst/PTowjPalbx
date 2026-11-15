@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>音频转 MP3 - ffmpeg.wasm 本地转换</title>
+<style>
+/* 你原来的样式一字没动，这里省略，用你自己的 */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: linear-gradient(135deg, #0f0c29, #302b63, #24243e); min-height: 100vh; padding: 20px; color: #eee; }
+.box { max-width: 720px; margin: 0 auto; background: rgba(255,255,255,0.06); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.12); border-radius: 16px; padding: 32px; box-shadow: 0 20px 60px rgba(0,0,0,0.4); }
+h1 { font-size: 22px; margin-bottom: 4px; }
+.sub { font-size: 12px; color: #aaa; margin-bottom: 24px; }
+.mode-row { display: flex; gap: 8px; margin-bottom: 20px; }
+.mode-btn { flex: 1; padding: 10px; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; background: transparent; color: #ccc; cursor: pointer; font-size: 13px; transition: .2s; }
+.mode-btn.active { background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; border-color: transparent; }
+.drop { border: 2px dashed rgba(255,255,255,0.25); border-radius: 12px; padding: 40px 16px; text-align: center; cursor: pointer; transition: .3s; margin-bottom: 20px; }
+.drop:hover, .drop.over { border-color: #667eea; background: rgba(102,126,234,0.08); }
+.drop p { font-size: 15px; }
+.drop .fmt { font-size: 11px; color: #888; margin-top: 6px; }
+.file-info { background: rgba(255,255,255,0.06); border-radius: 8px; padding: 12px 16px; margin-bottom: 16px; display: none; }
+.file-info.show { display: block; }
+.file-info .name { font-weight: 600; word-break: break-all; }
+.file-info .size { font-size: 12px; color: #aaa; margin-top: 4px; }
+.row { display: flex; gap: 12px; margin-bottom: 20px; }
+.row > div { flex: 1; }
+label { font-size: 12px; font-weight: 600; color: #bbb; display: block; margin-bottom: 6px; }
+select { width: 100%; padding: 10px; border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; background: rgba(0,0,0,0.3); color: #eee; font-size: 14px; }
+.btn { width: 100%; padding: 14px; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; transition: .3s; }
+.btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(102,126,234,0.5); }
+.btn:disabled { opacity: .4; cursor: not-allowed; }
+.prog-wrap { display: none; margin-top: 20px; }
+.prog-wrap.show { display: block; }
+.prog-bar { height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; overflow: hidden; }
+.prog-fill { height: 100%; width: 0%; background: linear-gradient(90deg, #667eea, #764ba2, #f093fb); background-size: 200% 100%; animation: shimmer 1.5s infinite; transition: width .3s; }
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+.prog-text { font-size: 12px; color: #aaa; text-align: center; margin-top: 8px; }
+.log { margin-top: 12px; max-height: 120px; overflow-y: auto; font-size: 11px; color: #888; font-family: monospace; background: rgba(0,0,0,0.3); border-radius: 6px; padding: 8px 12px; display: none; }
+.log.show { display: block; }
+.log .line { margin: 2px 0; }
+.log .ok { color: #4caf50; }
+.log .err { color: #f44336; }
+.result { display: none; margin-top: 20px; padding: 16px; background: rgba(76,175,80,0.12); border: 1px solid rgba(76,175,80,0.3); border-radius: 10px; text-align: center; }
+.result.show { display: block; }
+.result .stat { font-size: 13px; color: #a5d6a7; margin-bottom: 12px; }
+.result audio { width: 100%; margin-bottom: 12px; }
+.dl-btn { display: inline-block; padding: 10px 24px; background: #4caf50; color: #fff; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 14px; }
+.dl-btn:hover { background: #388e3c; }
+.err-box { display: none; margin-top: 16px; padding: 12px 16px; background: rgba(244,67,54,0.12); border: 1px solid rgba(244,67,54,0.3); border-radius: 8px; color: #ef9a9a; font-size: 13px; }
+.err-box.show { display: block; }
+.engine-status { font-size: 11px; padding: 6px 12px; border-radius: 12px; display: inline-block; margin-bottom: 16px; }
+.engine-status.unloaded { background: rgba(255,152,0,0.15); color: #ffb74d; }
+.engine-status.loaded { background: rgba(76,175,80,0.15); color: #81c784; }
+.engine-status.loading { background: rgba(102,126,234,0.15); color: #9fa8da; }
+#wasmBar { width: 100%; height: 6px; margin-top: 8px; }
+</style>
+</head>
+<body>
+<div class="box">
+  <h1>🎵 音频转 MP3</h1>
+  <div class="sub">ffmpeg.wasm 本地转换 · 文件不上传 · 单/多线程可选</div>
+
+  <div class="engine-status unloaded" id="engStatus">⚡ 引擎未加载</div>
+  <progress id="wasmBar" value="0" max="100"></progress>
+  <div class="prog-text" id="wasmText">等待下载 wasm...</div>
+
+  <div class="mode-row">
+    <button class="mode-btn active" id="btnST">🐌 单线程</button>
+    <button class="mode-btn" id="btnMT">🚀 多线程</button>
+  </div>
+
+  <div class="drop" id="drop">
+    <p>📂 点击选择，或拖拽音频/视频到这里</p>
+    <p class="fmt">MP3 · WAV · FLAC · OGG · M4A · OPUS · MP4 · MOV</p>
+  </div>
+  <input type="file" id="file" accept="audio/*,video/*" hidden>
+
+  <div class="file-info" id="fileInfo">
+    <div class="name" id="fileName"></div>
+    <div class="size" id="fileSize"></div>
+  </div>
+
+  <div class="row">
+    <div>
+      <label>比特率</label>
+      <select id="bitrate">
+        <option value="96k">96 kbps</option>
+        <option value="128k" selected>128 kbps</option>
+        <option value="192k">192 kbps</option>
+        <option value="256k">256 kbps</option>
+        <option value="320k">320 kbps</option>
+      </select>
+    </div>
+    <div>
+      <label>声道</label>
+      <select id="ch">
+        <option value="1">单声道</option>
+        <option value="2" selected>立体声</option>
+      </select>
+    </div>
+  </div>
+
+  <button class="btn" id="go" disabled>开始转换</button>
+
+  <div class="prog-wrap" id="progWrap">
+    <div class="prog-bar"><div class="prog-fill" id="progFill"></div></div>
+    <div class="prog-text" id="progText">准备中...</div>
+  </div>
+
+  <div class="log" id="log"></div>
+  <div class="err-box" id="errBox"></div>
+
+  <div class="result" id="result">
+    <div class="stat" id="stat"></div>
+    <audio id="preview" controls></audio><br>
+    <a href="#" class="dl-btn" id="dl">⬇ 下载 MP3</a>
+  </div>
+</div>
+
+<script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
+<script src="https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js"></script>
+
+<script>
+const { createFFmpeg, fetchFile } = window.FFmpeg;
+
+// ===== DOM =====
+const drop = document.getElementById('drop');
+const fileInput = document.getElementById('file');
+const fileInfo = document.getElementById('fileInfo');
+const fileName = document.getElementById('fileName');
+const fileSize = document.getElementById('fileSize');
+const goBtn = document.getElementById('go');
+const progWrap = document.getElementById('progWrap');
+const progFill = document.getElementById('progFill');
+const progText = document.getElementById('progText');
+const logEl = document.getElementById('log');
+const errBox = document.getElementById('errBox');
+const result = document.getElementById('result');
+const engStatus = document.getElementById('engStatus');
+const wasmBar = document.getElementById('wasmBar');
+const wasmText = document.getElementById('wasmText');
+const btnST = document.getElementById('btnST');
+const btnMT = document.getElementById('btnMT');
+
+let currentFile = null;
+let mode = 'st';
+let ffmpeg = null;
+let isLoaded = false;
+let wasmBlobURL = null;  // ← 关键：streamDownload 的结果存这里
+
+// ===== 日志 =====
+function log(msg, type) {
+  logEl.classList.add('show');
+  const line = document.createElement('div');
+  line.className = 'line ' + (type || '');
+  line.textContent = '[' + new Date().toLocaleTimeString() + '] ' + msg;
+  logEl.appendChild(line);
+  logEl.scrollTop = logEl.scrollHeight;
+}
+function clearLog() { logEl.innerHTML = ''; }
+
+// ===== 模式切换 =====
+btnST.onclick = () => { mode = 'st'; btnST.classList.add('active'); btnMT.classList.remove('active'); resetEngine(); };
+btnMT.onclick = () => { mode = 'mt'; btnMT.classList.add('active'); btnST.classList.remove('active'); resetEngine(); };
+
+function resetEngine() {
+  ffmpeg = null;
+  isLoaded = false;
+  engStatus.className = 'engine-status unloaded';
+  engStatus.textContent = '⚡ 引擎未加载';
+}
+
+// ===== 流式下载 wasm（页面加载时自动执行）=====
+async function streamDownloadWasm() {
+  const WASM_URL = 'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.wasm';
+  wasmText.textContent = '⏳ 下载 wasm 中...';
+
+  try {
+    const res = await fetch(WASM_URL);
+    if (!res.ok) throw new Error('HTTP ' + res.status + ' 可能 unpkg 被拦');
+
+    const total = parseInt(res.headers.get('Content-Length') || '0', 10);
+    const reader = res.body.getReader();
+    const chunks = [];
+    let loaded = 0;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      chunks.push(value);
+      loaded += value.length;
+      const pct = total ? (loaded / total * 100) : (loaded / 1024 / 1024);
+      wasmBar.value = pct;
+      wasmText.textContent = total
+        ? `⏳ wasm 下载中 ${pct.toFixed(1)}% (${(loaded/1048576).toFixed(1)}/${(total/1048576).toFixed(1)} MB)`
+        : `⏳ wasm 接收中 ${(loaded/1048576).toFixed(1)} MB`;
+    }
+
+    // 合并成 Blob
+    const wasmBlob = new Blob(chunks, { type: 'application/wasm' });
+
+    // 校验魔数
+    const head = new Uint8Array(await wasmBlob.slice(0, 4).arrayBuffer());
+    const magic = head[0]===0x00 && head[1]===0x61 && head[2]===0x73 && head[3]===0x6d;
+    if (!magic) throw new Error('下载的不是合法 wasm（可能被拦截页污染）');
+
+    wasmBlobURL = URL.createObjectURL(wasmBlob);
+    wasmBar.value = 100;
+    wasmText.textContent = `✅ wasm 就绪 (${(wasmBlob.size/1048576).toFixed(1)} MB)`;
+    engStatus.className = 'engine-status loaded';
+    engStatus.textContent = '✅ 引擎就绪（wasm 已下载）';
+    goBtn.disabled = false;  // wasm 下好了才允许点转换
+    log('wasm 流式下载完成: ' + (wasmBlob.size/1048576).toFixed(1) + ' MB', 'ok');
+
+  } catch (e) {
+    wasmText.textContent = '❌ wasm 下载失败: ' + e.message;
+    engStatus.className = 'engine-status unloaded';
+    engStatus.textContent = '❌ wasm 下载失败';
+    log('wasm 下载失败: ' + e.message, 'err');
+    console.error(e);
+  }
+}
+
+// 页面加载后立刻开始下载 wasm
+streamDownloadWasm();
+
+// ===== 创建 ffmpeg 实例（用流式下载的 blob URL）=====
+function getFFmpeg() {
+  if (!wasmBlobURL) throw new Error('wasm 还没下载完');
+
+  const opt = {
+    mainName: 'main',
+    corePath: 'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js',
+    wasmURL: wasmBlobURL,  // ← 用 streamDownload 的结果
+  };
+
+  if (mode === 'mt') {
+    opt.workerPath = 'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.worker.js';
+    opt.log = true;
+  } else {
+    opt.log = false;
+  }
+
+  return createFFmpeg(opt);
+}
+
+// ===== 加载引擎 =====
+async function loadEngine() {
+  if (isLoaded && ffmpeg) return ffmpeg;
+
+  if (!wasmBlobURL) {
+    throw new Error('wasm 还没下载完，请等进度条到 100%');
+  }
+
+  engStatus.className = 'engine-status loading';
+  engStatus.textContent = '⏳ 初始化 ffmpeg...';
+  log('初始化 ffmpeg ' + mode + ' 模式');
+
+  ffmpeg = getFFmpeg();
+
+  try {
+    await ffmpeg.load();
+    isLoaded = true;
+    engStatus.className = 'engine-status loaded';
+    engStatus.textContent = '✅ 引擎就绪';
+    log('ffmpeg.load() 完成', 'ok');
+    return ffmpeg;
+  } catch (e) {
+    engStatus.className = 'engine-status unloaded';
+    engStatus.textContent = '❌ 加载失败';
+    log('ffmpeg.load() 失败: ' + e.message, 'err');
+    throw e;
+  }
+}
+
+// ===== 拖拽/选择 =====
+drop.onclick = () => fileInput.click();
+fileInput.onchange = e => pick(e.target.files[0]);
+drop.ondragover = e => { e.preventDefault(); drop.classList.add('over'); };
+drop.ondragleave = () => drop.classList.remove('over');
+drop.ondrop = e => { e.preventDefault(); drop.classList.remove('over'); pick(e.dataTransfer.files[0]); };
+
+function pick(f) {
+  if (!f) return;
+  if (f.size > 300 * 1024 * 1024) { errBox.textContent = '文件超过 300MB'; errBox.classList.add('show'); return; }
+  errBox.classList.remove('show');
+  currentFile = f;
+  fileName.textContent = f.name;
+  fileSize.textContent = (f.size / 1024 / 1024).toFixed(2) + ' MB';
+  fileInfo.classList.add('show');
+  result.classList.remove('show');
+  log('已选择: ' + f.name + ' (' + (f.size/1024/1024).toFixed(1) + 'MB)');
+}
+
+// ===== 转换 =====
+goBtn.onclick = async () => {
+  if (!currentFile) return;
+  goBtn.disabled = true;
+  result.classList.remove('show');
+  errBox.classList.remove('show');
+  clearLog();
+  progWrap.classList.add('show');
+  setProg(2, '加载引擎...');
+
+  try {
+    const ff = await loadEngine();
+    setProg(10, '写入文件...');
+    log('写入 ' + currentFile.name);
+
+    const ext = (currentFile.name.match(/\.[^.]+$/) || ['.bin'])[0];
+    const inp = 'input' + ext;
+    const out = 'output.mp3';
+    try { ff.FS('unlink', inp); } catch(e) {}
+    try { ff.FS('unlink', out); } catch(e) {}
+    ff.FS('writeFile', inp, await fetchFile(currentFile));
+
+    setProg(20, '开始编码...');
+    log('执行 ffmpeg 转码');
+
+    let lastPct = 20;
+    ff.setProgress(ratio => {
+      const p = Math.min(95, 20 + Math.round(ratio * 75));
+      if (p > lastPct) { lastPct = p; setProg(p, '转码中 ' + p + '%'); }
+    });
+
+    await ff.run('-i', inp, '-vn', '-map', '0:a:0', '-c:a', 'libmp3lame', '-b:a', document.getElementById('bitrate').value, '-ac', document.getElementById('ch').value, out);
+
+    setProg(96, '读取输出...');
+    const data = ff.FS('readFile', out);
+    const blob = new Blob([data.buffer], { type: 'audio/mpeg' });
+    try { ff.FS('unlink', inp); } catch(e) {}
+    try { ff.FS('unlink', out); } catch(e) {}
+
+    setProg(100, '完成！');
+    const url = URL.createObjectURL(blob);
+    document.getElementById('preview').src = url;
+    const dl = document.getElementById('dl');
+    dl.href = url;
+    dl.download = currentFile.name.replace(/\.[^.]+$/, '') + '.mp3';
+
+    const origMB = (currentFile.size / 1024 / 1024).toFixed(2);
+    const outMB = (blob.size / 1024 / 1024).toFixed(2);
+    document.getElementById('stat').innerHTML = `原 ${origMB} MB → 后 ${outMB} MB`;
+    result.classList.add('show');
+    log('转换完成: ' + outMB + 'MB', 'ok');
+    setTimeout(() => progWrap.classList.remove('show'), 1500);
+  } catch (e) {
+    log('失败: ' + (e.message || e), 'err');
+    errBox.textContent = '转换失败: ' + (e.message || e);
+    errBox.classList.add('show');
+    progWrap.classList.remove('show');
+  } finally {
+    goBtn.disabled = false;
+  }
+};
+
+function setProg(pct, text) {
+  progFill.style.width = pct + '%';
+  progText.textContent = text;
+}
+</script>
+</body>
+</html>

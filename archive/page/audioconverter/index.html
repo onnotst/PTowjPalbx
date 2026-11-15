@@ -3,344 +3,547 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>音频转 MP3 - ffmpeg.wasm 本地转换</title>
+<title>音频转 MP3 · ffmpeg.wasm 本地转换</title>
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
-  min-height: 100vh; padding: 20px; color: #eee;
-}
-.box {
-  max-width: 720px; margin: 0 auto;
-  background: rgba(255,255,255,0.06);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 16px; padding: 32px;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.4);
-}
-h1 { font-size: 22px; margin-bottom: 4px; }
-.sub { font-size: 12px; color: #aaa; margin-bottom: 24px; }
-.mode-row { display: flex; gap: 8px; margin-bottom: 20px; }
-.mode-btn {
-  flex: 1; padding: 10px; border: 1px solid rgba(255,255,255,0.2);
-  border-radius: 8px; background: transparent; color: #ccc;
-  cursor: pointer; font-size: 13px; transition: .2s;
-}
-.mode-btn.active {
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  color: #fff; border-color: transparent;
-}
-.mode-btn:hover:not(.active) { border-color: #667eea; color: #fff; }
-.drop {
-  border: 2px dashed rgba(255,255,255,0.25);
-  border-radius: 12px; padding: 40px 16px;
-  text-align: center; cursor: pointer;
-  transition: .3s; margin-bottom: 20px;
-}
-.drop:hover, .drop.over { border-color: #667eea; background: rgba(102,126,234,0.08); }
-.drop p { font-size: 15px; }
-.drop .fmt { font-size: 11px; color: #888; margin-top: 6px; }
-.file-info {
-  background: rgba(255,255,255,0.06); border-radius: 8px; padding: 12px 16px;
-  margin-bottom: 16px; display: none;
-}
-.file-info.show { display: block; }
-.file-info .name { font-weight: 600; word-break: break-all; }
-.file-info .size { font-size: 12px; color: #aaa; margin-top: 4px; }
-.row { display: flex; gap: 12px; margin-bottom: 20px; }
-.row > div { flex: 1; }
-label { font-size: 12px; font-weight: 600; color: #bbb; display: block; margin-bottom: 6px; }
-select {
-  width: 100%; padding: 10px; border: 1px solid rgba(255,255,255,0.2);
-  border-radius: 8px; background: rgba(0,0,0,0.3); color: #eee; font-size: 14px;
-}
-.btn {
-  width: 100%; padding: 14px; border: none; border-radius: 10px;
-  font-size: 15px; font-weight: 700; cursor: pointer;
-  background: linear-gradient(135deg, #667eea, #764ba2); color: #fff; transition: .3s;
-}
-.btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(102,126,234,0.5); }
-.btn:disabled { opacity: .4; cursor: not-allowed; }
-.prog-wrap { display: none; margin-top: 20px; }
-.prog-wrap.show { display: block; }
-.prog-bar { height: 10px; background: rgba(255,255,255,0.1); border-radius: 5px; overflow: hidden; }
-.prog-fill {
-  height: 100%; width: 0%;
-  background: linear-gradient(90deg, #667eea, #764ba2, #f093fb);
-  background-size: 200% 100%; animation: shimmer 1.5s infinite; transition: width .3s;
-}
-@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-.prog-text { font-size: 12px; color: #aaa; text-align: center; margin-top: 8px; }
-.log {
-  margin-top: 12px; max-height: 120px; overflow-y: auto; font-size: 11px; color: #888;
-  font-family: monospace; background: rgba(0,0,0,0.3); border-radius: 6px; padding: 8px 12px; display: none;
-}
-.log.show { display: block; }
-.log .line { margin: 2px 0; }
-.log .ok { color: #4caf50; }
-.log .err { color: #f44336; }
-.result {
-  display: none; margin-top: 20px; padding: 16px; background: rgba(76,175,80,0.12);
-  border: 1px solid rgba(76,175,80,0.3); border-radius: 10px; text-align: center;
-}
-.result.show { display: block; }
-.result .stat { font-size: 13px; color: #a5d6a7; margin-bottom: 12px; }
-.result audio { width: 100%; margin-bottom: 12px; }
-.dl-btn {
-  display: inline-block; padding: 10px 24px; background: #4caf50; color: #fff;
-  text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 14px;
-}
-.dl-btn:hover { background: #388e3c; }
-.err-box {
-  display: none; margin-top: 16px; padding: 12px 16px; background: rgba(244,67,54,0.12);
-  border: 1px solid rgba(244,67,54,0.3); border-radius: 8px; color: #ef9a9a; font-size: 13px;
-}
-.err-box.show { display: block; }
-.engine-status { font-size: 11px; padding: 6px 12px; border-radius: 12px; display: inline-block; margin-bottom: 16px; }
-.engine-status.unloaded { background: rgba(255,152,0,0.15); color: #ffb74d; }
-.engine-status.loaded { background: rgba(76,175,80,0.15); color: #81c784; }
-.engine-status.loading { background: rgba(102,126,234,0.15); color: #9fa8da; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --card:rgba(255,255,255,.055); --line:rgba(255,255,255,.13);
+    --txt:#eaeaf2; --dim:#9d9db4; --acc:#7d7bf5; --acc2:#a855f7;
+  }
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",Roboto,sans-serif;
+    min-height:100vh;padding:26px 16px 48px;color:var(--txt);
+    background:radial-gradient(1200px 600px at 20% 0%,#232055 0%,transparent 60%),
+               radial-gradient(900px 500px at 90% 10%,#3b1e4d 0%,transparent 55%),
+               linear-gradient(160deg,#0f0c29,#171436 45%,#1b1730);
+  }
+  .wrap{max-width:780px;margin:0 auto}
+  header{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:18px;flex-wrap:wrap}
+  h1{font-size:21px;letter-spacing:.4px;display:flex;align-items:center;gap:9px}
+  .tagline{font-size:12px;color:var(--dim);margin-top:6px;line-height:1.7;max-width:560px}
+  .badge{
+    font-size:11.5px;padding:6px 11px;border-radius:999px;white-space:nowrap;
+    border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--dim);
+  }
+  .badge.loading{color:#c7b9ff;border-color:rgba(125,123,245,.5);background:rgba(125,123,245,.12)}
+  .badge.ok{color:#86efac;border-color:rgba(74,222,128,.45);background:rgba(74,222,128,.1)}
+  .badge.err{color:#fca5a5;border-color:rgba(248,113,113,.45);background:rgba(248,113,113,.1)}
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:16px;
+    padding:22px;backdrop-filter:blur(14px);box-shadow:0 18px 50px rgba(0,0,0,.38);
+  }
+  .banner{
+    display:none;margin-bottom:16px;padding:12px 15px;border-radius:11px;font-size:12.5px;line-height:1.8;
+    background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.35);color:#fecaca;
+  }
+  .banner.show{display:block}
+  .banner b{color:#fff}
+  .modes{display:flex;gap:8px;margin-bottom:14px}
+  .modes button{
+    flex:1;padding:11px 10px;border-radius:10px;cursor:pointer;font-size:12.5px;
+    border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--dim);transition:.18s;
+  }
+  .modes button:hover:not(:disabled){border-color:rgba(125,123,245,.6);color:#fff}
+  .modes button.active{
+    border-color:transparent;color:#fff;font-weight:600;
+    background:linear-gradient(135deg,var(--acc),var(--acc2));box-shadow:0 6px 18px rgba(125,123,245,.3)
+  }
+  .modes button:disabled{opacity:.42;cursor:not-allowed}
+  .drop{
+    border:2px dashed rgba(255,255,255,.22);border-radius:13px;padding:34px 16px;
+    text-align:center;cursor:pointer;transition:.26s;margin-bottom:16px;background:rgba(255,255,255,.015)
+  }
+  .drop:hover,.drop.over{border-color:rgba(125,123,245,.75);background:rgba(125,123,245,.08)}
+  .drop .big{font-size:14.5px;margin-bottom:7px}
+  .drop .fmt{font-size:11px;color:var(--dim);letter-spacing:.3px}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;margin-bottom:16px}
+  @media(max-width:560px){ .grid{grid-template-columns:1fr} }
+  label{font-size:11.5px;font-weight:600;color:#b9b9cc;display:block;margin-bottom:6px;letter-spacing:.3px}
+  select{
+    width:100%;padding:10px 11px;border-radius:9px;font-size:13px;color:var(--txt);
+    border:1px solid var(--line);background:rgba(12,10,30,.65);outline:none
+  }
+  select:focus{border-color:rgba(125,123,245,.7)}
+  .go{
+    width:100%;padding:14px;border:none;border-radius:11px;cursor:pointer;
+    font-size:14.5px;font-weight:700;color:#fff;letter-spacing:.5px;
+    background:linear-gradient(135deg,var(--acc),var(--acc2));transition:.2s;
+  }
+  .go:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 10px 26px rgba(125,123,245,.42)}
+  .go:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
+  .hint{font-size:11.5px;color:var(--dim);margin-top:9px;text-align:center;line-height:1.7}
+  .list{margin-top:18px;display:none}
+  .list.show{display:block}
+  .item{
+    border:1px solid var(--line);border-radius:11px;padding:12px 14px;margin-bottom:9px;
+    background:rgba(255,255,255,.035)
+  }
+  .item .row1{display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap}
+  .item .nm{flex:1;font-size:13px;font-weight:600;word-break:break-all;line-height:1.45;min-width:120px}
+  .item .sz{font-size:11px;color:var(--dim);white-space:nowrap}
+  .st{font-size:11px;padding:3px 9px;border-radius:999px;white-space:nowrap;border:1px solid transparent}
+  .st.wait{color:#cbd5e1;background:rgba(148,163,184,.14);border-color:rgba(148,163,184,.3)}
+  .st.run{color:#c7b9ff;background:rgba(125,123,245,.16);border-color:rgba(125,123,245,.4)}
+  .st.ok{color:#86efac;background:rgba(74,222,128,.13);border-color:rgba(74,222,128,.35)}
+  .st.err{color:#fca5a5;background:rgba(248,113,113,.13);border-color:rgba(248,113,113,.35)}
+  .bar{height:6px;border-radius:4px;background:rgba(255,255,255,.09);overflow:hidden}
+  .bar i{display:block;height:100%;width:0;border-radius:4px;transition:width .18s;
+    background:linear-gradient(90deg,#7d7bf5,#a855f7,#f0abfc)}
+  .item .foot{display:flex;align-items:center;gap:12px;margin-top:8px;font-size:11.5px;color:var(--dim);flex-wrap:wrap}
+  .item .foot a{color:#a5b4fc;text-decoration:none;border-bottom:1px dotted rgba(165,180,252,.5)}
+  .item .foot a:hover{color:#fff}
+  .item audio{width:100%;margin-top:9px;height:32px}
+  .tools{display:flex;justify-content:flex-end;gap:10px;margin-top:4px}
+  .tools button{
+    font-size:11.5px;padding:7px 12px;border-radius:8px;cursor:pointer;
+    border:1px solid var(--line);background:rgba(255,255,255,.04);color:#c9c9dd
+  }
+  .tools button:hover{border-color:rgba(125,123,245,.6);color:#fff}
+  .logbox{margin-top:14px;display:none}
+  .logbox.show{display:block}
+  .logbox summary{cursor:pointer;font-size:11.5px;color:var(--dim);list-style:none;padding:7px 10px;
+    border:1px solid var(--line);border-radius:8px;background:rgba(255,255,255,.03)}
+  .logbox summary::-webkit-details-marker{display:none}
+  .log{
+    margin-top:8px;max-height:200px;overflow:auto;font:11px/1.7 Consolas,"Courier New",monospace;
+    color:#98a2b3;background:rgba(0,0,0,.36);border-radius:8px;padding:10px 12px;
+    white-space:pre-wrap;word-break:break-all
+  }
+  .log .e{color:#fca5a5}
+  .log .s{color:#86efac}
+  .log .w{color:#fcd34d}
+  footer{margin-top:18px;text-align:center;font-size:11px;color:#6f6f86;line-height:1.8}
 </style>
 </head>
 <body>
-<div class="box">
-  <h1>🎵 音频转 MP3</h1>
-  <div class="sub">ffmpeg.wasm 本地转换 · 文件不上传 · 单/多线程可选</div>
-
-  <div class="engine-status unloaded" id="engStatus">⚡ 引擎未加载</div>
-
-  <div class="mode-row">
-    <button class="mode-btn active" data-mode="st" id="btnST">🐌 单线程</button>
-    <button class="mode-btn" data-mode="mt" id="btnMT">🚀 多线程</button>
-  </div>
-
-  <div class="drop" id="drop">
-    <p>📂 点击选择，或拖拽音频/视频到这里</p>
-    <p class="fmt">MP3 · WAV · FLAC · OGG · M4A · OPUS · MP4 · MOV</p>
-  </div>
-  <input type="file" id="file" accept="audio/*,video/*" hidden>
-
-  <div class="file-info" id="fileInfo">
-    <div class="name" id="fileName"></div>
-    <div class="size" id="fileSize"></div>
-  </div>
-
-  <div class="row">
+<div class="wrap">
+  <header>
     <div>
-      <label>比特率</label>
-      <select id="bitrate">
-        <option value="96k">96 kbps</option>
-        <option value="128k" selected>128 kbps</option>
-        <option value="192k">192 kbps</option>
-        <option value="256k">256 kbps</option>
-        <option value="320k">320 kbps</option>
-      </select>
+      <h1><span>🎵</span>音频转 MP3</h1>
+      <div class="tagline">ffmpeg.wasm 全程在本机浏览器内转码，文件不上传任何服务器。核心文件已随包内置，默认不走 CDN。</div>
     </div>
-    <div>
-      <label>声道</label>
-      <select id="ch">
-        <option value="1">单声道</option>
-        <option value="2" selected>立体声</option>
-      </select>
+    <div class="badge" id="badge">引擎未加载</div>
+  </header>
+
+  <div class="card">
+    <div class="banner" id="banner"></div>
+
+    <div class="modes">
+      <button class="active" id="mST">🐌 单线程（推荐）</button>
+      <button id="mMT">🚀 多线程（更快）</button>
     </div>
+
+    <div class="drop" id="drop">
+      <div class="big">📂 点击选择，或把音频/视频拖到这里</div>
+      <div class="fmt">MP3 · WAV · FLAC · OGG · M4A · OPUS · AAC · MP4 · MOV · MKV</div>
+    </div>
+    <input type="file" id="file" accept="audio/*,video/*,.flac,.ogg,.opus,.m4a,.aac,.wma,.amr,.mkv,.wmv,.avi" multiple hidden>
+
+    <div class="grid">
+      <div>
+        <label>比特率</label>
+        <select id="br">
+          <option value="96k">96 kbps</option>
+          <option value="128k" selected>128 kbps</option>
+          <option value="160k">160 kbps</option>
+          <option value="192k">192 kbps</option>
+          <option value="256k">256 kbps</option>
+          <option value="320k">320 kbps</option>
+        </select>
+      </div>
+      <div>
+        <label>声道</label>
+        <select id="ch">
+          <option value="" selected>保持原样</option>
+          <option value="1">单声道</option>
+          <option value="2">立体声</option>
+        </select>
+      </div>
+      <div>
+        <label>采样率</label>
+        <select id="sr">
+          <option value="auto" selected>保持原样</option>
+          <option value="44100">44100 Hz</option>
+          <option value="48000">48000 Hz</option>
+          <option value="22050">22050 Hz</option>
+        </select>
+      </div>
+    </div>
+
+    <button class="go" id="go" disabled>开始转换</button>
+    <div class="hint" id="hint">首次转换需要把 32MB 核心编译进浏览器内存，约 5–20 秒；之后换文件秒开。</div>
+
+    <div class="list" id="list"></div>
+    <div class="tools" id="tools" style="display:none">
+      <button id="clear">清空列表</button>
+    </div>
+
+    <details class="logbox" id="logbox">
+      <summary>运行日志（出错时看这里）</summary>
+      <div class="log" id="log"></div>
+    </details>
   </div>
 
-  <button class="btn" id="go" disabled>开始转换</button>
-
-  <div class="prog-wrap" id="progWrap">
-    <div class="prog-bar"><div class="prog-fill" id="progFill"></div></div>
-    <div class="prog-text" id="progText">准备中...</div>
-  </div>
-
-  <div class="log" id="log"></div>
-  <div class="err-box" id="errBox"></div>
-
-  <div class="result" id="result">
-    <div class="stat" id="stat"></div>
-    <audio id="preview" controls></audio><br>
-    <a href="#" class="dl-btn" id="dl">⬇ 下载 MP3</a>
-  </div>
+  <footer>ffmpeg.wasm 0.12.15 · ffmpeg core 0.12.10 · 本地核心优先，npmmirror 兜底</footer>
 </div>
 
-<script>
-// 强制 ffmpeg 内部 fetch unpkg 时不带 cookie
-const _f = window.fetch;
-window.fetch = (u, o = {}) => {
-  if (typeof u === 'string' && u.includes('unpkg.com')) o.credentials = 'omit';
-  return _f(u, o);
-};
-</script>
-<!-- 全部走 unpkg -->
-<script src="https://unpkg.com/@ffmpeg/ffmpeg@0.11.6/dist/ffmpeg.min.js"></script>
-<script src="https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js"></script>
+<script type="module">
+import { FFmpeg } from './lib/index.js';
 
-<script>
-const { createFFmpeg, fetchFile } = window.FFmpeg;
+const $ = (id) => document.getElementById(id);
+const badge = $('badge'), banner = $('banner'), drop = $('drop'), fileInput = $('file');
+const listEl = $('list'), goBtn = $('go'), logEl = $('log'), logbox = $('logbox');
+const mST = $('mST'), mMT = $('mMT'), tools = $('tools');
 
-const drop = document.getElementById('drop');
-const fileInput = document.getElementById('file');
-const fileInfo = document.getElementById('fileInfo');
-const fileName = document.getElementById('fileName');
-const fileSize = document.getElementById('fileSize');
-const goBtn = document.getElementById('go');
-const progWrap = document.getElementById('progWrap');
-const progFill = document.getElementById('progFill');
-const progText = document.getElementById('progText');
-const logEl = document.getElementById('log');
-const errBox = document.getElementById('errBox');
-const result = document.getElementById('result');
-const engStatus = document.getElementById('engStatus');
-const btnST = document.getElementById('btnST');
-const btnMT = document.getElementById('btnMT');
+const BASE = new URL('.', location.href).href;
+const CORE_MT_VER = '0.12.10';
 
-let currentFile = null;
 let mode = 'st';
-let ffmpeg = null;
-let isLoaded = false;
+let engine = null;
+let engineSource = '';
+let enginePromise = null;
+let running = false;
+let progressTarget = null;
+const queue = [];
 
-function log(msg, type) {
-  logEl.classList.add('show');
-  const line = document.createElement('div');
-  line.className = 'line ' + (type || '');
-  line.textContent = '[' + new Date().toLocaleTimeString() + '] ' + msg;
-  logEl.appendChild(line);
+/* ---------------- 日志 ---------------- */
+function log(msg, cls) {
+  logbox.classList.add('show');
+  const div = document.createElement('div');
+  if (cls) div.className = cls;
+  div.textContent = '[' + new Date().toLocaleTimeString() + '] ' + msg;
+  logEl.appendChild(div);
   logEl.scrollTop = logEl.scrollHeight;
-}
-function clearLog() { logEl.innerHTML = ''; }
-
-btnST.onclick = () => { mode = 'st'; btnST.classList.add('active'); btnMT.classList.remove('active'); resetEngine(); };
-btnMT.onclick = () => { mode = 'mt'; btnMT.classList.add('active'); btnST.classList.remove('active'); resetEngine(); };
-
-function resetEngine() {
-  ffmpeg = null;
-  isLoaded = false;
-  engStatus.className = 'engine-status unloaded';
-  engStatus.textContent = '⚡ 引擎未加载';
+  if (cls === 'e') logbox.open = true;
 }
 
-function getFFmpeg() {
-  const opt = {
-    mainName: 'main',
-    corePath: 'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.js',
-  };
-  if (mode === 'mt') {
-    opt.workerPath = 'https://unpkg.com/@ffmpeg/core@0.11.0/dist/ffmpeg-core.worker.js';
-    opt.log = true;
-  } else {
-    opt.log = false;
+/* ---------------- 核心来源 ---------------- */
+function sources(which) {
+  if (which === 'mt') {
+    return [
+      {
+        label: '本地 core-mt',
+        coreURL: BASE + 'core-mt/ffmpeg-core.js',
+        wasmURL: BASE + 'core-mt/ffmpeg-core.wasm',
+        workerURL: BASE + 'core-mt/ffmpeg-core.worker.js',
+      },
+      {
+        label: 'npmmirror core-mt',
+        coreURL: `https://registry.npmmirror.com/@ffmpeg/core-mt/${CORE_MT_VER}/files/dist/esm/ffmpeg-core.js`,
+        wasmURL: `https://registry.npmmirror.com/@ffmpeg/core-mt/${CORE_MT_VER}/files/dist/esm/ffmpeg-core.wasm`,
+        workerURL: `https://registry.npmmirror.com/@ffmpeg/core-mt/${CORE_MT_VER}/files/dist/esm/ffmpeg-core.worker.js`,
+      },
+      {
+        label: 'jsdelivr core-mt',
+        coreURL: `https://fastly.jsdelivr.net/npm/@ffmpeg/core-mt@${CORE_MT_VER}/dist/esm/ffmpeg-core.js`,
+        wasmURL: `https://fastly.jsdelivr.net/npm/@ffmpeg/core-mt@${CORE_MT_VER}/dist/esm/ffmpeg-core.wasm`,
+        workerURL: `https://fastly.jsdelivr.net/npm/@ffmpeg/core-mt@${CORE_MT_VER}/dist/esm/ffmpeg-core.worker.js`,
+      },
+    ];
   }
-  return createFFmpeg(opt);
+  return [
+    {
+      label: '本地 core',
+      coreURL: BASE + 'core/ffmpeg-core.js',
+      wasmURL: BASE + 'core/ffmpeg-core.wasm',
+    },
+    {
+      label: 'npmmirror 镜像',
+      coreURL: 'https://registry.npmmirror.com/@ffmpeg/core/0.12.10/files/dist/esm/ffmpeg-core.js',
+      wasmURL: 'https://registry.npmmirror.com/@ffmpeg/core/0.12.10/files/dist/esm/ffmpeg-core.wasm',
+    },
+    {
+      label: 'jsdelivr 镜像',
+      coreURL: 'https://fastly.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/esm/ffmpeg-core.js',
+      wasmURL: 'https://fastly.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/esm/ffmpeg-core.wasm',
+    },
+  ];
 }
 
-async function loadEngine() {
-  if (isLoaded && ffmpeg) return ffmpeg;
+function setBadge(kind, text) {
+  badge.className = 'badge' + (kind ? ' ' + kind : '');
+  badge.textContent = text;
+}
 
-  engStatus.className = 'engine-status loading';
-  engStatus.textContent = '⏳ 加载中...';
-  log('初始化 ffmpeg ' + mode + ' 模式');
+function destroyEngine() {
+  if (engine) {
+    try { engine.terminate(); } catch (e) {}
+    engine = null;
+    engineSource = '';
+  }
+  enginePromise = null;
+}
 
-  ffmpeg = getFFmpeg();
+async function buildEngine(which) {
+  let lastErr = null;
+  for (const s of sources(which)) {
+    setBadge('loading', '加载核心 · ' + s.label);
+    log('尝试核心：' + s.label, 'w');
+    const ff = new FFmpeg();
+    ff.on('log', ({ message }) => log(message));
+    ff.on('progress', onProgress);
+    try {
+      const cfg = { coreURL: s.coreURL, wasmURL: s.wasmURL };
+      if (s.workerURL) cfg.workerURL = s.workerURL;
+      await ff.load(cfg);
+      if (!ff.loaded) throw new Error('core 未报告 loaded');
+      engine = ff;
+      engineSource = s.label;
+      setBadge('ok', '引擎就绪 · ' + s.label);
+      log('核心加载成功：' + s.label, 's');
+      return ff;
+    } catch (e) {
+      lastErr = e;
+      log('核心加载失败（' + s.label + '）：' + (e && (e.message || e)), 'e');
+      try { ff.terminate(); } catch (_) {}
+    }
+  }
+  setBadge('err', '引擎加载失败');
+  throw lastErr || new Error('所有核心来源均加载失败');
+}
 
-  try {
-    await ffmpeg.load();
-    isLoaded = true;
-    engStatus.className = 'engine-status loaded';
-    engStatus.textContent = '✅ 引擎就绪';
-    log('引擎加载完成', 'ok');
-    return ffmpeg;
-  } catch (e) {
-    engStatus.className = 'engine-status unloaded';
-    engStatus.textContent = '❌ 加载失败';
-    log('加载失败: ' + e.message, 'err');
-    throw e;
+function ensureEngine() {
+  if (engine && engine.loaded) return Promise.resolve(engine);
+  if (!enginePromise) {
+    enginePromise = buildEngine(mode).catch((e) => { enginePromise = null; throw e; });
+  }
+  return enginePromise;
+}
+
+/* ---------------- 进度 ---------------- */
+function onProgress({ progress }) {
+  if (!progressTarget) return;
+  const p = Number.isFinite(progress) ? Math.min(0.999, Math.max(0, progress)) : 0;
+  progressTarget.pct = p * 100;
+  progressTarget.text = '转码中 ' + Math.round(p * 100) + '%';
+  paint(progressTarget);
+}
+
+/* ---------------- 列表 UI ---------------- */
+function fmtSize(n) {
+  if (n < 1024) return n + ' B';
+  if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
+  return (n / 1024 / 1024).toFixed(2) + ' MB';
+}
+
+function makeItem(file) {
+  const item = { file, name: file.name, size: file.size, state: 'wait', pct: 0, text: '等待转换', url: null, blob: null };
+  const el = document.createElement('div');
+  el.className = 'item';
+  el.innerHTML =
+    '<div class="row1">' +
+      '<div class="nm"></div>' +
+      '<div class="sz"></div>' +
+      '<div class="st wait">等待</div>' +
+    '</div>' +
+    '<div class="bar"><i></i></div>' +
+    '<div class="foot"></div>';
+  el.querySelector('.nm').textContent = item.name;
+  el.querySelector('.sz').textContent = fmtSize(item.size);
+  item.el = el;
+  item.bar = el.querySelector('.bar i');
+  item.st = el.querySelector('.st');
+  item.foot = el.querySelector('.foot');
+  paint(item);
+  return item;
+}
+
+const ST_TEXT = { wait: '等待', run: '转换中', ok: '完成', err: '失败' };
+
+function paint(item) {
+  item.st.className = 'st ' + item.state;
+  item.st.textContent = ST_TEXT[item.state];
+  item.bar.style.width = (item.state === 'ok' ? 100 : item.pct) + '%';
+  item.foot.innerHTML = '';
+  const info = document.createElement('span');
+  info.textContent = item.text;
+  item.foot.appendChild(info);
+  if (item.state === 'ok' && item.url) {
+    const a = document.createElement('a');
+    a.href = item.url;
+    a.download = item.name.replace(/\.([^.]+)$/, '') + '.mp3';
+    a.textContent = '⬇ 下载 MP3';
+    item.foot.appendChild(a);
+  }
+  if (item.state === 'err') {
+    const r = document.createElement('a');
+    r.href = 'javascript:void(0)';
+    r.textContent = '重试';
+    r.onclick = () => { item.state = 'wait'; item.pct = 0; item.text = '等待转换'; paint(item); refreshGo(); };
+    item.foot.appendChild(r);
+  }
+  if (item.state === 'ok' && item.url && !item.audio) {
+    const au = document.createElement('audio');
+    au.controls = true;
+    au.preload = 'none';
+    au.src = item.url;
+    item.audio = au;
+    item.el.appendChild(au);
   }
 }
 
-drop.onclick = () => fileInput.click();
-fileInput.onchange = e => pick(e.target.files[0]);
-drop.ondragover = e => { e.preventDefault(); drop.classList.add('over'); };
-drop.ondragleave = () => drop.classList.remove('over');
-drop.ondrop = e => { e.preventDefault(); drop.classList.remove('over'); pick(e.dataTransfer.files[0]); };
-
-function pick(f) {
-  if (!f) return;
-  if (f.size > 300 * 1024 * 1024) { errBox.textContent = '文件超过 300MB'; errBox.classList.add('show'); return; }
-  errBox.classList.remove('show');
-  currentFile = f;
-  fileName.textContent = f.name;
-  fileSize.textContent = (f.size / 1024 / 1024).toFixed(2) + ' MB';
-  fileInfo.classList.add('show');
-  result.classList.remove('show');
-  goBtn.disabled = false;
-  log('已选择: ' + f.name + ' (' + (f.size/1024/1024).toFixed(1) + 'MB)');
+function addFiles(files) {
+  const ok = [];
+  for (const f of files) {
+    if (f.size === 0) continue;
+    if (f.size > 1024 * 1024 * 1024) { log('跳过超过 1GB 的文件：' + f.name, 'w'); continue; }
+    const item = makeItem(f);
+    queue.push(item);
+    listEl.appendChild(item.el);
+    ok.push(f);
+  }
+  if (ok.length) {
+    listEl.classList.add('show');
+    tools.style.display = 'flex';
+    refreshGo();
+    if (!engine && !enginePromise) ensureEngine().catch(() => {});
+  }
 }
 
-goBtn.onclick = async () => {
-  if (!currentFile) return;
-  goBtn.disabled = true;
-  result.classList.remove('show');
-  errBox.classList.remove('show');
-  clearLog();
-  progWrap.classList.add('show');
-  setProg(2, '加载引擎...');
+function refreshGo() {
+  const hasPending = queue.some((q) => q.state === 'wait' || q.state === 'err');
+  goBtn.disabled = running || !hasPending || location.protocol === 'file:';
+}
 
+/* ---------------- 转换 ---------------- */
+async function convertItem(ff, item) {
+  const ext = (item.name.match(/([^.]+)$/) || [, 'bin'])[1].toLowerCase();
+  const inName = 'input.' + ext;
+  const outName = 'output.mp3';
+
+  item.state = 'run';
+  item.text = '写入文件…';
+  item.pct = 0;
+  paint(item);
+
+  const buf = new Uint8Array(await item.file.arrayBuffer());
+  try { await ff.deleteFile(inName); } catch (_) {}
+  try { await ff.deleteFile(outName); } catch (_) {}
+  await ff.writeFile(inName, buf);
+
+  const args = ['-i', inName, '-vn', '-map', '0:a:0', '-c:a', 'libmp3lame', '-b:a', $('br').value];
+  if ($('ch').value) args.push('-ac', $('ch').value);
+  if ($('sr').value !== 'auto') args.push('-ar', $('sr').value);
+  args.push('-id3v2_version', '3', outName);
+
+  log('ffmpeg ' + args.join(' '), 'w');
+  item.text = '转码中 0%';
+  item.pct = 0;
+  progressTarget = item;
+  paint(item);
+
+  let code;
   try {
-    const ff = await loadEngine();
-    setProg(10, '写入文件...');
-    log('写入 ' + currentFile.name);
-
-    const ext = (currentFile.name.match(/\.[^.]+$/) || ['.bin'])[0];
-    const inp = 'input' + ext;
-    const out = 'output.mp3';
-    try { ff.FS('unlink', inp); } catch(e) {}
-    try { ff.FS('unlink', out); } catch(e) {}
-    ff.FS('writeFile', inp, await fetchFile(currentFile));
-
-    setProg(20, '开始编码...');
-    log('执行 ffmpeg 转码');
-
-    let lastPct = 20;
-    ff.setProgress(ratio => {
-      const p = Math.min(95, 20 + Math.round(ratio * 75));
-      if (p > lastPct) { lastPct = p; setProg(p, '转码中 ' + p + '%'); }
-    });
-
-    await ff.run('-i', inp, '-vn', '-map', '0:a:0', '-c:a', 'libmp3lame', '-b:a', document.getElementById('bitrate').value, '-ac', document.getElementById('ch').value, out);
-
-    setProg(96, '读取输出...');
-    const data = ff.FS('readFile', out);
-    const blob = new Blob([data.buffer], { type: 'audio/mpeg' });
-    try { ff.FS('unlink', inp); } catch(e) {}
-    try { ff.FS('unlink', out); } catch(e) {}
-
-    setProg(100, '完成！');
-    const url = URL.createObjectURL(blob);
-    document.getElementById('preview').src = url;
-    const dl = document.getElementById('dl');
-    dl.href = url;
-    dl.download = currentFile.name.replace(/\.[^.]+$/, '') + '.mp3';
-
-    const origMB = (currentFile.size / 1024 / 1024).toFixed(2);
-    const outMB = (blob.size / 1024 / 1024).toFixed(2);
-    document.getElementById('stat').innerHTML = `原 ${origMB} MB → 后 ${outMB} MB`;
-    result.classList.add('show');
-    log('转换完成: ' + outMB + 'MB', 'ok');
-    setTimeout(() => progWrap.classList.remove('show'), 1500);
-  } catch (e) {
-    log('失败: ' + (e.message || e), 'err');
-    errBox.textContent = '转换失败: ' + (e.message || e);
-    errBox.classList.add('show');
-    progWrap.classList.remove('show');
+    code = await ff.exec(args);
   } finally {
-    goBtn.disabled = false;
+    progressTarget = null;
   }
+  if (code !== 0) throw new Error('ffmpeg 退出码 ' + code + '（详见运行日志）');
+
+  const data = await ff.readFile(outName);
+  const bytes = data instanceof Uint8Array ? data : new TextEncoder().encode(String(data));
+  if (!bytes.length) throw new Error('输出文件为空');
+  const blob = new Blob([bytes], { type: 'audio/mpeg' });
+
+  try { await ff.deleteFile(inName); } catch (_) {}
+  try { await ff.deleteFile(outName); } catch (_) {}
+
+  item.blob = blob;
+  item.url = URL.createObjectURL(blob);
+  item.state = 'ok';
+  item.pct = 100;
+  item.text = fmtSize(item.size) + ' → ' + fmtSize(blob.size);
+  paint(item);
+  log('完成：' + item.name + '（' + fmtSize(blob.size) + '）', 's');
+}
+
+async function runQueue() {
+  if (running) return;
+  running = true;
+  goBtn.textContent = '转换中…';
+  refreshGo();
+  const t0 = performance.now();
+  try {
+    for (const item of queue) {
+      if (item.state !== 'wait' && item.state !== 'err') continue;
+      item.state = 'run';
+      item.text = engine ? '准备中…' : '加载引擎…';
+      paint(item);
+      const ff = await ensureEngine();
+      await convertItem(ff, item);
+    }
+    const sec = ((performance.now() - t0) / 1000).toFixed(1);
+    if (mode === 'st') log('本轮全部处理完毕，用时 ' + sec + ' 秒', 's');
+  } catch (e) {
+    const msg = e && (e.message || e);
+    log('转换中断：' + msg, 'e');
+    for (const item of queue) {
+      if (item.state === 'run') {
+        item.state = 'err';
+        item.text = '出错：' + msg;
+        paint(item);
+      }
+    }
+  } finally {
+    running = false;
+    goBtn.textContent = '开始转换';
+    refreshGo();
+  }
+}
+
+/* ---------------- 事件 ---------------- */
+drop.onclick = () => fileInput.click();
+fileInput.onchange = (e) => { addFiles(e.target.files); fileInput.value = ''; };
+drop.ondragover = (e) => { e.preventDefault(); drop.classList.add('over'); };
+drop.ondragleave = () => drop.classList.remove('over');
+drop.ondrop = (e) => {
+  e.preventDefault();
+  drop.classList.remove('over');
+  if (e.dataTransfer && e.dataTransfer.files.length) addFiles(e.dataTransfer.files);
 };
 
-function setProg(pct, text) {
-  progFill.style.width = pct + '%';
-  progText.textContent = text;
+goBtn.onclick = runQueue;
+
+$('clear').onclick = () => {
+  if (running) return;
+  for (const it of queue) { if (it.url) URL.revokeObjectURL(it.url); it.el.remove(); }
+  queue.length = 0;
+  listEl.classList.remove('show');
+  tools.style.display = 'none';
+  refreshGo();
+};
+
+mST.onclick = () => switchMode('st');
+mMT.onclick = () => switchMode('mt');
+
+function switchMode(m) {
+  if (running || m === mode) return;
+  mode = m;
+  destroyEngine();
+  mST.classList.toggle('active', m === 'st');
+  mMT.classList.toggle('active', m === 'mt');
+  setBadge('', '引擎未加载');
+  log('切换到 ' + (m === 'st' ? '单线程' : '多线程') + ' 核心', 'w');
+  if (queue.some((q) => q.state === 'wait')) ensureEngine().catch(() => {});
 }
+
+/* ---------------- 启动自检 ---------------- */
+(function init() {
+  if (location.protocol === 'file:') {
+    banner.classList.add('show');
+    banner.innerHTML = '<b>请改用本地服务打开本页。</b>以 file:// 双击打开时，浏览器禁止页面加载 Web Worker 与 .wasm（同源策略限制，与代码无关）。<br>' +
+      '正确做法：双击同目录下的 <b>启动.bat</b>，它会起一个本地服务并自动打开浏览器（地址形如 http://127.0.0.1:8787/）。';
+    goBtn.disabled = true;
+  }
+  const mtReady = typeof SharedArrayBuffer !== 'undefined' && window.crossOriginIsolated === true;
+  if (!mtReady) {
+    mMT.disabled = true;
+    mMT.textContent = '🚀 多线程（需 COOP/COEP，当前不可用）';
+    mMT.title = '多线程核心要求页面处于 cross-origin isolated 状态，用包内 server.ps1 启动时才会开启。';
+  }
+  log('页面就绪 · 协议 ' + location.protocol + ' · crossOriginIsolated=' + (window.crossOriginIsolated === true), 'w');
+  if (!mtReady) log('多线程不可用：未处于 cross-origin isolated（用启动.bat 打开可开启）', 'w');
+})();
 </script>
 </body>
 </html>
