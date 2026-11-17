@@ -1,5 +1,7 @@
 # PTowjPalbx 我的网站
-我的网页（纯静态资源）
+
+# ⚠️ 免责声明：脚本部分内容未经验证，请自行分辨风险。
+# 未经充分调试直接使用造成的任何后果，作者概不负责。
 
 # 警告
 coi-serviceworker.js <!-- 必须在根目录 -->
@@ -13,7 +15,7 @@ favicon.ico <!-- 必须在根目录 -->
 coi-serviceworker.js <!-- 不得删除，这个用来处理显示图标，防止每页都要指定 -->
 
 
-## 0. 配置你的系统用户信息（单个用户使用）
+## 0. 配置你的系统用户信息
 git config --global user.name "onnotst"
 git config --global user.email "onnotst@163.com"
 git config --global core.autocrlf true

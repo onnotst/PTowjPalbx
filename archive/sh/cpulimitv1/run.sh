@@ -1,0 +1,403 @@
+#!/bin/bash
+# ============================================================
+# cpu_watchdog_deploy.sh
+# CPU Watchdog 一键部署脚本
+# 兼容: Oracle Linux, Rocky, Alma, CentOS, Ubuntu, Debian
+# 用法: bash cpu_watchdog_deploy.sh
+# ============================================================
+
+set -euo pipefail
+
+# ---------- 颜色 ----------
+RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'
+CYAN='\033[0;36m'; BOLD='\033[1m'; NC='\033[0m'
+
+info()  { echo -e "${GREEN}[INFO]${NC} $1"; }
+warn()  { echo -e "${YELLOW}[WARN]${NC} $1"; }
+error() { echo -e "${RED}[ERROR]${NC} $1"; }
+
+# ---------- 检测 ----------
+detect_pkg() {
+    if command -v dnf &>/dev/null;     then PKG=dnf;     INSTALL="dnf install -y";
+    elif command -v yum &>/dev/null;   then PKG=yum;     INSTALL="yum install -y";
+    elif command -v apt &>/dev/null;   then PKG=apt;     INSTALL="apt install -y";
+    elif command -v apk &>/dev/null;   then PKG=apk;     INSTALL="apk add";
+    elif command -v zypper &>/dev/null;then PKG=zypper;  INSTALL="zypper install -y";
+    elif command -v pacman &>/dev/null;then PKG=pacman;  INSTALL="pacman -S --noconfirm";
+    else error "未识别的包管理器"; exit 1; fi
+    info "包管理器: $PKG"
+}
+
+detect_distro() {
+    if [ -f /etc/os-release ]; then . /etc/os-release; DISTRO="$ID"; VER="$VERSION_ID";
+    else DISTRO="unknown"; VER="unknown"; fi
+    info "发行版: $DISTRO $VER"
+}
+
+get_mem_gb() {
+    local mem_kb=$(grep MemTotal /proc/meminfo | awk '{print $2}')
+    echo $((mem_kb / 1024 / 1024))
+}
+
+get_cpu_cores() {
+    nproc 2>/dev/null || grep -c ^processor /proc/cpuinfo
+}
+
+# ---------- 安装依赖 ----------
+install_deps() {
+    info "安装 cpulimit, bc, gawk..."
+    case "$PKG" in
+        apt) $INSTALL cpulimit bc gawk procps 2>&1 | tail -3 ;;
+        apk) $INSTALL cpulimit bc gawk procps-ng 2>&1 | tail -3 ;;
+        *)    $INSTALL cpulimit bc gawk 2>&1 | tail -3 ;;
+    esac
+    # 确认 cpulimit 装上了
+    if ! command -v cpulimit &>/dev/null; then
+        error "cpulimit 安装失败，请手动安装后重试"
+        exit 1
+    fi
+    info "依赖安装完成"
+}
+
+# ---------- 生成白名单（按发行版定制） ----------
+build_whitelist() {
+    local distro="$1"
+    # 通用核心
+    local common="systemd|kthreadd|kworker|migration|rcu|watchdog|idle|init|
+sshd|ssh|nginx|mysqld|mariadbd|mysql|postgresql|pg_ctl|
+crond|atd|cron|anacron|systemd-timer|
+dbus-daemon|dbus-broker|polkitd|polkit-agent|
+chronyd|ntpd|systemd-timesyncd|systemd-networkd|systemd-resolved|
+NetworkManager|networkd|dhclient|dhcpcd|
+auditd|audispd|rsyslogd|syslog-ng|syslog|syslogd|
+rngd|irqbalance|lvmetad|lvm|multipathd|
+tuned|thermd|upowerd|powerprofiles|
+agetty|login|gdm|lightdm|sshd-gen|
+containerd|dockerd|kubelet|containerd-shim|
+named|bind|nsd|dnsmasq|unbound|
+rpcbind|rpc.statd|rpc.mountd|nfsd|nfs-idmapd|
+postfix|sendmail|exim4|dovecot|opendkim|opendmarc|
+fail2ban|denyhosts|ufw|firewalld|iptables|nft|ip6tables|
+pmcd|pmie|pmlogger|pcp|pcp-systemd|
+
+# 宝塔面板全家桶
+BT-Panel|BT-Task|python3|uwsgi|pure-ftpd|sftp-server|vsftpd|
+memcached|redis-server|php-fpm|php-cgi|tomcat|java|javaw|
+node|nodejs|npm|yarn|pnpm|
+
+# 监控/日志
+node_exporter|prometheus|grafana-server|filebeat|metricbeat|heartbeat|
+logstash|telegraf|collectd|netdata|netdata-claim.sh|
+fluentd|fluent-bit|vector|
+
+# 容器/虚拟化
+libvirtd|virtlogd|virtlockd|qemu-kvm|qemu-system|
+docker-proxy|containerd|
+
+# 硬件/内核辅助
+ksoftirqd|kcompactd|ksmd|khugepaged|jbd2|flush|sync_supers|
+md|mdadm|md0_raid|md1_raid|btrfs|btrfs-transacti|
+z_wr_int|z_rd_int|z_null_|arc_reclaim|l2arc_feed"
+
+    # 发行版特有关键进程
+    case "$distro" in
+        ubuntu|debian)
+            distro_extra="unattended-upgr|apt-daily|dpkg|packagekitd|snapd|snap|
+rtkit-daemon|ModemManager|wpa_supplicant|avahi-daemon|
+apparmor|aa-kerneld|sergretd|whoopsie|cupsd|colord|
+thermald|accounts-daemon|iio-sensor-proxy|fwupd|
+snapfuse|snap-confine"
+            ;;
+        ol|oracle|rhel|centos|rocky|almalinux|alma|fedora|amzn)
+            distro_extra="yum|dnf|rpm|packagekitd|PackageKit|dnf-makecache|
+tuned|rhsmcertd|rhsmd|subscription-manager|
+sssd|sssd_be|nslcd|oddjobd|certmonger|krb5kdc|kadmind|
+rpc.gssd|rpc.idmapd|nfsdcld|blkmapd|
+cloud-init|cloud-init-local|cloud-final|cloud-config|cloud-init-hotplugd|
+waagent|WALinuxAgent|oci-utils|oci-growfs|
+ovs-vswitchd|ovsdb-server|
+nm-dispatcher|nm-online|nm-iface-helper"
+            ;;
+        alpine)
+            distro_extra="openrc|runit|s6-svscan|s6-supervise|
+acpid|mdevd|udevd|hotplugd|seedrng|crond|fcron|chronyd|ntpd"
+            ;;
+        *)
+            distro_extra=""
+            ;;
+    esac
+
+    echo "${common}
+${distro_extra}" | tr -d ' \t' | grep -v '^$'
+}
+
+# ---------- 生成 watchdog 脚本 ----------
+generate_script() {
+    local limit_pct="$1"
+    local check_interval="$2"
+    local whitelist_comm
+    whitelist_comm=$(build_whitelist "$DISTRO")
+
+    info "生成脚本: CPU限制=${limit_pct}%, 检测间隔=${check_interval}s"
+
+    cat > /usr/local/sbin/cpu_watchdog.sh << EOF
+#!/bin/bash
+# ============================================================
+# CPU Watchdog v3 - Auto cpulimit high-CPU processes
+# Generated by cpu_watchdog_deploy.sh
+# 发行版: $DISTRO $VER | 包管理: $PKG
+# 限制阈值: ${limit_pct}% | 检测间隔: ${check_interval}s
+# ============================================================
+
+LIMIT_PCT=$limit_pct
+CHECK_INTERVAL=$check_interval
+CONF_DIR="/etc/cpu_watchdog"
+CONF_FILE="\${CONF_DIR}/limited_procs.conf"
+LOG_FILE="/var/log/cpu_watchdog.log"
+SCRIPT_PID=\$\$
+
+# ---------- 白名单 (comm) ----------
+WHITELIST_COMM="$(echo "$whitelist_comm" | tr '\n' '|' | sed 's/|$//')"
+
+# ---------- 白名单 (完整命令行关键字) ----------
+WHITELIST_CMDLINE="/www/server/panel|/www/server/|/usr/bin/python.*panel|/usr/sbin|/usr/libexec|/lib/systemd|/sbin/|/usr/local/bt|/etc/init.d/bt|/www/server/cron|/www/server/panel/class|/www/server/panel/pyenv|/usr/bin/panel|/www/server/mysql/bin|/www/server/nginx/sbin|/www/server/php|/www/server/pure-ftpd|/usr/local/aegis|/usr/local/cloudmonitor|/usr/local/defender"
+
+mkdir -p "\$CONF_DIR"
+touch "\$CONF_FILE"
+
+log() {
+    echo "[\$(date '+%Y-%m-%d %H:%M:%S')] \$*" >> "\$LOG_FILE"
+    echo "[\$(date '+%H:%M:%S')] \$*"
+}
+
+# ---------- 是否在白名单 ----------
+is_whitelisted() {
+    local pid="\$1"
+    local comm="\$2"
+
+    # 1. comm 精确匹配
+    if echo "\$comm" | grep -qiE "^(\${WHITELIST_COMM})\$" 2>/dev/null; then
+        return 0
+    fi
+
+    # 2. 完整命令行匹配
+    local cmdline=""
+    if [ -r "/proc/\$pid/cmdline" ]; then
+        cmdline=\$(tr '\0' ' ' < /proc/\$pid/cmdline 2>/dev/null)
+        if echo "\$cmdline" | grep -qiE "\${WHITELIST_CMDLINE}" 2>/dev/null; then
+            return 0
+        fi
+    fi
+
+    # 3. systemd cgroup 保护
+    if [ -r "/proc/\$pid/cgroup" ]; then
+        local cgroup=\$(grep -o '[^/]*\.service' /proc/\$pid/cgroup 2>/dev/null | head -1)
+        if [ -n "\$cgroup" ]; then
+            case "\$cgroup" in
+                cpu-watchdog.service|work-load.service|batch.slice)
+                    return 1 ;;
+                *)
+                    return 0 ;;
+            esac
+        fi
+    fi
+
+    # 4. 自己不杀自己
+    if [ "\$pid" = "\$SCRIPT_PID" ]; then
+        return 0
+    fi
+
+    return 1
+}
+
+# ---------- 施加限制 ----------
+limit_pid() {
+    local pid="\$1"
+    local comm="\$2"
+    local pcpu="\$3"
+
+    # 已限制则跳过
+    if pgrep -f "cpulimit.*-p \${pid}[^0-9]" > /dev/null 2>&1; then
+        return
+    fi
+
+    if is_whitelisted "\$pid" "\$comm"; then
+        return
+    fi
+
+    if ! kill -0 "\$pid" 2>/dev/null; then
+        return
+    fi
+
+    log "LIMIT \$comm PID=\$pid CPU=\${pcpu}% -> \${LIMIT_PCT}%"
+    cpulimit -p "\$pid" -l "\$LIMIT_PCT" -z >> "\$LOG_FILE" 2>&1 &
+
+    # 记录
+    if ! grep -q "^\${comm}|" "\$CONF_FILE" 2>/dev/null; then
+        local cmdline=""
+        if [ -r "/proc/\$pid/cmdline" ]; then
+            cmdline=\$(tr '\0' ' ' < /proc/\$pid/cmdline 2>/dev/null | cut -c1-100)
+        fi
+        echo "\${comm}|\$(date '+%Y-%m-%d %H:%M:%S')|\${cmdline}" >> "\$CONF_FILE"
+    fi
+}
+
+# ---------- 恢复模式 ----------
+enforce_saved() {
+    log "RESTORE: 恢复已记录进程的限制"
+    while IFS='|' read -r comm first_seen rest; do
+        [ -z "\$comm" ] && continue
+        echo "\$comm" | grep -q '^#' && continue
+        if echo "\$comm" | grep -qiE "^(\${WHITELIST_COMM})\$" 2>/dev/null; then
+            continue
+        fi
+        for pid in \$(pgrep -x "\$comm" 2>/dev/null); do
+            if kill -0 "\$pid" 2>/dev/null && ! is_whitelisted "\$pid" "\$comm"; then
+                pcpu=\$(ps -p "\$pid" -o pcpu= | tr -d ' ')
+                log "RESTORE \$comm PID=\$pid CPU=\${pcpu}%"
+                cpulimit -p "\$pid" -l "\$LIMIT_PCT" -z >> "\$LOG_FILE" 2>&1 &
+            fi
+        done
+    done < "\$CONF_FILE"
+}
+
+# ---------- 主循环 ----------
+main_loop() {
+    log "START: CPU Watchdog v3 (limit=\${LIMIT_PCT}%, interval=\${CHECK_INTERVAL}s)"
+    while true; do
+        ps -eo pid,comm,pcpu --no-headers 2>/dev/null | while read pid comm pcpu; do
+            [ -z "\$pid" ] && continue
+            [ "\$pid" = "\$SCRIPT_PID" ] && continue
+            pcpu_num=\$(echo "\$pcpu" | tr -d '%')
+            if [ -n "\$pcpu_num" ] && [ "\$(echo "\$pcpu_num > \$LIMIT_PCT" | bc -l 2>/dev/null)" = "1" ]; then
+                limit_pid "\$pid" "\$comm" "\$pcpu_num"
+            fi
+        done
+        sleep "\$CHECK_INTERVAL"
+    done
+}
+
+case "\${1:-loop}" in
+    loop)    main_loop ;;
+    restore) enforce_saved ;;
+    *) echo "Usage: \$0 [loop|restore]"; exit 1 ;;
+esac
+EOF
+
+    chmod +x /usr/local/sbin/cpu_watchdog.sh
+    info "脚本已生成: /usr/local/sbin/cpu_watchdog.sh"
+}
+
+# ---------- 生成 systemd service ----------
+generate_service() {
+    cat > /etc/systemd/system/cpu-watchdog.service << 'EOF'
+[Unit]
+Description=CPU Watchdog v3 - Auto cpulimit high-CPU processes
+After=multi-user.target mysql.service mariadb.service nginx.service sshd.service
+
+[Service]
+Type=simple
+ExecStart=/usr/local/sbin/cpu_watchdog.sh loop
+ExecStartPost=/bin/sleep 20
+ExecStartPost=/usr/local/sbin/cpu_watchdog.sh restore
+Restart=always
+RestartSec=10
+
+# 自身不受限
+CPUQuota=
+CPUWeight=50
+OOMScoreAdjust=-200
+
+[Install]
+WantedBy=multi-user.target
+EOF
+    info "systemd service 已生成"
+}
+
+# ---------- 启动 ----------
+start_service() {
+    systemctl daemon-reload
+    systemctl enable cpu-watchdog.service
+    systemctl restart cpu-watchdog.service
+    sleep 2
+    if systemctl is-active --quiet cpu-watchdog.service; then
+        info "服务已启动 ✓"
+    else
+        warn "服务启动异常，查看日志: journalctl -u cpu-watchdog -n 20"
+    fi
+}
+
+# ---------- 档位选择 ----------
+show_menu() {
+    clear
+    local mem cpu
+    mem=$(get_mem_gb)
+    cpu=$(get_cpu_cores)
+    echo -e "${CYAN}"
+    echo "  ╔════════════════════════════════════════════════╗"
+    echo "  ║     CPU Watchdog v3 — 一键部署                ║"
+    echo "  ╠════════════════════════════════════════════════╣"
+    echo "  ║                                                ║"
+    echo "  ║  当前机器: ${mem}G 内存 / ${cpu} 核 CPU                  ║"
+    echo "  ║                                                ║"
+    echo "  ║  1. 差机器 (1G/1核)  → 限 5%   间隔 3s       ║"
+    echo "  ║  2. 中机器 (2-4G)    → 限 10%  间隔 5s       ║"
+    echo "  ║  3. 好机器 (8G+/4核+)→ 限 20%  间隔 8s       ║"
+    echo "  ║  4. 自定义配置                            ║"
+    echo "  ║  0. 退出                                    ║"
+    echo "  ║                                                ║"
+    echo "  ╚════════════════════════════════════════════════╝"
+    echo -e "${NC}"
+}
+
+custom_config() {
+    read -rp "  限制阈值 (%) [5-50]: " limit
+    limit=${limit:-10}
+    read -rp "  检测间隔 (秒) [1-30]: " interval
+    interval=${interval:-5}
+    echo "$limit $interval"
+}
+
+# ---------- 主流程 ----------
+main() {
+    detect_distro
+    detect_pkg
+
+    show_menu
+    read -rp "  请选择档位 [0-4]: " choice
+
+    case "$choice" in
+        1) LIMIT=5;  INTERVAL=3  ;;
+        2) LIMIT=10; INTERVAL=5  ;;
+        3) LIMIT=20; INTERVAL=8  ;;
+        4)
+            local cfg
+            cfg=$(custom_config)
+            LIMIT=$(echo $cfg | awk '{print $1}')
+            INTERVAL=$(echo $cfg | awk '{print $2}')
+            ;;
+        0) info "退出"; exit 0 ;;
+        *) warn "无效选择，使用默认值 10% / 5s"; LIMIT=10; INTERVAL=5 ;;
+    esac
+
+    echo ""
+    info "配置: 限制阈值=${LIMIT}%, 检测间隔=${INTERVAL}s"
+    echo ""
+
+    install_deps
+    generate_script "$LIMIT" "$INTERVAL"
+    generate_service
+    start_service
+
+    echo ""
+    info "部署完成 ✓"
+    echo ""
+    echo "  查看状态: systemctl status cpu-watchdog"
+    echo "  查看日志: tail -f /var/log/cpu_watchdog.log"
+    echo "  限制记录: cat /etc/cpu_watchdog/limited_procs.conf"
+    echo "  停止服务: systemctl stop cpu-watchdog"
+    echo "  卸载:    systemctl disable --now cpu-watchdog && rm -f /usr/local/sbin/cpu_watchdog.sh /etc/systemd/system/cpu-watchdog.service"
+    echo ""
+}
+
+main "$@"
