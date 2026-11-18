@@ -1,0 +1,17 @@
+{
+  "timestamp": "2026-11-18 04:13:23",
+  "arch": "i386",
+  "os": "Debian GNU/Linux 13 (trixie)",
+  "kernel": "Linux version 7.0.12-1-pve",
+  "cpu": "Intel(R) Celeron(R) N5095 @ 2.00GHz",
+  "cores": 2,
+  "bits": 32,
+  "loadavg": "1.00",
+  "duration_sec": 20,
+  "results": {
+    "int_add": 459200000,
+    "int_madd": 78430000,
+    "float": 145252500,
+    "mem_bw_mib": 5654
+  }
+}
