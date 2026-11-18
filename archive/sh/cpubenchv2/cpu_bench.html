@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CPU Benchmark — Browser Edition</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'SF Mono', 'Cascadia Code', 'Consolas', monospace;
+  background: #0d1117; color: #e6edf3;
+  padding: 20px; line-height: 1.6;
+}
+.container { max-width: 780px; margin: 0 auto; }
+h1 { font-size: 1.4em; margin-bottom: 4px; color: #58a6ff; }
+.subtitle { font-size: 0.85em; color: #8b949e; margin-bottom: 20px; }
+.section { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 16px; margin-bottom: 14px; }
+.section h2 { font-size: 1em; color: #f0ad4e; margin-bottom: 10px; }
+.row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #21262d; font-size: 0.9em; gap: 12px; }
+.row:last-child { border-bottom: none; }
+.row .label { color: #8b949e; }
+.row .value { color: #3fb950; font-weight: bold; text-align: right; }
+.row .value.running { color: #58a6ff; }
+.row .value.done { color: #3fb950; }
+.row .value.wait { color: #8b949e; font-weight: normal; }
+.btn {
+  background: #238636; color: #fff; border: none; padding: 12px 28px;
+  border-radius: 6px; font-size: 1em; cursor: pointer; font-family: inherit;
+}
+.btn:hover { background: #2ea043; }
+.btn:disabled { background: #21262d; color: #484f58; cursor: not-allowed; }
+.btn-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
+.chk { font-size: 0.85em; color: #8b949e; display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.progress { height: 4px; background: #21262d; border-radius: 2px; margin-top: 10px; overflow: hidden; }
+.progress-bar { height: 100%; background: #58a6ff; width: 0%; transition: width 0.3s; }
+.summary { background: #0d1117; border: 2px solid #58a6ff; }
+.ok { color: #3fb950; }
+.err { color: #f85149; }
+.dim { color: #8b949e; }
+pre {
+  background: #0d1117; border: 1px solid #30363d; border-radius: 6px;
+  padding: 10px; margin-top: 8px; font-size: 0.78em; color: #8b949e;
+  white-space: pre-wrap; word-break: break-all; max-height: 260px; overflow: auto; display: none;
+}
+footer { text-align: center; color: #484f58; font-size: 0.75em; margin-top: 20px; }
+@media (max-width: 500px) {
+  .row { font-size: 0.8em; }
+  h1 { font-size: 1.1em; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>⚡ CPU Benchmark — Browser Edition</h1>
+  <p class="subtitle">纯前端跑分 · 无服务器依赖 · 结果可回传</p>
+
+  <div class="section" id="sysinfo">
+    <h2>📋 系统信息</h2>
+    <div class="row"><span class="label">User-Agent</span><span class="value" id="ua">检测中...</span></div>
+    <div class="row"><span class="label">平台</span><span class="value" id="plat">-</span></div>
+    <div class="row"><span class="label">逻辑核心</span><span class="value" id="cores">-</span></div>
+    <div class="row"><span class="label">内存(估算)</span><span class="value" id="mem">-</span></div>
+    <div class="row"><span class="label">浏览器/引擎</span><span class="value" id="engine">-</span></div>
+  </div>
+
+  <div class="section">
+    <h2>🏃 测试项目</h2>
+    <div class="row"><span class="label">[1/4] 整数累加</span><span class="value wait" id="r1">等待</span></div>
+    <div class="row"><span class="label">[2/4] 整数乘加+移位</span><span class="value wait" id="r2">等待</span></div>
+    <div class="row"><span class="label">[3/4] 标量浮点</span><span class="value wait" id="r3">等待</span></div>
+    <div class="row"><span class="label">[4/4] 内存顺序读</span><span class="value wait" id="r4">等待</span></div>
+    <div class="progress"><div class="progress-bar" id="bar"></div></div>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn" id="runbtn" onclick="start()">开始跑分 (20秒)</button>
+    <label class="chk"><input type="checkbox" id="uploadChk" checked> 跑完自动上传结果</label>
+  </div>
+
+  <div class="section summary" id="summary" style="display:none;">
+    <h2>📊 汇总分数</h2>
+    <div class="row"><span class="label">整数累加</span><span class="value" id="s1">-</span></div>
+    <div class="row"><span class="label">整数乘加</span><span class="value" id="s2">-</span></div>
+    <div class="row"><span class="label">标量浮点</span><span class="value" id="s3">-</span></div>
+    <div class="row"><span class="label">内存带宽</span><span class="value" id="s4">-</span></div>
+  </div>
+
+  <div class="section" id="uploadSec" style="display:none;">
+    <h2>☁️ 结果上传</h2>
+    <div class="row"><span class="label">接口</span><span class="value dim" id="upurl">-</span></div>
+    <div class="row"><span class="label">状态</span><span class="value" id="upstatus">-</span></div>
+    <div class="row"><span class="label">message 编码</span><span class="value dim">Base64(结果 JSON)</span></div>
+    <pre id="upbody"></pre>
+  </div>
+
+  <footer>
+    纯前端计算 · 同源对比请用同一浏览器同一时长<br>
+    提示：手机端请保持屏幕常亮，后台会降频导致分数偏低
+  </footer>
+</div>
+
+<script>
+// ============ 配置 ============
+const API_URL = (location.host === 'api.mblue.ltd')
+  ? '/api/allinone/save'
+  : 'https://api.mblue.ltd/api/allinone/save';
+const API_TYPE = 2;
+const API_TITLE = '设备测试记录';
+
+// ============ 系统信息 ============
+const SYS = {};
+
+(function sysinfo() {
+  const ua = navigator.userAgent;
+  SYS.ua = ua;
+  SYS.platform = (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || '未知';
+  SYS.cores = navigator.hardwareConcurrency || 0;
+  SYS.memGB = navigator.deviceMemory || 0;
+
+  let engine = '未知';
+  if (ua.includes('Edg')) engine = 'V8 (Edge)';
+  else if (ua.includes('Chrome') || ua.includes('Chromium')) engine = 'V8 (Chrome/Chromium)';
+  else if (ua.includes('Firefox')) engine = 'SpiderMonkey (Firefox)';
+  else if (ua.includes('Safari')) engine = 'JavaScriptCore (Safari)';
+  SYS.engine = engine;
+
+  // 架构 / 位数：优先 UA-CH，其次按 UA 推断
+  let arch = '';
+  let bits = 0;
+  if (navigator.userAgentData) {
+    arch = navigator.userAgentData.architecture || '';
+    bits = navigator.userAgentData.bitness ? parseInt(navigator.userAgentData.bitness, 10) : 0;
+  }
+  if (!arch) {
+    if (/arm64|aarch64/i.test(ua)) arch = 'arm64';
+    else if (/arm/i.test(ua)) arch = 'arm';
+    else if (/x86_64|win64|x64|amd64/i.test(ua)) arch = 'x86_64';
+    else if (/i686|i386/i.test(ua)) arch = 'i386';
+    else arch = SYS.platform || 'wasm';
+  }
+  if (!bits) bits = /arm64|x86_64|win64|x64|amd64/i.test(ua) ? 64 : 32;
+  SYS.arch = 'web_' + arch;
+  SYS.bits = bits;
+
+  document.getElementById('ua').textContent = ua.substring(0, 60) + '...';
+  document.getElementById('plat').textContent = SYS.platform;
+  document.getElementById('cores').textContent = SYS.cores || '未知';
+  document.getElementById('mem').textContent = SYS.memGB ? SYS.memGB + ' GB (浏览器限值)' : '不可用';
+  document.getElementById('engine').textContent = engine;
+  document.getElementById('upurl').textContent = API_URL;
+})();
+
+// ============ 防优化屏障 ============
+let sink = 0;
+
+// ============ 1. 整数累加 ============
+function benchIntAdd(seconds) {
+  const deadline = performance.now() + seconds * 1000;
+  let ops = 0, s = 0;
+  while (performance.now() < deadline) {
+    for (let i = 1; i <= 1000000; i++) s += i;
+    ops += 1000000;
+  }
+  sink = s;
+  return ops;
+}
+
+// ============ 2. 整数乘加+移位 ============
+function benchIntMadd(seconds) {
+  const deadline = performance.now() + seconds * 1000;
+  let ops = 0, h = 0x811C9DC5;
+  while (performance.now() < deadline) {
+    for (let i = 0; i < 200000; i++) {
+      h = Math.imul(h ^ (i * 0x01000193), 0x100000001);
+      h ^= h >>> 13;
+      h = Math.imul(h, 0x5bd1e995);
+      h ^= h >>> 15;
+    }
+    ops += 200000;
+  }
+  sink = h;
+  return ops;
+}
+
+// ============ 3. 标量浮点 ============
+function benchFloat(seconds) {
+  const deadline = performance.now() + seconds * 1000;
+  let ops = 0, x = 1.0;
+  while (performance.now() < deadline) {
+    for (let i = 0; i < 50000; i++) {
+      x = x * 1.0000001 + 0.0000003;
+      x = x / 1.00000005 - 0.0000001;
+      x = x * 0.9999999 + 0.5;
+    }
+    ops += 50000 * 3;
+  }
+  sink = x;
+  return ops;
+}
+
+// ============ 4. 内存顺序读 (16M x 4B = 64MB) ============
+const MEM_MB = 16;
+const MEM_ELEMS = MEM_MB * 1024 * 1024 / 4;
+
+function benchMemRead(seconds) {
+  let buf;
+  try {
+    buf = new Uint32Array(MEM_ELEMS);
+  } catch (e) {
+    return -1; // 分配失败（内存不足）
+  }
+  for (let i = 0; i < MEM_ELEMS; i++) buf[i] = i;
+
+  const deadline = performance.now() + seconds * 1000;
+  let bytes = 0, sum = 0;
+  while (performance.now() < deadline) {
+    for (let i = 0; i + 7 < MEM_ELEMS; i += 8) {
+      sum += buf[i] + buf[i+1] + buf[i+2] + buf[i+3]
+           + buf[i+4] + buf[i+5] + buf[i+6] + buf[i+7];
+    }
+    bytes += MEM_ELEMS * 4;
+  }
+  sink = sum;
+  return bytes;
+}
+
+// ============ 格式化 ============
+function fmt(n, unit) {
+  if (!isFinite(n) || n <= 0) return '0' + unit;
+  if (n >= 1e12) return (n / 1e12).toFixed(2) + ' T' + unit;
+  if (n >= 1e9) return (n / 1e9).toFixed(2) + ' G' + unit;
+  if (n >= 1e6) return (n / 1e6).toFixed(2) + ' M' + unit;
+  if (n >= 1e3) return (n / 1e3).toFixed(2) + ' K' + unit;
+  return n.toFixed(0) + unit;
+}
+
+function pad2(n) { return (n < 10 ? '0' : '') + n; }
+
+function localTimeStr(d) {
+  return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()) + ' '
+       + pad2(d.getHours()) + ':' + pad2(d.getMinutes()) + ':' + pad2(d.getSeconds());
+}
+
+// ============ Base64（UTF-8 安全） ============
+function b64Utf8(str) {
+  const bytes = new TextEncoder().encode(str);
+  let bin = '';
+  const CHUNK = 4096;
+  for (let i = 0; i < bytes.length; i += CHUNK) {
+    bin += String.fromCharCode.apply(null, bytes.subarray(i, i + CHUNK));
+  }
+  return btoa(bin);
+}
+
+// ============ 主流程 ============
+function setStatus(id, text, cls) {
+  const el = document.getElementById(id);
+  el.textContent = text;
+  el.className = 'value ' + cls;
+}
+
+const TIMEOUT = 20; // 每项 20 秒
+
+let RESULT = null;   // 最近一次的结果 JSON 对象
+
+async function start() {
+  const btn = document.getElementById('runbtn');
+  btn.disabled = true;
+  document.getElementById('summary').style.display = 'none';
+  document.getElementById('uploadSec').style.display = 'none';
+  document.getElementById('bar').style.width = '0%';
+  ['r1', 'r2', 'r3', 'r4'].forEach(id => setStatus(id, '等待', 'wait'));
+
+  // 1/4
+  setStatus('r1', '运行中...', 'running');
+  await new Promise(r => setTimeout(r, 50));
+  let t = performance.now();
+  const ops1 = benchIntAdd(TIMEOUT);
+  const dt1 = (performance.now() - t) / 1000;
+  const v1 = ops1 / dt1;
+  setStatus('r1', fmt(v1, ' ops/sec'), 'done');
+  document.getElementById('bar').style.width = '25%';
+
+  // 2/4
+  setStatus('r2', '运行中...', 'running');
+  await new Promise(r => setTimeout(r, 50));
+  t = performance.now();
+  const ops2 = benchIntMadd(TIMEOUT);
+  const dt2 = (performance.now() - t) / 1000;
+  const v2 = ops2 / dt2;
+  setStatus('r2', fmt(v2, ' ops/sec'), 'done');
+  document.getElementById('bar').style.width = '50%';
+
+  // 3/4
+  setStatus('r3', '运行中...', 'running');
+  await new Promise(r => setTimeout(r, 50));
+  t = performance.now();
+  const ops3 = benchFloat(TIMEOUT);
+  const dt3 = (performance.now() - t) / 1000;
+  const v3 = ops3 / dt3;
+  setStatus('r3', fmt(v3, ' flops/sec'), 'done');
+  document.getElementById('bar').style.width = '75%';
+
+  // 4/4
+  setStatus('r4', '运行中...', 'running');
+  await new Promise(r => setTimeout(r, 50));
+  t = performance.now();
+  const bytes4 = benchMemRead(TIMEOUT);
+  const dt4 = (performance.now() - t) / 1000;
+  let v4 = 0;
+  if (bytes4 < 0) {
+    setStatus('r4', '分配 64MB 失败，已跳过', 'err');
+  } else {
+    v4 = bytes4 / dt4 / 1024 / 1024;
+    setStatus('r4', fmt(v4, ' MiB/s'), 'done');
+  }
+  document.getElementById('bar').style.width = '100%';
+
+  // 汇总
+  document.getElementById('s1').textContent = fmt(v1, ' ops/sec');
+  document.getElementById('s2').textContent = fmt(v2, ' ops/sec');
+  document.getElementById('s3').textContent = fmt(v3, ' flops/sec');
+  document.getElementById('s4').textContent = bytes4 < 0 ? '跳过' : fmt(v4, ' MiB/s');
+  document.getElementById('summary').style.display = 'block';
+
+  // 结果 JSON（字段与 C 版保持一致，便于横向对比）
+  RESULT = {
+    timestamp: localTimeStr(new Date()),
+    source: 'html',
+    platform: 'browser',
+    arch: SYS.arch,
+    os: SYS.platform,
+    kernel: SYS.engine,
+    cpu: SYS.engine + ' / ' + (SYS.ua.slice(0, 120)),
+    cores: SYS.cores,
+    bits: SYS.bits,
+    loadavg: 'n/a',
+    duration_sec: TIMEOUT,
+    mem_mb: bytes4 < 0 ? 0 : MEM_MB,
+    results: {
+      int_add: Math.round(v1),
+      int_madd: Math.round(v2),
+      float: Math.round(v3),
+      mem_bw_mib: Math.round(v4)
+    }
+  };
+
+  btn.disabled = false;
+  btn.textContent = '重新跑分';
+
+  // 上传
+  if (document.getElementById('uploadChk').checked) {
+    await uploadResult(RESULT);
+  }
+}
+
+async function uploadResult(result) {
+  const sec = document.getElementById('uploadSec');
+  const st = document.getElementById('upstatus');
+  sec.style.display = 'block';
+
+  const compact = JSON.stringify(result);
+  const b64 = b64Utf8(compact);
+  const clientTime = result.timestamp;
+
+  const payload = {
+    type: API_TYPE,
+    title: API_TITLE,
+    message: b64,
+    client_time: clientTime
+  };
+
+  const bodyPre = document.getElementById('upbody');
+  bodyPre.textContent = 'POST ' + API_URL + '\n' + JSON.stringify({
+    type: payload.type, title: payload.title,
+    message: b64.slice(0, 120) + (b64.length > 120 ? '...(' + b64.length + ' chars)' : ''),
+    client_time: clientTime
+  }, null, 2) + '\n\n--- 解码后的 JSON ---\n' + JSON.stringify(result, null, 2);
+  bodyPre.style.display = 'block';
+
+  setStatus('upstatus', '上传中...', 'running');
+  try {
+    const resp = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const text = await resp.text();
+    if (resp.ok) {
+      setStatus('upstatus', '成功 HTTP ' + resp.status, 'done');
+      if (text) bodyPre.textContent += '\n\n--- 服务端响应 ---\n' + text.slice(0, 400);
+    } else {
+      setStatus('upstatus', '失败 HTTP ' + resp.status, 'err');
+      bodyPre.textContent += '\n\n--- 服务端响应 ---\n' + text.slice(0, 400);
+    }
+  } catch (e) {
+    // 跨域被拦 / 断网时都会到这里
+    setStatus('upstatus', '失败：' + (e && e.message ? e.message : '网络或跨域错误'), 'err');
+    bodyPre.textContent += '\n\n提示：若为跨域(CORS)拦截，需要服务端允许该来源；'
+      + '也可把本页放到接口同域下访问，或改用命令行版程序上传。';
+  }
+}
+</script>
+</body>
+</html>
