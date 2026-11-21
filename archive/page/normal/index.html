@@ -1,0 +1,1264 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>机遇与选择 · 3D 正态分布实验</title>
+<style>
+:root{
+  --ink:#eaf3ff; --dim:#8ba4c4; --line:rgba(120,170,255,.16);
+  --c1:#4fa8ff; --c2:#63f0ff; --gold:#ffc75a; --red:#ff6078;
+  --glass:rgba(9,15,26,.58);
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;overflow:hidden;background:#05070e;color:var(--ink);
+  font-family:"Inter","HarmonyOS Sans SC","PingFang SC","Microsoft YaHei",system-ui,sans-serif;
+  -webkit-font-smoothing:antialiased;}
+#scene{position:fixed;inset:0;width:100%;height:100%;display:block;cursor:grab;}
+#scene.dragging{cursor:grabbing}
+
+/* ---------- brand ---------- */
+.brand{position:fixed;left:34px;top:30px;max-width:430px;pointer-events:none;z-index:5}
+.kicker{font-size:10px;letter-spacing:.34em;color:#6f9ac9;margin-bottom:10px}
+h1{margin:0;font-size:clamp(28px,2.6vw,42px);font-weight:650;letter-spacing:.01em;
+  background:linear-gradient(96deg,#ffffff,#a9d8ff 45%,#63f0ff);
+  -webkit-background-clip:text;background-clip:text;color:transparent;}
+.sub{margin-top:6px;font-size:12px;letter-spacing:.12em;color:#7fa6cf}
+.lead{margin:16px 0 0;font-size:13px;line-height:1.85;color:#93aac6;max-width:390px}
+.lead b{color:#cfe4ff;font-weight:600}
+
+/* ---------- panel ---------- */
+.panel{position:fixed;right:24px;top:24px;width:308px;z-index:6;
+  background:var(--glass);border:1px solid var(--line);border-radius:16px;
+  backdrop-filter:blur(16px) saturate(120%);box-shadow:0 18px 50px rgba(0,0,0,.45);}
+.ph{display:flex;align-items:center;justify-content:space-between;
+  padding:14px 16px;border-bottom:1px solid rgba(120,170,255,.10)}
+.ph span{font-size:11px;letter-spacing:.22em;color:#93b3d6}
+.pbody{padding:12px 16px 16px;max-height:calc(100vh - 140px);overflow:auto}
+.panel.closed .pbody{display:none}
+.field{margin:10px 0 14px}
+.fl{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:7px}
+.fl span{font-size:12px;color:#9fb8d4}
+.fl b{font-variant-numeric:tabular-nums;font-family:ui-monospace,"SF Mono",Consolas,monospace;
+  font-size:12.5px;color:#dceaff;font-weight:600}
+input[type=range]{-webkit-appearance:none;width:100%;height:3px;border-radius:3px;outline:none;
+  background:linear-gradient(90deg,rgba(79,168,255,.65),rgba(99,240,255,.25));}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;
+  background:#dff3ff;border:1px solid rgba(120,200,255,.9);box-shadow:0 0 12px rgba(99,240,255,.65);cursor:pointer}
+.toggles{display:flex;gap:8px;margin:14px 0 12px}
+.tg{flex:1;padding:8px 6px;border-radius:9px;border:1px solid rgba(120,170,255,.18);
+  background:rgba(255,255,255,.03);color:#8fa8c6;font-size:11.5px;cursor:pointer;transition:.18s}
+.tg.on{color:#c8ecff;border-color:rgba(99,240,255,.42);background:rgba(79,168,255,.14);
+  box-shadow:inset 0 0 18px rgba(79,168,255,.16)}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btn{padding:9px 8px;border-radius:10px;border:1px solid rgba(120,170,255,.20);
+  background:rgba(255,255,255,.035);color:#c3d8ef;font-size:12px;cursor:pointer;transition:.18s}
+.btn:hover{background:rgba(79,168,255,.16);border-color:rgba(99,240,255,.45);color:#e8f6ff}
+.btn.primary{grid-column:1 / -1;background:linear-gradient(100deg,rgba(79,168,255,.30),rgba(99,240,255,.18));
+  border-color:rgba(99,240,255,.5);color:#f0fbff;font-weight:600;letter-spacing:.08em}
+
+/* ---------- stats ---------- */
+.stats{position:fixed;left:34px;bottom:74px;display:flex;gap:26px;z-index:5;pointer-events:none}
+.stat{min-width:64px}
+.stat label{display:block;font-size:9.5px;letter-spacing:.18em;color:#6d8db3;margin-bottom:5px}
+.stat span{font-variant-numeric:tabular-nums;font-family:ui-monospace,"SF Mono",Consolas,monospace;
+  font-size:19px;color:#dcebff;letter-spacing:-.01em}
+.stat span small{font-size:11px;color:#7fa6cf;margin-left:2px}
+
+/* ---------- legend ---------- */
+.legend{position:fixed;left:34px;bottom:34px;display:flex;gap:18px;z-index:5;pointer-events:none}
+.legend span{display:flex;align-items:center;gap:7px;font-size:11px;color:#89a3c3}
+.legend i{width:7px;height:7px;border-radius:50%;display:block;box-shadow:0 0 9px currentColor}
+
+/* 三个被跟踪的普通人 */
+.picks{position:fixed;left:34px;bottom:148px;display:flex;gap:14px;z-index:5;pointer-events:none;
+  font-size:11px;letter-spacing:.04em;align-items:center}
+.picks span{display:flex;align-items:center;gap:6px}
+.picks i{width:7px;height:7px;border-radius:50%;display:block;box-shadow:0 0 10px currentColor}
+.picks b{font-weight:500;font-variant-numeric:tabular-nums}
+
+/* ---------- timeline ---------- */
+.timeline{position:fixed;left:50%;bottom:26px;transform:translateX(-50%);width:min(520px,44vw);z-index:5;
+  pointer-events:none}
+.bar{height:2px;background:rgba(120,170,255,.16);border-radius:2px;overflow:hidden}
+.bar div{height:100%;width:0;background:linear-gradient(90deg,#4fa8ff,#63f0ff);
+  box-shadow:0 0 10px rgba(99,240,255,.7);transition:width .12s linear}
+.tl{display:flex;justify-content:space-between;margin-top:8px;font-size:10.5px;letter-spacing:.12em;color:#7593b6}
+
+/* ---------- 旁白 ---------- */
+.narr{position:fixed;left:50%;bottom:92px;transform:translateX(-50%);width:min(620px,58vw);z-index:5;
+  text-align:center;font-size:12.5px;line-height:1.6;letter-spacing:.04em;color:#a9c3de;
+  pointer-events:none;text-shadow:0 2px 14px rgba(0,0,0,.75);transition:opacity .35s}
+.narr b{color:#7fe6ff;font-weight:600;margin-right:6px}
+/* ---------- 坐标轴标注（3D 投影定位） ---------- */
+.axl{position:fixed;z-index:4;transform:translate(-50%,-50%);font-size:10px;letter-spacing:.14em;
+  color:#6288b0;pointer-events:none;white-space:nowrap;display:none}
+
+/* ---------- conclusion ---------- */
+.conclusion{position:fixed;left:50%;bottom:96px;transform:translate(-50%,14px);z-index:6;
+  width:min(660px,72vw);padding:16px 22px;border-radius:14px;
+  background:linear-gradient(100deg,rgba(16,40,68,.78),rgba(10,22,40,.7));
+  border:1px solid rgba(99,240,255,.28);backdrop-filter:blur(14px);
+  box-shadow:0 16px 50px rgba(0,0,0,.5),inset 0 0 40px rgba(60,180,255,.08);
+  opacity:0;visibility:hidden;transition:.45s cubic-bezier(.2,.8,.2,1);pointer-events:none}
+.conclusion.show{opacity:1;visibility:visible;transform:translate(-50%,0)}
+.conclusion h3{margin:0 0 8px;font-size:12.5px;letter-spacing:.2em;color:#7fe6ff;font-weight:600}
+.conclusion p{margin:0;font-size:12.8px;line-height:1.8;color:#a9c3de}
+.conclusion p b{color:#eaf7ff;font-variant-numeric:tabular-nums}
+
+/* ---------- misc ---------- */
+.hint{position:fixed;right:26px;bottom:28px;font-size:10.5px;letter-spacing:.1em;color:#5c769a;
+  z-index:5;pointer-events:none;text-align:right;line-height:1.7}
+#err{position:fixed;inset:auto 24px 24px 24px;z-index:20;padding:14px 18px;border-radius:12px;
+  background:rgba(120,20,32,.9);color:#ffdbe0;font:12px/1.6 ui-monospace,monospace;display:none;white-space:pre-wrap}
+@media (max-width:980px){
+  .panel{width:250px;right:14px;top:14px}
+  .brand{left:18px;top:18px;max-width:300px}
+  .lead{display:none}
+  .stats{left:18px;bottom:66px;gap:16px}
+  .stat span{font-size:15px}
+  .legend{left:18px;bottom:30px;gap:12px;flex-wrap:wrap;max-width:250px}
+  .hint{display:none}
+}
+</style>
+</head>
+<body>
+<canvas id="scene"></canvas>
+
+<header class="brand">
+  <div class="kicker">TALENT · LUCK · CHOICE</div>
+  <h1>机遇与选择</h1>
+  <div class="sub">3D 正态分布实验 · 10,000 个点</div>
+  <p class="lead">每个点都从同一条起跑线出发。每一步只是随机地向左或向右——这是<b>「选择」</b>；途中金球飞来，砸中加分、错过落后——这是<b>「机遇」</b>。当两者叠加足够多次，个体的混乱会自己排成一座<b>钟形山</b>。</p>
+</header>
+
+<aside class="panel" id="panel">
+  <div class="ph"><span>实验参数</span><button class="btn" id="bCollapse" style="padding:4px 10px;font-size:11px">收起</button></div>
+  <div class="pbody">
+    <div class="field">
+      <div class="fl"><span>点数（个体）</span><b id="vN">10,000</b></div>
+      <input id="rN" type="range" min="1000" max="20000" step="1000" value="10000">
+    </div>
+    <div class="field">
+      <div class="fl"><span>「选择」步数</span><b id="vS">40</b></div>
+      <input id="rS" type="range" min="4" max="120" step="2" value="40">
+    </div>
+    <div class="field">
+      <div class="fl"><span>「机遇」次数</span><b id="vO">240</b></div>
+      <input id="rO" type="range" min="0" max="600" step="10" value="240">
+    </div>
+    <div class="field">
+      <div class="fl"><span>机遇强度</span><b id="vI">5</b></div>
+      <input id="rI" type="range" min="0" max="16" step="1" value="5">
+    </div>
+    <div class="field">
+      <div class="fl"><span>天赋差异</span><b id="vG">0.15</b></div>
+      <input id="rG" type="range" min="0" max="0.6" step="0.01" value="0.15">
+    </div>
+    <div class="field" style="margin-bottom:6px">
+      <div class="fl"><span>播放速度</span><b id="vP">1.0×</b></div>
+      <input id="rP" type="range" min="0.3" max="4" step="0.1" value="1">
+    </div>
+    <div class="toggles">
+      <button class="tg on" id="tgRot">自动旋转</button>
+      <button class="tg on" id="tgCurve">正态曲线</button>
+    </div>
+    <div class="btns">
+      <button class="btn primary" id="bPlay">暂停</button>
+      <button class="btn" id="bReplay">重播</button>
+      <button class="btn" id="bSeed">重新随机</button>
+      <button class="btn" id="bJump">跳到结果</button>
+      <button class="btn" id="bCam">视角复位</button>
+    </div>
+  </div>
+</aside>
+
+<div class="stats">
+  <div class="stat"><label>样本</label><span id="stN">10,000</span></div>
+  <div class="stat"><label>均值 μ</label><span id="stMu">0.0</span></div>
+  <div class="stat"><label>标准差 σ</label><span id="stSd">—</span></div>
+  <div class="stat"><label>±1σ 覆盖</label><span id="stP1">—</span></div>
+  <div class="stat"><label>偏度</label><span id="stSk">—</span></div>
+</div>
+
+<div class="legend">
+  <span><i style="background:#4fa8ff;color:#4fa8ff"></i>随机选择</span>
+  <span><i style="background:#ffc75a;color:#ffc75a"></i>抓住机遇</span>
+  <span><i style="background:#ff6078;color:#ff6078"></i>遭遇厄运</span>
+  <span><i style="background:#63f0ff;color:#63f0ff"></i>正态拟合</span>
+</div>
+
+<div class="picks">
+  <span style="color:#6d8db3">随机抽出的 3 个普通人</span>
+  <span><i style="background:#ffc247;color:#ffc247"></i><b id="pkA" style="color:#ffc247">甲</b></span>
+  <span><i style="background:#7dffb0;color:#7dffb0"></i><b id="pkB" style="color:#7dffb0">乙</b></span>
+  <span><i style="background:#ff9ad5;color:#ff9ad5"></i><b id="pkC" style="color:#ff9ad5">丙</b></span>
+</div>
+
+<div class="timeline">
+  <div class="bar"><div id="fill"></div></div>
+  <div class="tl"><span id="phase">起跑</span><span id="stepTxt">0 / 40 步</span></div>
+</div>
+
+<div class="narr" id="narr"></div>
+<div class="axl" id="axX">分数 →</div>
+<div class="axl" id="axY">↑ 人数（密度）</div>
+
+<div class="conclusion" id="conclusion">
+  <h3>结 论</h3>
+  <p id="conclText"></p>
+</div>
+
+<div class="hint">拖拽旋转 · 滚轮缩放 · 空格播放/暂停<br>R 重播 · N 重新随机<br><span style="color:#42d6c4">localhost/moni/normal-3d.html</span></div>
+<div id="err"></div>
+
+<script type="module">
+const errBox = document.getElementById('err');
+function fail(msg){
+  errBox.style.display = 'block';
+  errBox.textContent = '运行出错：\n' + msg;
+}
+window.addEventListener('error', e => fail(e.message + '\n' + (e.filename||'')));
+window.addEventListener('unhandledrejection', e => fail(String(e.reason && e.reason.stack || e.reason)));
+
+let THREE;
+try {
+  THREE = await import('./vendor/three.module.js');
+} catch (e1) {
+  try {
+    THREE = await import('https://unpkg.com/three@0.187.0/build/three.module.js');
+  } catch (e2) {
+    fail('three.js 加载失败：本地 ./vendor/three.module.js（需同时存在 three.core.js）与 CDN 均不可用。\n' + e1);
+    throw e2;
+  }
+}
+
+/* =================== 基础工具 =================== */
+const clamp = (v,a,b) => v < a ? a : (v > b ? b : v);
+const lerp  = (a,b,t) => a + (b-a)*t;
+
+function srand(s){
+  let x = (s >>> 0) || 1;
+  return function(){
+    x ^= x << 13; x >>>= 0;
+    x ^= x >>> 17;
+    x ^= x << 5;  x >>>= 0;
+    return x / 4294967296;
+  };
+}
+
+function makeDotTexture(){
+  const s = 128;
+  const c = document.createElement('canvas');
+  c.width = c.height = s;
+  const g = c.getContext('2d');
+  const grd = g.createRadialGradient(s/2, s/2, 0, s/2, s/2, s/2);
+  grd.addColorStop(0.00, 'rgba(255,255,255,1)');
+  grd.addColorStop(0.34, 'rgba(255,255,255,1)');
+  grd.addColorStop(0.50, 'rgba(255,255,255,0.75)');
+  grd.addColorStop(0.70, 'rgba(255,255,255,0.18)');
+  grd.addColorStop(1.00, 'rgba(255,255,255,0)');
+  g.fillStyle = grd;
+  g.beginPath(); g.arc(s/2, s/2, s/2, 0, Math.PI*2); g.fill();
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.needsUpdate = true;
+  return tex;
+}
+
+/* =================== 参数 =================== */
+const cfg = { N:10000, M:40, K:240, strength:5, talent:0.15, speed:1, autoRot:true, curve:true };
+const QS = new URLSearchParams(location.search);
+const DBG = QS.get('dbg') === '1';
+// 默认每次打开都是全新的一批数据；只有显式 ?seed= 才能复现同一组
+let seed = QS.get('seed') ? (parseInt(QS.get('seed'), 10) >>> 0)
+                          : (Math.floor(Math.random() * 4294967296) >>> 0);
+const MAXN = 20000;
+
+let sim = null;
+let playT = 0, playing = true, finished = false;
+let dy = 0;
+
+const xs    = new Float32Array(MAXN);
+const posY  = new Float32Array(MAXN);
+const posZ  = new Float32Array(MAXN);
+const bi    = new Int32Array(MAXN);
+const posU  = new Float32Array(MAXN);   // 每人固定相对高度 0..1
+const jitX  = new Float32Array(MAXN);   // 柱内横向抖动
+let counts  = new Int32Array(8);
+let sm      = new Float32Array(8);
+let HH      = new Float32Array(8);
+
+// 密度平滑核
+const KR = 4;
+const KW = (() => {
+  const w = [];
+  let s = 0;
+  for (let k=-KR;k<=KR;k++){ const v = Math.exp(-0.5*(k/1.7)*(k/1.7)); w.push(v); s += v; }
+  return w.map(v => v/s);
+})();
+
+const posArr = new Float32Array(MAXN*3);
+const colArr = new Float32Array(MAXN*3);
+const mirArr = new Float32Array(MAXN*3);
+
+/* =================== 渲染器 =================== */
+const canvas   = document.getElementById('scene');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, powerPreference:'high-performance' });
+renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
+renderer.setSize(window.innerWidth, window.innerHeight, false);
+renderer.setClearColor(0x05070e, 1);
+
+const scene  = new THREE.Scene();
+scene.fog = new THREE.FogExp2(0x05070e, 0.0068);
+
+const camera = new THREE.PerspectiveCamera(52, window.innerWidth/window.innerHeight, 0.1, 800);
+const camState = { yaw: 0.20, pitch: 0.36, dist: 47, target: new THREE.Vector3(0, 3.5, 0) };
+
+function updateCamera(){
+  const cp = Math.cos(camState.pitch), sp = Math.sin(camState.pitch);
+  camera.position.set(
+    camState.target.x + camState.dist*cp*Math.sin(camState.yaw),
+    camState.target.y + camState.dist*sp,
+    camState.target.z + camState.dist*cp*Math.cos(camState.yaw)
+  );
+  camera.lookAt(camState.target);
+}
+
+/* =================== 场景元素 =================== */
+const dotTex = makeDotTexture();
+
+const SIGMA_W = 6.5;     // 1σ 对应的世界单位
+const MAX_H   = 9.2;     // 钟形山最高点
+const AXL     = SIGMA_W * 3.35;  // 坐标轴半边长度：所有点都被裁在这里面，也就是「框」的边界
+
+// 地面网格
+const grid = new THREE.GridHelper(96, 48, 0x26679c, 0x123a5e);
+grid.material.transparent = true;
+grid.material.opacity = 0.34;
+grid.material.depthWrite = false;
+grid.position.y = 0;
+scene.add(grid);
+
+// σ 区间地面光带 + 取景框：全部挂在一个 group 上，
+// 每帧按「当前 σ」缩放 x，框跟着人群一起长大，而不是一个从开头就固定的死框
+const frameGroup = new THREE.Group();
+scene.add(frameGroup);
+
+function makeBand(x0, x1, color, opacity){
+  const w = x1 - x0;
+  const geo = new THREE.PlaneGeometry(w, 14);
+  geo.rotateX(-Math.PI/2);
+  const mesh = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({
+    color, transparent:true, opacity, depthWrite:false, blending:THREE.AdditiveBlending
+  }));
+  mesh.position.set((x0+x1)/2, 0.02, 0);
+  frameGroup.add(mesh);
+}
+makeBand(-SIGMA_W, SIGMA_W, 0x2fa8ff, 0.07);
+makeBand(-2*SIGMA_W, 2*SIGMA_W, 0x1d70a8, 0.038);
+makeBand(-AXL, AXL, 0x1b5a86, 0.030);   // 最外层就是框：数据被裁在这里面
+
+// σ 分隔线
+function sigmaLine(x, color, opacity){
+  const g = new THREE.BufferGeometry().setFromPoints([
+    new THREE.Vector3(x, 0.03, -7), new THREE.Vector3(x, 0.03, 7)
+  ]);
+  const line = new THREE.Line(g, new THREE.LineBasicMaterial({
+    color, transparent:true, opacity, blending:THREE.AdditiveBlending, depthWrite:false
+  }));
+  frameGroup.add(line);
+}
+sigmaLine(-AXL, 0x2f6f9c, 0.30);
+sigmaLine(-2*SIGMA_W, 0x2f6f9c, 0.35);
+sigmaLine(-SIGMA_W,   0x63f0ff, 0.55);
+sigmaLine(0,          0x9fd8ff, 0.35);
+sigmaLine(SIGMA_W,    0x63f0ff, 0.55);
+sigmaLine(2*SIGMA_W,  0x2f6f9c, 0.35);
+sigmaLine(AXL, 0x2f6f9c, 0.30);
+
+// 框的前后两条横边，让范围是一个闭合方框
+function edgeLine(z){
+  const g = new THREE.BufferGeometry().setFromPoints([
+    new THREE.Vector3(-AXL, 0.032, z), new THREE.Vector3(AXL, 0.032, z)
+  ]);
+  frameGroup.add(new THREE.Line(g, new THREE.LineBasicMaterial({
+    color:0x2f6f9c, transparent:true, opacity:0.42, blending:THREE.AdditiveBlending, depthWrite:false
+  })));
+}
+edgeLine(-7); edgeLine(7);
+
+// 背景星尘
+(function stars(){
+  const n = 320;
+  const p = new Float32Array(n*3);
+  const rnd = srand(99);
+  for (let i=0;i<n;i++){
+    p[i*3]   = (rnd()*2-1)*130;
+    p[i*3+1] = 6 + rnd()*70;
+    p[i*3+2] = (rnd()*2-1)*90;
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(p,3));
+  scene.add(new THREE.Points(g, new THREE.PointsMaterial({
+    color:0x9fc8ff, size:0.9, sizeAttenuation:true, transparent:true, opacity:0.35,
+    blending:THREE.AdditiveBlending, depthWrite:false, map:dotTex
+  })));
+})();
+
+// 远景辉光
+(function backdrop(){
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: dotTex, color:0x1d5c96, transparent:true, opacity:0.30,
+    blending:THREE.AdditiveBlending, depthWrite:false, fog:false
+  }));
+  sp.position.set(0, 16, -70);
+  sp.scale.set(150, 100, 1);
+  scene.add(sp);
+})();
+
+// 主体点云
+const geoMain = new THREE.BufferGeometry();
+geoMain.setAttribute('position', new THREE.BufferAttribute(posArr, 3).setUsage(THREE.DynamicDrawUsage));
+const colAttr = new THREE.BufferAttribute(colArr, 3);
+colAttr.setUsage(THREE.DynamicDrawUsage);
+geoMain.setAttribute('color', colAttr);
+geoMain.setDrawRange(0, 0);
+
+const matMain = new THREE.PointsMaterial({
+  size: 0.27, sizeAttenuation: true, map: dotTex, vertexColors: true,
+  transparent: true, opacity: 0.47, blending: THREE.AdditiveBlending,
+  depthWrite: false, alphaTest: 0.004
+});
+const points = new THREE.Points(geoMain, matMain);
+points.frustumCulled = false;
+scene.add(points);
+
+// 柔光层：同一批点，大尺寸低透明度，让整座山有体积感
+const matHalo = new THREE.PointsMaterial({
+  size: 1.05, sizeAttenuation: true, map: dotTex, vertexColors: true,
+  transparent: true, opacity: 0.07, blending: THREE.AdditiveBlending,
+  depthWrite: false, alphaTest: 0.0
+});
+// const halo = new THREE.Points(geoMain, matHalo);
+// scene.add(halo);
+
+// 地面倒影（弱化，仅留一点舞台感）
+const geoMir = new THREE.BufferGeometry();
+geoMir.setAttribute('position', new THREE.BufferAttribute(mirArr, 3).setUsage(THREE.DynamicDrawUsage));
+geoMir.setAttribute('color', colAttr);
+geoMir.setDrawRange(0, 0);
+const matMir = matMain.clone();
+matMir.opacity = 0.0;
+const painMir = new THREE.Points(geoMir, matMir);
+painMir.frustumCulled = false;
+// 不加入场景：没有实心地板时，倒影会变成悬浮的“第二团云”
+
+
+// 正态拟合曲线（按当前 μ、σ 重建，跟随数据收敛）
+let curveGroup = null;
+let curveSigma = -1, curveCenter = 1e9;
+let frameScale = 1, frameCx = 0;
+
+function dropCurve(){
+  if (curveGroup){
+    scene.remove(curveGroup);
+    curveGroup.traverse(o => {
+      if (o.geometry) o.geometry.dispose();
+      if (o.material) o.material.dispose();
+    });
+    curveGroup = null;
+  }
+  curveSigma = -1;
+  curveCenter = 1e9;
+}
+
+function buildCurve(sigmaW, centerW){
+  dropCurve();
+  if (!(sigmaW > 0.15)) return;
+
+  const pts = [];
+  // span 取到坐标轴边界（3.35σ），曲线两端与框对齐：
+  // 保证任何一个被裁进框里的点，左右都有拟合线陪着，不会有点落在曲线之外
+  const n = 96, span = AXL / SIGMA_W;
+  for (let i=0;i<=n;i++){
+    const u = -span + i*(2*span/n);
+    const x = centerW + u * sigmaW;
+    const y = Math.max(0.03, MAX_H * 0.97 * Math.exp(-0.5 * u * u));
+    pts.push(new THREE.Vector3(x, y, 0));
+  }
+  const curve = new THREE.CatmullRomCurve3(pts);
+  const tube = new THREE.Mesh(
+    new THREE.TubeGeometry(curve, 240, 0.05, 8, false),
+    new THREE.MeshBasicMaterial({ color:0x63f0ff, transparent:true, opacity:0.95, blending:THREE.AdditiveBlending, depthWrite:false })
+  );
+  const halo = new THREE.Mesh(
+    new THREE.TubeGeometry(curve, 240, 0.18, 8, false),
+    new THREE.MeshBasicMaterial({ color:0x2b9fd0, transparent:true, opacity:0.13, blending:THREE.AdditiveBlending, depthWrite:false })
+  );
+  curveGroup = new THREE.Group();
+  curveGroup.add(tube, halo);
+  curveGroup.visible = false;
+  scene.add(curveGroup);
+
+  curveSigma = sigmaW;
+  curveCenter = centerW;
+}
+
+// 机遇光球池
+const orbPool = [];
+for (let i=0;i<12;i++){
+  const spr = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: dotTex, color:0xffc75a, transparent:true, opacity:0,
+    blending: THREE.AdditiveBlending, depthWrite:false, depthTest:false
+  }));
+  spr.scale.set(1.3,1.3,1);
+  scene.add(spr);
+
+  const ring = new THREE.Mesh(
+    new THREE.RingGeometry(0.97, 1.0, 72),
+    new THREE.MeshBasicMaterial({ color:0xffc75a, transparent:true, opacity:0,
+      blending:THREE.AdditiveBlending, side:THREE.DoubleSide, depthWrite:false, depthTest:false })
+  );
+  scene.add(ring);
+  orbPool.push({ spr, ring, used:false });
+}
+
+/* =================== 模拟核心 =================== */
+function buildSim(){
+  const N = cfg.N, M = cfg.M;
+  const rand = srand(seed);
+  const rnd = rand;
+  const gauss = () => {
+    let u = 0, v = 0;
+    while (!u) u = rnd();
+    while (!v) v = rnd();
+    return Math.sqrt(-2*Math.log(u)) * Math.cos(2*Math.PI*v);
+  };
+
+  const S = new Float32Array(N * (M + 1));
+  const talentArr = new Float32Array(N);
+
+  for (let i=0;i<N;i++){
+    const g = 1 + cfg.talent * gauss();
+    talentArr[i] = g;
+    let sc = 0;
+    const o = i * (M + 1);
+    for (let t=1;t<=M;t++){
+      // 步幅本身也有细微差异：否则「向左向右次数刚好相同」的人会精确叠在 0 分，
+      // 中间长出一根并不属于钟形的尖塔
+      const stepLen = 0.86 + rnd() * 0.28;
+      sc += g * (rnd() < 0.5 ? -1 : 1) * stepLen;
+      S[o + t] = sc;
+    }
+  }
+
+  // 平均天赋，用于机遇分布位置
+  let tg = 0;
+  for (let i=0;i<N;i++) tg += talentArr[i];
+  const avgG = tg / N;
+
+  const bonus = new Float32Array(N);      // 每人净机遇收益
+  const events = [];
+  const HITP = 0.0075;                    // 金球扫过一片，真正被砸中的只是少数
+
+  for (let k=0;k<cfg.K;k++){
+    const t = 2 + Math.floor(rnd() * Math.max(1, M - 1));
+    const sigmaT = Math.sqrt(t) * avgG;
+    const target = gauss() * sigmaT * 1.15;
+    const rad = Math.max(0.4, 1.15 * sigmaT);
+    const sign = rnd() < 0.5 ? 1 : -1;
+
+    let hits = 0;
+    for (let i=0;i<N;i++){
+      if (Math.abs(S[i*(M+1)+t] - target) < rad && rnd() < HITP){
+        const o = i*(M+1);
+        const d = sign * cfg.strength;
+        for (let tt=t;tt<=M;tt++) S[o+tt] += d;
+        bonus[i] += d;
+        hits++;
+      }
+    }
+    events.push({ t, target, sign, rad, hits });
+  }
+
+  // 终局统计
+  const last = M;
+  let mu = 0;
+  for (let i=0;i<N;i++) mu += S[i*(M+1) + last];
+  mu /= N;
+
+  let v2 = 0, v3 = 0;
+  for (let i=0;i<N;i++){
+    const d = S[i*(M+1) + last] - mu;
+    v2 += d*d; v3 += d*d*d;
+  }
+  const sd = Math.sqrt(v2 / N) || 1;
+  const skew = (v3 / N) / (sd*sd*sd);
+
+  const xUnit = SIGMA_W / sd;            // 世界单位 / 分
+  const axMax = SIGMA_W * 3.35;
+  const binW  = 0.46;
+  const bins  = Math.ceil((axMax*2) / binW);
+
+  return { N, M, S, bonus, events, mu, sd, skew, xUnit, axMax, binW, bins };
+}
+
+/* =================== 重建 / 复位 =================== */
+let rebuildTimer = 0;
+function scheduleRebuild(){
+  clearTimeout(rebuildTimer);
+  rebuildTimer = setTimeout(() => rebuild(), 140);
+}
+
+function rebuild(){
+  sim = buildSim();
+  pickWho();
+
+  counts   = new Int32Array(sim.bins);
+  sm       = new Float32Array(sim.bins);
+  HH       = new Float32Array(sim.bins);
+
+  dy = 0;
+  posY.fill(0);
+
+  const rv0 = srand(seed + 5551);
+  for (let i=0;i<cfg.N;i++){
+    // 高度分布向上偏置：越靠近表面越密，钟形穹顶才立得住
+    posU[i] = Math.pow(rv0(), 0.45);
+    jitX[i] = (rv0()*2 - 1) * sim.binW * 0.45;
+  }
+
+  // 颜色：按净机遇收益取最幸运 8% 与最倒霉 8%
+  const cN = new THREE.Color(0x3a9bff);
+  const cG = new THREE.Color(0xffc247);
+  const cR = new THREE.Color(0xff4d64);
+  const rv = srand(seed + 7773);
+
+  const bs = Float32Array.from(sim.bonus.subarray(0, cfg.N));
+  bs.sort();
+  const qLo = bs[Math.floor(cfg.N * 0.06)];
+  const qHi = bs[Math.floor(cfg.N * 0.94)];
+  const useLuck = cfg.strength >= 0.5 && qHi > 0.001;
+
+  for (let i=0;i<cfg.N;i++){
+    const b = sim.bonus[i];
+    const base = (useLuck && b >= qHi) ? cG
+               : (useLuck && b <= qLo && qLo < -0.001) ? cR : cN;
+    const v = 0.72 + rv() * 0.42;
+    colArr[i*3]   = Math.min(1, base.r * v);
+    colArr[i*3+1] = Math.min(1, base.g * v);
+    colArr[i*3+2] = Math.min(1, base.b * v);
+
+    // z 方向厚度抖动
+    let z = 0;
+    for (let k=0;k<3;k++) z += rv()*2 - 1;
+    posZ[i] = clamp(z * 0.36, -1.2, 1.2);
+  }
+  colAttr.needsUpdate = true;
+
+  geoMain.setDrawRange(0, cfg.N);
+  geoMir.setDrawRange(0, cfg.N);
+
+  dropCurve();
+
+  playT = 0;
+  finished = false;
+  playing = true;
+  document.getElementById('conclusion').classList.remove('show');
+  setPlayBtn();
+  updateHudForce();
+}
+
+/* ============ 三个「天选之子」 ============
+   从 1 万人里随机点的三个人，没有任何特权，只是被画出来便于跟踪。
+   z 轴临时借作时间轴：靠后是过去、靠前是现在；x 轴就是他们此刻的分数位置。 */
+const PICK_COLORS = [0xffc247, 0x7dffb0, 0xff9ad5];
+const PICK_MAX = 260;
+const pick = { idx:[0,0,0], geo:[], arr:[], col:[], heads:[], base:[] };
+
+for (let p=0;p<3;p++){
+  const arr = new Float32Array(PICK_MAX * 3);
+  const col = new Float32Array(PICK_MAX * 3);
+  const geo = new THREE.BufferGeometry();
+  geo.setAttribute('position', new THREE.BufferAttribute(arr, 3));
+  geo.setAttribute('color',    new THREE.BufferAttribute(col, 3));
+  geo.setDrawRange(0, 0);
+  // 同一条轨迹叠 3 层（略微抬高、逐层变淡），线宽只有 1px 时才看得见
+  [0.95, 0.55, 0.28].forEach((op, k) => {
+    const line = new THREE.Line(geo, new THREE.LineBasicMaterial({
+      vertexColors:true, transparent:true, opacity:op,
+      blending: THREE.AdditiveBlending, depthWrite:false
+    }));
+    line.position.y = k * 0.11;
+    line.frustumCulled = false;
+    scene.add(line);
+  });
+
+  const head = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: dotTex, color: PICK_COLORS[p], transparent:true, opacity:0.95,
+    blending: THREE.AdditiveBlending, depthWrite:false
+  }));
+  head.scale.set(1.15, 1.15, 1);
+  head.frustumCulled = false;
+  scene.add(head);
+
+  const c3 = new THREE.Color(PICK_COLORS[p]);
+  pick.arr.push(arr); pick.geo.push(geo); pick.col.push(col);
+  pick.heads.push(head); pick.base.push(c3);
+}
+
+function pickWho(){
+  const rvp = srand(seed + 9137);
+  const ids = [];
+  while (ids.length < 3){
+    const c = Math.floor(rvp() * cfg.N);
+    if (ids.indexOf(c) < 0) ids.push(c);
+  }
+  pick.idx = ids;
+}
+
+function updatePicks(){
+  if (!sim) return;
+  const { M, S, xUnit } = sim;
+  const stride = M + 1;
+  const stF = Math.min(M, playT);
+  const axCur = sim.axCur || 0;
+  const zAt = t => -7 + (t / M) * 14.6;
+  const cl = v => v < -axCur ? -axCur : (v > axCur ? axCur : v);
+
+  for (let p=0;p<3;p++){
+    const id = pick.idx[p];
+    const arr = pick.arr[p];
+    const col = pick.col[p];
+    const c3 = pick.base[p];
+    let n = 0;
+    const lim = Math.floor(stF);
+    for (let t=0;t<=lim;t++){
+      arr[n*3]   = cl(S[id*stride + t] * xUnit);
+      arr[n*3+1] = 0.12;
+      arr[n*3+2] = zAt(t);
+      // 越靠近「此刻」越亮：整条路径是过去的淡影，头部最亮
+      const f = 0.30 + 0.70 * Math.pow(t / Math.max(1, stF), 2.5);
+      col[n*3] = c3.r * f; col[n*3+1] = c3.g * f; col[n*3+2] = c3.b * f;
+      n++;
+    }
+    let hx, hz = zAt(stF);
+    if (stF >= M){
+      hx = cl(S[id*stride + M] * xUnit);
+    } else {
+      const a = S[id*stride + lim] * xUnit;
+      const b = S[id*stride + lim + 1] * xUnit;
+      hx = cl(a + (b - a) * (stF - lim));
+      // 把插值出来的「此刻」接在线尾，轨迹不会断
+      arr[n*3] = hx; arr[n*3+1] = 0.12; arr[n*3+2] = hz;
+      col[n*3] = c3.r; col[n*3+1] = c3.g; col[n*3+2] = c3.b;
+      n++;
+    }
+    pick.geo[p].setDrawRange(0, n);
+    pick.geo[p].getAttribute('position').needsUpdate = true;
+    pick.geo[p].getAttribute('color').needsUpdate = true;
+    pick.heads[p].position.set(hx, 0.30, hz);
+  }
+}
+
+/* =================== 每帧更新 =================== */
+function updateCloud(dt){
+  if (!sim) return;
+  const { N, M, S } = sim;
+  const stride = M + 1;
+  const st = Math.min(M, Math.floor(playT));
+
+  counts.fill(0);
+  let sum = 0, sum2 = 0;
+  for (let i=0;i<N;i++){
+    const sv = st === 0 ? 0 : S[i*stride + st];
+    sum += sv; sum2 += sv * sv;
+  }
+  const muCur = sum / N;
+  const sdCur = Math.sqrt(Math.max(0, sum2 / N - muCur * muCur));
+  sim.muCur = muCur;
+  sim.sdCur = sdCur;
+
+  // 框 = 当前分布范围（±3.35σ 当前）：σ 长大，框跟着长大，点永远不会「撞墙」
+  const axCur = 3.35 * sdCur * sim.xUnit;
+  sim.axCur = axCur;
+
+  for (let i=0;i<N;i++){
+    const sv = st === 0 ? 0 : S[i*stride + st];
+    let x = sv * sim.xUnit;
+    if (x < -axCur) x = -axCur;
+    else if (x > axCur) x = axCur;
+    xs[i] = x;
+
+    let b = Math.floor((x + sim.axMax) / sim.binW);
+    if (b < 0) b = 0; else if (b >= sim.bins) b = sim.bins - 1;
+    bi[i] = b;
+    counts[b]++;
+  }
+
+  // 平滑直方图 → 每箱表面高度（两遍高斯核）
+  // 两遍是必要的：步数是离散的，中途 σ 小的时候「同一批分数」会在个别箱里堆成
+  // 一根根竖柱（梳齿），再来一遍滤波才能抹平，钟形面才连续
+  for (let b=0;b<sim.bins;b++){
+    let s = 0;
+    for (let k2=-KR;k2<=KR;k2++){
+      const j = b + k2;
+      if (j >= 0 && j < sim.bins) s += counts[j] * KW[k2+KR];
+    }
+    sm[b] = s;
+  }
+  for (let b=0;b<sim.bins;b++){
+    let s = 0;
+    for (let k2=-KR;k2<=KR;k2++){
+      const j = b + k2;
+      if (j >= 0 && j < sim.bins) s += sm[j] * KW[k2+KR];
+    }
+    HH[b] = s;                       // 先用 HH 暂存第二遍结果
+  }
+  let maxS = 1;
+  for (let b=0;b<sim.bins;b++) if (HH[b] > maxS) maxS = HH[b];
+
+  // 生长因子：前半程里山体只从地面慢慢抬起，
+  // 先让「人群在地面上左右分流」被看见，避免开局就是两根高柱
+  const prog = M ? playT / M : 1;
+  const rise = Math.min(1, Math.max(0, (prog - 0.02) / 0.45));
+  sim.groF = 0.06 + 0.94 * (rise * rise * (3 - 2 * rise));
+
+  for (let b=0;b<sim.bins;b++) HH[b] = MAX_H * (HH[b] / maxS) * sim.groF;
+
+  const k = 1 - Math.exp(-dt * 14);
+
+  // 取景框：横向按「当前 σ」缩放、随 μ 平移（带平滑，避免每帧抽动）
+  const kf = 1 - Math.exp(-dt * 9);
+  const tgtScale = clamp(sdCur / (sim.sd || 1), 0.05, 1.0);
+  frameScale += (tgtScale - frameScale) * kf;
+  frameCx    += (muCur * sim.xUnit - frameCx) * kf;
+  frameGroup.scale.x = frameScale;
+  frameGroup.position.x = frameCx;
+  sim.frameCx = frameCx;
+
+  const pa = posArr, pm = mirArr;
+
+  for (let i=0;i<N;i++){
+    const ty = posU[i] * HH[bi[i]];
+    posY[i] += (ty - posY[i]) * k;
+    const y = posY[i];
+    const x = xs[i] + jitX[i];
+
+    pa[i*3]   = x;
+    pa[i*3+1] = y;
+    pa[i*3+2] = posZ[i];
+
+    pm[i*3]   = x;
+    pm[i*3+1] = -y * 0.86 - 0.06;
+    pm[i*3+2] = posZ[i];
+  }
+
+  geoMain.getAttribute('position').needsUpdate = true;
+  geoMir.getAttribute('position').needsUpdate = true;
+
+  let maxC = 1;
+  for (let b=0;b<sim.bins;b++) if (counts[b] > maxC) maxC = counts[b];
+  sim.dbgMaxC = maxC;
+  sim.dbgDy = maxS;
+  let maxY = 0;
+  for (let i=0;i<N;i++) if (posY[i] > maxY) maxY = posY[i];
+  sim.dbgMaxY = maxY;
+}
+
+function updateOrbs(){
+  let used = 0;
+  if (sim){
+    const st = Math.min(sim.M, playT);
+    for (const ev of sim.events){
+      const d = st - ev.t;
+      if (Math.abs(d) > 2.4) continue;
+      if (used >= orbPool.length) break;
+
+      const o = orbPool[used++];
+      const x = clamp(ev.target * sim.xUnit, -sim.axMax, sim.axMax);
+      const fade = Math.max(0, 1 - Math.abs(d) / 2.6);
+
+      o.spr.position.set(x, 6.8 - Math.abs(d) * 1.25, 0);
+      o.spr.scale.setScalar(0.9 + Math.abs(d) * 0.32);
+      o.spr.material.opacity = 0.9 * fade;
+      o.spr.material.color.setHex(ev.sign > 0 ? 0xffc75a : 0xff5a70);
+
+      o.ring.position.set(x, 4.0, 0);
+      o.ring.scale.setScalar(0.35 + Math.abs(d) * 0.85);
+      o.ring.quaternion.copy(camera.quaternion);
+      o.ring.material.opacity = 0.5 * fade;
+      o.ring.material.color.setHex(ev.sign > 0 ? 0xffc75a : 0xff5a70);
+      o.used = true;
+    }
+  }
+  for (let i=used;i<orbPool.length;i++){
+    orbPool[i].spr.material.opacity = 0;
+    orbPool[i].ring.material.opacity = 0;
+  }
+}
+
+function updateCurve(){
+  if (!sim || !cfg.curve){
+    if (curveGroup) curveGroup.visible = false;
+    return;
+  }
+  const sW = (sim.sdCur || 0) * sim.xUnit;
+  const cW = (sim.muCur || 0) * sim.xUnit;
+  const frac = playT / sim.M;
+  if (!(frac > 0.10 && sW > 0.35)){
+    if (curveGroup) curveGroup.visible = false;
+    return;
+  }
+  if (!curveGroup || Math.abs(sW - curveSigma) > 0.28 || Math.abs(cW - curveCenter) > 0.28){
+    buildCurve(sW, cW);
+  }
+  if (curveGroup){
+    curveGroup.visible = true;
+    curveGroup.scale.y = sim.groF || 1;   // 拟合线跟着山体一起长高
+  }
+}
+
+/* =================== HUD =================== */
+const hud = {
+  N: document.getElementById('stN'),
+  mu: document.getElementById('stMu'),
+  sd: document.getElementById('stSd'),
+  p1: document.getElementById('stP1'),
+  sk: document.getElementById('stSk'),
+  fill: document.getElementById('fill'),
+  phase: document.getElementById('phase'),
+  step: document.getElementById('stepTxt'),
+  concl: document.getElementById('conclusion'),
+  conclText: document.getElementById('conclText'),
+  narr: document.getElementById('narr'),
+  pk: [
+    document.getElementById('pkA'),
+    document.getElementById('pkB'),
+    document.getElementById('pkC')
+  ]
+};
+
+const axXEl = document.getElementById('axX');
+const axYEl = document.getElementById('axY');
+const _pv = new THREE.Vector3();
+
+// 把「分数 →」「人数（密度）↑」两个标注按 3D 世界坐标投到屏幕上
+function placeAxisLabels(){
+  if (!sim) return;
+  const w = window.innerWidth, h = window.innerHeight;
+  const put = (el, x, y, z) => {
+    _pv.set(x, y, z).project(camera);
+    const sx = (_pv.x * 0.5 + 0.5) * w;
+    const sy = (-_pv.y * 0.5 + 0.5) * h;
+    const on = _pv.z < 1 && sx > 30 && sx < w - (w > 1100 ? 380 : 60) && sy > 70 && sy < h - 150;
+    el.style.display = on ? 'block' : 'none';
+    if (on){ el.style.left = sx + 'px'; el.style.top = sy + 'px'; }
+  };
+  const ax = Math.max(sim.axCur || 0, 7);
+  const cx = sim.frameCx || 0;
+  put(axXEl, cx + ax * 0.985, -0.62, 0);
+  put(axYEl, cx - ax * 0.96, MAX_H * 0.86, 0);
+}
+
+// 分阶段旁白：每一步都在解释观众此刻看到的东西是什么
+function narrText(st, M, prog){
+  if (st <= 0) return '<b>①</b>10,000 个点站在同一条起跑线上 —— 此刻谁都一样';
+  if (st <= 1) return '<b>②</b>第 1 步：每个人随机向左或向右，一半人往左、一半人往右';
+  if (prog < 0.30) return '<b>③</b>每一步都在随机横跳 —— 跳的次数越多，人和人的差距拉得越开';
+  if (prog < 0.62) return '<b>④</b>金球飞过：被砸中的少数人 +' + cfg.strength + ' 分，错过的原地不动 —— 运气开始起作用';
+  if (prog < 0.995) return '<b>⑤</b>多数人挤向中间、少数人甩在两头 —— 山的轮廓已经浮出来了';
+  return '<b>⑥</b>结果：钟形 —— 一万个人的混乱，自己长出了可预测的形状';
+}
+
+function fmt(n, d){
+  if (!isFinite(n)) return '—';
+  return n.toFixed(d);
+}
+
+function updateHudForce(){
+  if (!sim) return;
+  const { N, M, S } = sim;
+  const st = Math.min(M, Math.floor(playT));
+  const stride = M + 1;
+
+  let mu = 0;
+  for (let i=0;i<N;i++) mu += S[i*stride + st];
+  mu /= N;
+
+  let v2 = 0;
+  for (let i=0;i<N;i++){ const d = S[i*stride+st]-mu; v2 += d*d; }
+  const sd = Math.sqrt(v2/N);
+
+  const inside = sd > 1e-6 ? S : null;
+  let p1 = 0, p2 = 0, p3 = 0;
+  if (inside){
+    for (let i=0;i<N;i++){
+      const a = Math.abs(S[i*stride+st]-mu);
+      if (a <= sd) p1++;
+      if (a <= 2*sd) p2++;
+      if (a <= 3*sd) p3++;
+    }
+    p1 /= N; p2 /= N; p3 /= N;
+  }
+
+  hud.N.textContent = N.toLocaleString('en-US');
+  hud.mu.textContent = fmt(mu, 1);
+  hud.sd.textContent = fmt(sd, 1);
+  hud.p1.textContent = sd ? fmt(p1*100, 1) + '%' : '—';
+  hud.sk.textContent = fmt(playT >= M ? sim.skew : 0, 2);
+
+  hud.fill.style.width = (playT / M * 100).toFixed(1) + '%';
+  hud.step.textContent = st + ' / ' + M + ' 步';
+
+  // 三个跟踪对象此刻的分数
+  const names = ['甲', '乙', '丙'];
+  for (let p=0;p<3;p++){
+    const v = S[pick.idx[p]*stride+st];
+    hud.pk[p].textContent = names[p] + ' ' + (v > 0 ? '+' : '') + fmt(v, 1);
+  }
+  hud.phase.textContent = finished ? '结果成型' :
+    (st < 3 ? '起跑' : (st < M*0.55 ? '选择 + 机遇' : '收敛中'));
+
+  const prog = M ? playT / M : 1;
+  if (finished){
+    hud.narr.style.opacity = '0';
+  } else {
+    hud.narr.style.opacity = '0.94';
+    const t = narrText(st, M, prog);
+    if (hud.narr.dataset.t !== t){ hud.narr.innerHTML = t; hud.narr.dataset.t = t; }
+  }
+
+  if (finished){
+    hud.conclText.innerHTML =
+      cfg.N.toLocaleString('en-US') + ' 个点各自走完 <b>' + M + '</b> 次随机选择、经历 <b>' + cfg.K + '</b> 次随机机遇后，' +
+      '成绩分布收敛为钟形：μ = <b>' + fmt(sim.mu, 1) + '</b>，σ = <b>' + fmt(sim.sd, 1) + '</b>；' +
+      '落在 ±1σ 内的占 <b>' + fmt(p1*100, 1) + '%</b>（理论 68.3%），±2σ 占 <b>' + fmt(p2*100, 1) +
+      '%</b>（理论 95.4%），±3σ 占 <b>' + fmt(p3*100, 1) + '%</b>（理论 99.7%）。<br>' +
+      '每个人都只是在随机地左右横跳，但一万个人叠起来，混乱自己长出了可预测的形状。';
+    hud.concl.classList.add('show');
+  }
+}
+
+let hudAcc = 0;
+function updateHudLoop(dt){
+  hudAcc += dt;
+  if (hudAcc < 0.15) return;
+  hudAcc = 0;
+  updateHudForce();
+  if (DBG && sim){
+    errBox.style.display = 'block';
+    errBox.textContent = 'dbg  maxC=' + sim.dbgMaxC + '  dy=' + (sim.dbgDy||0).toFixed(4) +
+      '  maxY=' + (sim.dbgMaxY||0).toFixed(2) + '  bins=' + sim.bins + '  axMax=' + sim.axMax.toFixed(1) +
+      '  mu=' + sim.mu.toFixed(2) + '  sd=' + sim.sd.toFixed(2) + '  N=' + sim.N;
+  }
+}
+
+/* =================== 播放控制 =================== */
+function setPlayBtn(){
+  document.getElementById('bPlay').textContent = finished ? '重新开始' : (playing ? '暂停' : '继续');
+}
+
+function onFinish(){
+  finished = true;
+  playing = false;
+  setPlayBtn();
+  updateHudForce();
+}
+
+function jumpToEnd(){
+  if (!sim) return;
+  playT = sim.M;
+  finished = true;
+  playing = false;
+  updateCloud(1);
+  updateCloud(1);
+  setPlayBtn();
+  updateHudForce();
+}
+
+function replay(){
+  playT = 0;
+  finished = false;
+  playing = true;
+  dy = 0;
+  posY.fill(0);
+  document.getElementById('conclusion').classList.remove('show');
+  setPlayBtn();
+}
+
+/* =================== 主循环 =================== */
+let lastT = performance.now();
+let dragging = false;
+
+renderer.setAnimationLoop((now) => {
+  const dt = Math.min(0.06, Math.max(0.0005, (now - lastT) / 1000));
+  lastT = now;
+
+  if (playing && sim && !finished){
+    playT += dt * 6 * cfg.speed;
+    if (playT >= sim.M){
+      playT = sim.M;
+      onFinish();
+    }
+  }
+
+  if (cfg.autoRot && !dragging) camState.yaw += dt * 0.085;
+
+  updateCamera();
+  placeAxisLabels();
+  updateCloud(dt);
+  updateOrbs();
+  updatePicks();
+  updateCurve();
+  updateHudLoop(dt);
+  renderer.render(scene, camera);
+});
+
+/* =================== 交互 =================== */
+let px = 0, py = 0;
+canvas.addEventListener('pointerdown', e => {
+  dragging = true;
+  px = e.clientX; py = e.clientY;
+  canvas.classList.add('dragging');
+  canvas.setPointerCapture(e.pointerId);
+});
+canvas.addEventListener('pointermove', e => {
+  if (!dragging) return;
+  const dx = e.clientX - px, dy2 = e.clientY - py;
+  px = e.clientX; py = e.clientY;
+  camState.yaw   -= dx * 0.005;
+  camState.pitch  = clamp(camState.pitch + dy2 * 0.004, -0.06, 1.18);
+});
+canvas.addEventListener('pointerup', e => {
+  dragging = false;
+  canvas.classList.remove('dragging');
+  try { canvas.releasePointerCapture(e.pointerId); } catch(_) {}
+});
+canvas.addEventListener('pointercancel', () => { dragging = false; canvas.classList.remove('dragging'); });
+
+canvas.addEventListener('wheel', e => {
+  e.preventDefault();
+  camState.dist = clamp(camState.dist * Math.exp(e.deltaY * 0.0009), 26, 150);
+}, { passive:false });
+
+window.addEventListener('keydown', e => {
+  if (e.code === 'Space'){ e.preventDefault(); togglePlay(); }
+  else if (e.key === 'r' || e.key === 'R'){ replay(); }
+  else if (e.key === 'n' || e.key === 'N'){ newSeed(); }
+});
+
+function togglePlay(){
+  if (!sim) return;
+  if (finished){ replay(); return; }
+  playing = !playing;
+  setPlayBtn();
+}
+
+function newSeed(){
+  seed = (Math.floor(Math.random() * 4294967296) >>> 0);
+  rebuild();
+  replay();            // 换了一批人，从起跑线重新演一遍
+  updateCloud(0.02);
+  updateHudForce();
+}
+
+/* =================== 控件绑定 =================== */
+const rN = document.getElementById('rN');
+const rS = document.getElementById('rS');
+const rO = document.getElementById('rO');
+const rI = document.getElementById('rI');
+const rG = document.getElementById('rG');
+const rP = document.getElementById('rP');
+
+function syncLabels(){
+  document.getElementById('vN').textContent = cfg.N.toLocaleString('en-US');
+  document.getElementById('vS').textContent = cfg.M;
+  document.getElementById('vO').textContent = cfg.K;
+  document.getElementById('vI').textContent = cfg.strength;
+  document.getElementById('vG').textContent = cfg.talent.toFixed(2);
+  document.getElementById('vP').textContent = cfg.speed.toFixed(1) + '×';
+}
+
+function readShapeParams(){
+  cfg.N = +rN.value;
+  cfg.M = +rS.value;
+  cfg.K = +rO.value;
+  cfg.strength = +rI.value;
+  cfg.talent = +rG.value;
+  syncLabels();
+  scheduleRebuild();
+}
+
+[rN, rS, rO, rI, rG].forEach(el => el.addEventListener('input', readShapeParams));
+rP.addEventListener('input', () => { cfg.speed = +rP.value; syncLabels(); });
+
+document.getElementById('bPlay').addEventListener('click', togglePlay);
+document.getElementById('bReplay').addEventListener('click', replay);
+document.getElementById('bSeed').addEventListener('click', newSeed);
+document.getElementById('bJump').addEventListener('click', jumpToEnd);
+document.getElementById('bCam').addEventListener('click', () => {
+  camState.yaw = 0.20; camState.pitch = 0.36; camState.dist = 47;
+  camState.target.set(0, 3.5, 0);
+});
+document.getElementById('bCollapse').addEventListener('click', () => {
+  document.getElementById('panel').classList.toggle('closed');
+});
+
+const tgRot = document.getElementById('tgRot');
+const tgCurve = document.getElementById('tgCurve');
+tgRot.addEventListener('click', () => {
+  cfg.autoRot = !cfg.autoRot;
+  tgRot.classList.toggle('on', cfg.autoRot);
+});
+tgCurve.addEventListener('click', () => {
+  cfg.curve = !cfg.curve;
+  tgCurve.classList.toggle('on', cfg.curve);
+});
+
+window.addEventListener('resize', () => {
+  renderer.setSize(window.innerWidth, window.innerHeight, false);
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+});
+
+/* =================== 启动 =================== */
+if (QS.get('yaw'))   camState.yaw = +QS.get('yaw');
+if (QS.get('pitch')) camState.pitch = +QS.get('pitch');
+if (QS.get('dist'))  camState.dist = +QS.get('dist');
+if (QS.get('auto') === '0') cfg.autoRot = false;
+
+if (QS.get('jump') === '1') {
+  rebuild();
+  jumpToEnd();
+} else {
+  rebuild();
+  if (QS.get('at')){
+    playT = sim.M * Math.min(1, Math.max(0, parseFloat(QS.get('at'))));
+    playing = false;
+    updateCloud(1); updateCloud(1);
+    updateHudForce();
+    setPlayBtn();
+  }
+}
+syncLabels();
+window.__ok = true;
+</script>
+
+<script>
+/* 兜底提示：ES module 未启动时给出可执行的解决办法（非 module 脚本，任何情况下都会执行） */
+(function () {
+  setTimeout(function () {
+    if (window.__ok) return;
+    var box = document.getElementById('err');
+    if (!box || box.style.display === 'block') return;
+    box.style.display = 'block';
+    box.textContent = location.protocol === 'file:'
+      ? '页面无法从 file:// 直接加载（浏览器禁止本地 ES module 跨源导入）。\n\n请改用本地服务器访问：\nhttp://localhost/moni/normal-3d.html\n\n或在本文件所在目录执行：\npython -m http.server 8000  →  http://localhost:8000/normal-3d.html'
+      : 'three.js 未能在 3.5 秒内完成初始化。\n请确认 vendor/three.module.js 与 vendor/three.core.js 位于同一目录，或网络可访问 unpkg.com。';
+  }, 3500);
+})();
+</script>
+</body>
+</html>
