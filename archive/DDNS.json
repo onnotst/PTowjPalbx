@@ -1,0 +1,13 @@
+{
+  "version": "1.0",
+  "updated": "2026-11-21",
+  "default_target": "mblue.ltd",
+  "aliases": {
+    "mblue.ltd": "mblue.ltd",
+    "www.mblue.ltd": "mblue.ltd",
+    "209901.xyz": "mblue.ltd",
+    "www.209901.xyz": "mblue.ltd",
+    "nav.mblue.ltd": "nav.mblue.ltd",
+    "nav.209901.xyz": "nav.mblue.ltd"
+  }
+}
