@@ -14,43 +14,47 @@
                 {
                     "name": "随心笔记",
                     "url": "https://nav.mblue.ltd/my/archive/record/text/index.php",
+                    "color": "hight8light",
+                    "order": 1,
+                    "blink": false
+                },
+                {
+                    "name": "临时编辑",
+                    "url": "https://nav.mblue.ltd/my/editor/index.php",
                     "color": "hight10light",
-                    "order": 1
+                    "order": 2,
+                    "blink": false
                 },
                 {
                     "name": "小说灵感",
                     "url": "https://nav.mblue.ltd/my/book/index.html",
-                    "color": "hight10light",
-                    "order": 2
+                    "color": "hight14light",
+                    "order": 3,
+                    "blink": false
                 },
                 {
                     "name": "快速搜索",
-                    "url": "https://nt.mblue.ltd/archive/page/search/index.html",
-                    "color": "hight21light",
-                    "order": 3
+                    "url": "https://n.mblue.ltd/archive/page/search/index.html",
+                    "color": "hight2light",
+                    "order": 4,
+                    "blink": false
                 },
                 {
-                    "name": "执迷观测",
-                    "url": "https://mblue.ltd",
-                    "color": "hight1light",
-                    "order": 4
+                    "name": "文件管理",
+                    "url": "https://nav.mblue.ltd/my/manage/",
+                    "color": "hight12light",
+                    "order": 5
                 },
                 {
                     "name": "执迷文件",
                     "url": "https://cloudreve.mblue.ltd/",
-                    "color": "hight3light",
-                    "order": 5
+                    "color": "hight2light",
+                    "order": 6
                 },
                 {
                     "name": "记录问题",
                     "url": "https://why.mblue.ltd/",
                     "color": "hight7light",
-                    "order": 6
-                },
-                {
-                    "name": "执迷论坛",
-                    "url": "https://flarum.mblue.ltd/",
-                    "color": "hight2light",
                     "order": 7
                 },
                 {
@@ -60,88 +64,112 @@
                     "order": 8
                 },
                 {
-                    "name": "青龙任务",
-                    "url": "https://qinglong.mblue.ltd/",
-                    "color": "hight16light",
-                    "order": 9
-                },
-                {
-                    "name": "网络监控",
-                    "url": "https://npt.mblue.ltd/",
-                    "color": "hight23light",
-                    "order": 10
-                },
-                {
                     "name": "Github代理访问",
                     "url": "https://github.mblue.ltd/",
                     "color": "hight24light",
-                    "order": 11
+                    "order": 9
                 },
                 {
-                    "name": "执迷代码",
-                    "url": "https://gitea.mblue.ltd/",
-                    "color": "hight8light",
-                    "order": 12
-                },
-                {
-                    "name": "执迷图床",
-                    "url": "https://lsky.mblue.ltd/",
-                    "color": "",
-                    "order": 13
-                },
-                {
-                    "name": "平稳导航",
-                    "url": "https://nt.mblue.ltd/",
-                    "color": "",
-                    "order": 14
-                },
-                {
-                    "name": "快速导航",
-                    "url": "https://nav.mblue.ltd/",
-                    "color": "",
-                    "order": 15
-                },
-                {
-                    "name": "备用导航",
-                    "url": "https://where.mblue.ltd/",
-                    "color": "",
-                    "order": 16
-                },
-                {
-                    "name": "执迷通话",
-                    "url": "https://nextcloud.mblue.ltd/",
-                    "color": "",
-                    "order": 17
-                },
-                {
-                    "name": "临时编辑",
-                    "url": "https://nav.mblue.ltd/my/editor/index.php",
-                    "color": "hight1light",
-                    "order": 18
+                    "name": "数据导航",
+                    "url": "https://nav.mblue.ltd/my/link/database/index.php",
+                    "color": "hight12light",
+                    "order": 10
                 },
                 {
                     "name": "个人密码",
                     "url": "https://nav.mblue.ltd/my/password/index.php",
                     "color": "",
-                    "order": 19
-                },
-                {
-                    "name": "数据导航",
-                    "url": "https://nav.mblue.ltd/my/link/database/index.php",
-                    "color": "hight1light",
-                    "order": 20
-                },
-                {
-                    "name": "文件管理",
-                    "url": "https://nav.mblue.ltd/my/manage/",
-                    "color": "hight12light",
-                    "order": 21
+                    "order": 11
                 },
                 {
                     "name": "Github个人",
                     "url": "https://github.com/onnotst/PTowjPalbx",
+                    "color": "hight1light",
+                    "order": 12,
+                    "blink": false
+                },
+                {
+                    "name": "Github个人",
+                    "url": "https://github.mblue.ltd/onnotst/PTowjPalbx/",
+                    "color": "hight1light",
+                    "order": 13,
+                    "blink": false
+                },
+                {
+                    "name": "Github下载",
+                    "url": "https://gh-proxy.com/",
+                    "color": "hight1light",
+                    "order": 14,
+                    "blink": false
+                },
+                {
+                    "name": "AI音乐盒",
+                    "url": "https://209901.xyz/my/clist/aimusicv1/index.html",
                     "color": "",
-                    "order": 22
+                    "order": 15,
+                    "blink": false
+                },
+                {
+                    "name": "下载接口",
+                    "url": "https://fast.mblue.ltd/",
+                    "color": "hight7light",
+                    "order": 16
+                },
+                {
+                    "name": "十万个为什么",
+                    "url": "https://why.mblue.ltd/",
+                    "color": "hight3light",
+                    "order": 17,
+                    "blink": false
+                },
+                {
+                    "name": "我的相机",
+                    "url": "https://nav.mblue.ltd/my/siyou/camera/index.php",
+                    "color": "hight28light",
+                    "order": 18,
+                    "blink": true
+                },
+                {
+                    "name": "文件&粘贴板",
+                    "url": "https://nav.mblue.ltd/my/fileupload/upclipboard/index.php",
+                    "color": "hight30light",
+                    "order": 19,
+                    "blink": false
+                },
+                {
+                    "name": "文件&粘贴板&+",
+                    "url": "https://nav.mblue.ltd/my/fileupload/updown/",
+                    "color": "hight9light",
+                    "order": 20,
+                    "blink": true
+                },
+                {
+                    "name": "SSH连接管理",
+                    "url": "https://nav.mblue.ltd/my/siyou/ssh/",
+                    "color": "hight30light",
+                    "order": 21,
+                    "blink": false
+                },
+                {
+                    "name": "UptimeKuma",
+                    "url": "http://129.38.115.241:8032/",
+                    "color": "",
+                    "order": 22,
+                    "blink": false
+                },
+                {
+                    "name": "云浏览器",
+                    "url": "https://129.38.115.241:8031/",
+                    "color": "",
+                    "order": 23,
+                    "blink": false
+                },
+                {
+                    "name": "青龙面板",
+                    "url": "http://129.38.115.241:8030/",
+                    "color": "",
+                    "order": 24,
+                    "blink": false
                 }
             ],
             "order": 2
@@ -158,33 +186,37 @@
             "title": "个人链接",
             "links": [
                 {
-                    "name": "NAV功能区",
+                    "name": "主功能区",
                     "url": "https://nav.mblue.ltd/my/",
-                    "color": "hight10light",
-                    "order": 1
+                    "color": "hight8light",
+                    "order": 1,
+                    "blink": false
                 },
                 {
-                    "name": "NT功能区",
-                    "url": "https://nt.mblue.ltd/indexall.html",
-                    "color": "hight10light",
-                    "order": 2
+                    "name": "备用功能",
+                    "url": "https://n.mblue.ltd/indexall.html",
+                    "color": "hight8light",
+                    "order": 2,
+                    "blink": false
+                },
+                {
+                    "name": "跳转规则",
+                    "url": "https://nav.mblue.ltd/redirect-manage.php",
+                    "color": "hight26light",
+                    "order": 3,
+                    "blink": false
                 },
                 {
                     "name": "我的位置",
                     "url": "https://nav.mblue.ltd/my/location/index.php",
-                    "color": "hight13light",
-                    "order": 3
+                    "color": "hight16light",
+                    "order": 4,
+                    "blink": false
                 },
                 {
-                    "name": "落日流星",
-                    "url": "https://nav.mblue.ltd/my/remains/people/index.php",
-                    "color": "hight13light",
-                    "order": 4
-                },
-                {
-                    "name": "落日词条",
-                    "url": "https://nav.mblue.ltd/my/remains/things/index.html",
-                    "color": "hight13light",
+                    "name": "强制下载",
+                    "url": "https://nav.mblue.ltd/my/download/",
+                    "color": "hight7light",
                     "order": 5
                 },
                 {
@@ -194,190 +226,263 @@
                     "order": 6
                 },
                 {
-                    "name": "SQL导航",
-                    "url": "https://nav.mblue.ltd/my/link/database/",
-                    "color": "hight24light",
-                    "order": 7
-                },
-                {
-                    "name": "脚本收藏",
-                    "url": "https://nav.mblue.ltd/my/bash/index.php",
-                    "color": "",
-                    "order": 8
-                },
-                {
-                    "name": "粘贴板",
-                    "url": "https://nav.mblue.ltd/my/fileupload/upclipboard/index.php",
-                    "color": "hight10light",
-                    "order": 9
-                },
-                {
                     "name": "笔记随记",
                     "url": "https://nav.mblue.ltd/my/archive/record/text/index.php",
                     "color": "hight8light",
-                    "order": 10
+                    "order": 7
                 },
                 {
                     "name": "笔记随记+",
                     "url": "https://nav.mblue.ltd/my/archive/record/text/indexw3.php",
                     "color": "hight8light",
-                    "order": 11
+                    "order": 8
                 },
                 {
                     "name": "笔记文章",
                     "url": "https://nav.mblue.ltd/my/archive/record/text/indexw2.php",
                     "color": "hight8light",
-                    "order": 12
+                    "order": 9
                 },
                 {
                     "name": "笔记图文",
                     "url": "https://nav.mblue.ltd/my/archive/record/image/index.php",
                     "color": "hight8light",
-                    "order": 13
+                    "order": 10
                 },
                 {
                     "name": "笔记语音",
                     "url": "https://nav.mblue.ltd/my/archive/record/audio/index.php",
                     "color": "hight8light",
-                    "order": 14
+                    "order": 11
+                },
+                {
+                    "name": "落日词条",
+                    "url": "https://nav.mblue.ltd/my/remains/things/index.html",
+                    "color": "hight13light",
+                    "order": 12
+                },
+                {
+                    "name": "落日流星",
+                    "url": "https://nav.mblue.ltd/my/remains/people/index.php",
+                    "color": "hight13light",
+                    "order": 13
+                },
+                {
+                    "name": "SQL导航",
+                    "url": "https://nav.mblue.ltd/my/link/database/",
+                    "color": "hight11light",
+                    "order": 14,
+                    "blink": false
+                },
+                {
+                    "name": "执迷代码",
+                    "url": "https://gitea.mblue.ltd/",
+                    "color": "hight1light",
+                    "order": 15,
+                    "blink": false
+                },
+                {
+                    "name": "平稳导航",
+                    "url": "https://n.mblue.ltd/",
+                    "color": "",
+                    "order": 16,
+                    "blink": false
+                },
+                {
+                    "name": "执迷论坛",
+                    "url": "https://flarum.mblue.ltd/",
+                    "color": "",
+                    "order": 17
+                },
+                {
+                    "name": "快速导航",
+                    "url": "https://nav.mblue.ltd/",
+                    "color": "",
+                    "order": 18
+                },
+                {
+                    "name": "青龙任务",
+                    "url": "https://qinglong.mblue.ltd/",
+                    "color": "",
+                    "order": 19,
+                    "blink": false
+                },
+                {
+                    "name": "网络监控",
+                    "url": "http://129.38.115.241:8021/",
+                    "color": "",
+                    "order": 20
+                },
+                {
+                    "name": "执迷通话",
+                    "url": "https://nextcloud.mblue.ltd/",
+                    "color": "",
+                    "order": 21
+                },
+                {
+                    "name": "备用导航",
+                    "url": "https://where.mblue.ltd/",
+                    "color": "",
+                    "order": 22
+                },
+                {
+                    "name": "执迷图床",
+                    "url": "https://lsky.mblue.ltd/",
+                    "color": "",
+                    "order": 23
+                },
+                {
+                    "name": "网络监控",
+                    "url": "https://npt.mblue.ltd/",
+                    "color": "",
+                    "order": 24
+                },
+                {
+                    "name": "脚本收藏",
+                    "url": "https://nav.mblue.ltd/my/bash/index.php",
+                    "color": "",
+                    "order": 25
                 },
                 {
                     "name": "网络接口",
                     "url": "https://nav.mblue.ltd/my/api/",
                     "color": "",
-                    "order": 15
-                },
-                {
-                    "name": "下载接口",
-                    "url": "https://fast.mblue.ltd/",
-                    "color": "hight7light",
-                    "order": 16
-                },
-                {
-                    "name": "强制下载",
-                    "url": "https://nav.mblue.ltd/my/download/",
-                    "color": "hight7light",
-                    "order": 17
+                    "order": 26
                 },
                 {
                     "name": "信息展示",
                     "url": "https://turso.mblue.ltd/",
                     "color": "",
-                    "order": 18
+                    "order": 27
                 },
                 {
                     "name": "网站导航",
                     "url": "https://where.mblue.ltd/",
                     "color": "",
-                    "order": 19
+                    "order": 28
                 },
                 {
                     "name": "公网接口",
                     "url": "https://ipinfo.mblue.ltd/",
                     "color": "",
-                    "order": 20
+                    "order": 29
                 },
                 {
                     "name": "几猫游戏",
                     "url": "https://nt.mblue.ltd/archive/game/play001-20261114-shoot",
                     "color": "hight1light",
-                    "order": 21
+                    "order": 30
                 },
                 {
                     "name": "转刀游戏",
                     "url": "https://nt.mblue.ltd/archive/game/play002-20261114-stroll",
                     "color": "hight1light",
-                    "order": 22
+                    "order": 31
                 },
                 {
                     "name": "源尧十三",
                     "url": "https://article.mblue.ltd/",
                     "color": "hight1light",
-                    "order": 23
+                    "order": 32
                 },
                 {
                     "name": "2FA验证",
                     "url": "https://nt.mblue.ltd/archive/page/2fa",
                     "color": "",
-                    "order": 24
+                    "order": 33
                 },
                 {
                     "name": "视图旋转",
                     "url": "https://nt.mblue.ltd/archive/page/rotate",
                     "color": "",
-                    "order": 25
+                    "order": 34
                 },
                 {
                     "name": "执迷搜索",
                     "url": "https://nav.mblue.ltd/my/search/",
                     "color": "hight10light",
-                    "order": 26
+                    "order": 35
                 },
                 {
                     "name": "收藏文本",
                     "url": "https://nt.mblue.ltd/archive/page/turso",
                     "color": "",
-                    "order": 27
+                    "order": 36
                 },
                 {
                     "name": "导航",
                     "url": "https://nav.mblue.ltd/",
                     "color": "hight3light",
-                    "order": 28
+                    "order": 37
                 },
                 {
                     "name": "西安",
                     "url": "https://xa.209901.xyz/",
                     "color": "hight3light",
-                    "order": 29
+                    "order": 38
                 },
                 {
                     "name": "执迷心情",
                     "url": "https://www.209901.xyz/",
-                    "color": "hight6light",
-                    "order": 30
+                    "color": "hight10light",
+                    "order": 39,
+                    "blink": false
                 },
                 {
                     "name": "执迷心情-西安",
                     "url": "https://xa.209901.xyz/",
                     "color": "hight6light",
-                    "order": 31
+                    "order": 40
                 },
                 {
                     "name": "执迷心情-美国",
                     "url": "https://us.209901.xyz/",
                     "color": "hight6light",
-                    "order": 32
+                    "order": 41
                 },
                 {
                     "name": "执迷心情-文件",
                     "url": "http://fly.209901.xyz:5212/",
                     "color": "hight6light",
-                    "order": 33
+                    "order": 42
                 },
                 {
                     "name": "执迷心情-聊天",
                     "url": "http://fly.209901.xyz:25776/",
                     "color": "hight6light",
-                    "order": 34
+                    "order": 43
                 },
                 {
                     "name": "执迷心情-青龙",
                     "url": "http://fly.209901.xyz:25777/",
                     "color": "hight6light",
-                    "order": 35
+                    "order": 44
                 },
                 {
                     "name": "执迷心情-图床",
                     "url": "http://fly.209901.xyz:25778/",
                     "color": "hight6light",
-                    "order": 36
+                    "order": 45
                 },
                 {
                     "name": "执迷心情-归档",
                     "url": "http://fly.209901.xyz:25779/",
                     "color": "hight6light",
-                    "order": 37
+                    "order": 46
+                },
+                {
+                    "name": "抖音分享",
+                    "url": "https://us.209901.xyz/notepad/index.html",
+                    "color": "",
+                    "order": 47,
+                    "blink": false
+                },
+                {
+                    "name": "NodeTest",
+                    "url": "https://node.r.mblue.ltd/",
+                    "color": "",
+                    "order": 48,
+                    "blink": false
                 }
             ],
             "order": 4
@@ -400,226 +505,245 @@
                     "order": 1
                 },
                 {
-                    "name": "百度搜索",
-                    "url": "https://www.baidu.com/",
-                    "color": "",
-                    "order": 2
-                },
-                {
-                    "name": "Google搜索",
-                    "url": "https://www.google.com/",
-                    "color": "",
-                    "order": 3
-                },
-                {
                     "name": "腾讯云",
                     "url": "https://cloud.tencent.com/",
                     "color": "hight1light",
-                    "order": 4
+                    "order": 2
                 },
                 {
                     "name": "Cloudflare",
                     "url": "https://www.cloudflare-cn.com/",
                     "color": "hight1light",
-                    "order": 5
+                    "order": 3
                 },
                 {
                     "name": "Github",
                     "url": "https://github.com/",
                     "color": "hight1light",
-                    "order": 6
+                    "order": 4
                 },
                 {
                     "name": "Oracle Cloud",
                     "url": "https://cloud.oracle.com/",
                     "color": "hight1light",
-                    "order": 7
+                    "order": 5
                 },
                 {
                     "name": "DNS-GO",
                     "url": "https://github.com/jeessy2/ddns-go/",
                     "color": "",
-                    "order": 8
+                    "order": 6
                 },
                 {
                     "name": "Syncthing",
                     "url": "https://syncthing.net/",
                     "color": "",
-                    "order": 9
+                    "order": 7
                 },
                 {
                     "name": "FIR.RM",
                     "url": "https://www.betaqr.com.cn/",
                     "color": "",
-                    "order": 10
+                    "order": 8
                 },
                 {
                     "name": "MAVEN REPOSITORY",
                     "url": "https://mvnrepository.com/",
                     "color": "",
-                    "order": 11
+                    "order": 9
                 },
                 {
                     "name": "APP bugly",
                     "url": "https://bugly.qq.com/v2/workbench/apps",
                     "color": "",
-                    "order": 12
+                    "order": 10
                 },
                 {
                     "name": "2FA动态验证",
                     "url": "https://basetoolbox.com/zh/2fa/",
                     "color": "",
-                    "order": 13
+                    "order": 11
                 },
                 {
                     "name": "在线JSON",
                     "url": "https://www.json.cn/",
                     "color": "",
-                    "order": 14
+                    "order": 12
                 },
                 {
                     "name": "在线二维码",
                     "url": "https://cli.im/",
                     "color": "",
-                    "order": 15
+                    "order": 13
                 },
                 {
                     "name": "在线格式化",
                     "url": "https://tool.oschina.net/codeformat/",
                     "color": "",
-                    "order": 16
+                    "order": 14
                 },
                 {
                     "name": "在线字符统计",
                     "url": "https://eteste.com/",
                     "color": "",
-                    "order": 17
+                    "order": 15
                 },
                 {
                     "name": "在线浮点数",
                     "url": "https://www.toolhelper.cn/Digit/FractionConvert",
                     "color": "",
-                    "order": 18
+                    "order": 16
                 },
                 {
                     "name": "在线UUID",
                     "url": "https://config.net.cn/tools/UUID.html",
                     "color": "",
-                    "order": 19
+                    "order": 17
                 },
                 {
                     "name": "Vue3中文文档",
                     "url": "https://element-plus.org/zh-CN/#/zh-CN",
                     "color": "",
-                    "order": 20
+                    "order": 18
                 },
                 {
                     "name": "Turso",
                     "url": "https://app.turso.tech/",
                     "color": "",
-                    "order": 21
+                    "order": 19
                 },
                 {
                     "name": "蒲公英",
                     "url": "https://www.pgyer.com/",
                     "color": "",
-                    "order": 22
+                    "order": 20
                 },
                 {
                     "name": "苹果开发者",
                     "url": "https://developer.apple.com/cn/",
                     "color": "",
-                    "order": 23
+                    "order": 21
                 },
                 {
                     "name": "安卓开发者",
                     "url": "https://developer.android.google.cn/?hl=zh-cn",
                     "color": "",
-                    "order": 24
+                    "order": 22
                 },
                 {
                     "name": "草料二维码",
                     "url": "https://cli.im/",
                     "color": "",
-                    "order": 25
+                    "order": 23
                 },
                 {
                     "name": "下载狗",
                     "url": "https://www.xiazaitool.com/",
                     "color": "",
-                    "order": 26
+                    "order": 24
                 },
                 {
                     "name": "免费短信解码",
                     "url": "https://www.supercloudsms.com/zh/",
                     "color": "",
-                    "order": 27
-                },
-                {
-                    "name": "轻云互联",
-                    "url": "https://www.qingyunl.com/",
-                    "color": "",
-                    "order": 28
-                },
-                {
-                    "name": "不大创造",
-                    "url": "https://www.ipxr.cn/",
-                    "color": "",
-                    "order": 29
-                },
-                {
-                    "name": "伍六七云",
-                    "url": "https://www.vps567.com/",
-                    "color": "",
-                    "order": 30
-                },
-                {
-                    "name": "三维主机",
-                    "url": "https://www.3v.do/",
-                    "color": "",
-                    "order": 31
-                },
-                {
-                    "name": "新区云",
-                    "url": "https://www.xinquyun.com/",
-                    "color": "",
-                    "order": 32
+                    "order": 25
                 },
                 {
                     "name": "网站测速",
                     "url": "https://www.itdog.cn/http/",
                     "color": "hight6light",
-                    "order": 33
+                    "order": 26
                 },
                 {
                     "name": "职称系统",
                     "url": "https://www.rsj.sh.gov.cn/zcps/zcpssb/index",
                     "color": "",
-                    "order": 34
+                    "order": 27
                 },
                 {
                     "name": "矢量图片",
                     "url": "https://www.iconfont.cn/",
                     "color": "",
-                    "order": 35
+                    "order": 28
                 },
                 {
                     "name": "探索科学",
                     "url": "http://www.zzsfb.com/productsv.asp?id=5071",
                     "color": "",
-                    "order": 36
+                    "order": 29
                 },
                 {
                     "name": "快手视频",
                     "url": "https://dy.kukutool.com/",
                     "color": "",
-                    "order": 37
+                    "order": 30
                 },
                 {
                     "name": "变量重命名",
                     "url": "https://www.chtml.cn/",
                     "color": "hight7light",
+                    "order": 31
+                },
+                {
+                    "name": "联合镜像",
+                    "url": "https://mirrors.cernet.edu.cn/",
+                    "color": "",
+                    "order": 32
+                },
+                {
+                    "name": "镜像站说明",
+                    "url": "https://help.mirror.nju.edu.cn/",
+                    "color": "hight3light",
+                    "order": 33
+                },
+                {
+                    "name": "轻云互联",
+                    "url": "https://www.qingyunl.com/",
+                    "color": "",
+                    "order": 34
+                },
+                {
+                    "name": "新区云",
+                    "url": "https://www.xinquyun.com/",
+                    "color": "",
+                    "order": 35
+                },
+                {
+                    "name": "不大创造",
+                    "url": "https://www.ipxr.cn/",
+                    "color": "",
+                    "order": 36
+                },
+                {
+                    "name": "柒云数据",
+                    "url": "https://www.idc7y.com/",
+                    "color": "",
+                    "order": 37,
+                    "blink": false
+                },
+                {
+                    "name": "三维主机",
+                    "url": "https://www.3v.do/",
+                    "color": "",
                     "order": 38
+                },
+                {
+                    "name": "奶云",
+                    "url": "https://www.naiyun.vip/",
+                    "color": "",
+                    "order": 39
+                },
+                {
+                    "name": "MilkCloud",
+                    "url": "https://www.milkcloud.org",
+                    "color": "",
+                    "order": 40
+                },
+                {
+                    "name": "镜像地址",
+                    "url": "https://docker.aityp.com/image/docker.io/library/",
+                    "color": "",
+                    "order": 41
                 }
             ],
             "order": 6
