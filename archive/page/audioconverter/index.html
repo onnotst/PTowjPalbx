@@ -2,117 +2,90 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>音频转 MP3 · ffmpeg.wasm 本地转换</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>音频转 MP3 · 本地转码</title>
 <style>
-  *{box-sizing:border-box;margin:0;padding:0}
-  :root{
-    --card:rgba(255,255,255,.055); --line:rgba(255,255,255,.13);
-    --txt:#eaeaf2; --dim:#9d9db4; --acc:#7d7bf5; --acc2:#a855f7;
-  }
-  body{
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei",Roboto,sans-serif;
-    min-height:100vh;padding:26px 16px 48px;color:var(--txt);
-    background:radial-gradient(1200px 600px at 20% 0%,#232055 0%,transparent 60%),
-               radial-gradient(900px 500px at 90% 10%,#3b1e4d 0%,transparent 55%),
-               linear-gradient(160deg,#0f0c29,#171436 45%,#1b1730);
-  }
-  .wrap{max-width:780px;margin:0 auto}
-  header{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:18px;flex-wrap:wrap}
-  h1{font-size:21px;letter-spacing:.4px;display:flex;align-items:center;gap:9px}
-  .tagline{font-size:12px;color:var(--dim);margin-top:6px;line-height:1.7;max-width:560px}
-  .badge{
-    font-size:11.5px;padding:6px 11px;border-radius:999px;white-space:nowrap;
-    border:1px solid var(--line);background:rgba(255,255,255,.05);color:var(--dim);
-  }
-  .badge.loading{color:#c7b9ff;border-color:rgba(125,123,245,.5);background:rgba(125,123,245,.12)}
-  .badge.ok{color:#86efac;border-color:rgba(74,222,128,.45);background:rgba(74,222,128,.1)}
-  .badge.err{color:#fca5a5;border-color:rgba(248,113,113,.45);background:rgba(248,113,113,.1)}
-  .card{
-    background:var(--card);border:1px solid var(--line);border-radius:16px;
-    padding:22px;backdrop-filter:blur(14px);box-shadow:0 18px 50px rgba(0,0,0,.38);
-  }
-  .banner{
-    display:none;margin-bottom:16px;padding:12px 15px;border-radius:11px;font-size:12.5px;line-height:1.8;
-    background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.35);color:#fecaca;
-  }
+  :root{--bg:#0e1116;--card:#161b22;--line:#2a3038;--txt:#e6edf3;--sub:#8b949e;--ok:#3fb950;--warn:#d29922;--err:#f85149;--acc:#58a6ff}
+  *{box-sizing:border-box}
+  body{margin:0;padding:24px 16px;background:var(--bg);color:var(--txt);
+    font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif}
+  .wrap{max-width:860px;margin:0 auto}
+  header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
+  h1{font-size:20px;margin:0 0 4px}
+  .tagline{color:var(--sub);font-size:12px}
+  .badge{padding:5px 10px;border-radius:999px;border:1px solid var(--line);color:var(--sub);font-size:12px;white-space:nowrap}
+  .badge.loading{border-color:var(--warn);color:var(--warn)}
+  .badge.ok{border-color:var(--ok);color:var(--ok)}
+  .badge.err{border-color:var(--err);color:var(--err)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+  .banner{display:none;background:#2d1e0d;border:1px solid var(--warn);color:#f0c674;
+    padding:10px 12px;border-radius:8px;font-size:12px;margin-bottom:12px}
   .banner.show{display:block}
-  .banner b{color:#fff}
-  .modes{display:flex;gap:8px;margin-bottom:14px}
-  .modes button{
-    flex:1;padding:11px 10px;border-radius:10px;cursor:pointer;font-size:12.5px;
-    border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--dim);transition:.18s;
-  }
-  .modes button:hover:not(:disabled){border-color:rgba(125,123,245,.6);color:#fff}
-  .modes button.active{
-    border-color:transparent;color:#fff;font-weight:600;
-    background:linear-gradient(135deg,var(--acc),var(--acc2));box-shadow:0 6px 18px rgba(125,123,245,.3)
-  }
-  .modes button:disabled{opacity:.42;cursor:not-allowed}
-  .drop{
-    border:2px dashed rgba(255,255,255,.22);border-radius:13px;padding:34px 16px;
-    text-align:center;cursor:pointer;transition:.26s;margin-bottom:16px;background:rgba(255,255,255,.015)
-  }
-  .drop:hover,.drop.over{border-color:rgba(125,123,245,.75);background:rgba(125,123,245,.08)}
-  .drop .big{font-size:14.5px;margin-bottom:7px}
-  .drop .fmt{font-size:11px;color:var(--dim);letter-spacing:.3px}
-  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:11px;margin-bottom:16px}
-  @media(max-width:560px){ .grid{grid-template-columns:1fr} }
-  label{font-size:11.5px;font-weight:600;color:#b9b9cc;display:block;margin-bottom:6px;letter-spacing:.3px}
-  select{
-    width:100%;padding:10px 11px;border-radius:9px;font-size:13px;color:var(--txt);
-    border:1px solid var(--line);background:rgba(12,10,30,.65);outline:none
-  }
-  select:focus{border-color:rgba(125,123,245,.7)}
-  .go{
-    width:100%;padding:14px;border:none;border-radius:11px;cursor:pointer;
-    font-size:14.5px;font-weight:700;color:#fff;letter-spacing:.5px;
-    background:linear-gradient(135deg,var(--acc),var(--acc2));transition:.2s;
-  }
-  .go:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 10px 26px rgba(125,123,245,.42)}
-  .go:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
-  .hint{font-size:11.5px;color:var(--dim);margin-top:9px;text-align:center;line-height:1.7}
-  .list{margin-top:18px;display:none}
-  .list.show{display:block}
-  .item{
-    border:1px solid var(--line);border-radius:11px;padding:12px 14px;margin-bottom:9px;
-    background:rgba(255,255,255,.035)
-  }
-  .item .row1{display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap}
-  .item .nm{flex:1;font-size:13px;font-weight:600;word-break:break-all;line-height:1.45;min-width:120px}
-  .item .sz{font-size:11px;color:var(--dim);white-space:nowrap}
-  .st{font-size:11px;padding:3px 9px;border-radius:999px;white-space:nowrap;border:1px solid transparent}
-  .st.wait{color:#cbd5e1;background:rgba(148,163,184,.14);border-color:rgba(148,163,184,.3)}
-  .st.run{color:#c7b9ff;background:rgba(125,123,245,.16);border-color:rgba(125,123,245,.4)}
-  .st.ok{color:#86efac;background:rgba(74,222,128,.13);border-color:rgba(74,222,128,.35)}
-  .st.err{color:#fca5a5;background:rgba(248,113,113,.13);border-color:rgba(248,113,113,.35)}
-  .bar{height:6px;border-radius:4px;background:rgba(255,255,255,.09);overflow:hidden}
-  .bar i{display:block;height:100%;width:0;border-radius:4px;transition:width .18s;
-    background:linear-gradient(90deg,#7d7bf5,#a855f7,#f0abfc)}
-  .item .foot{display:flex;align-items:center;gap:12px;margin-top:8px;font-size:11.5px;color:var(--dim);flex-wrap:wrap}
-  .item .foot a{color:#a5b4fc;text-decoration:none;border-bottom:1px dotted rgba(165,180,252,.5)}
-  .item .foot a:hover{color:#fff}
-  .item audio{width:100%;margin-top:9px;height:32px}
-  .tools{display:flex;justify-content:flex-end;gap:10px;margin-top:4px}
-  .tools button{
-    font-size:11.5px;padding:7px 12px;border-radius:8px;cursor:pointer;
-    border:1px solid var(--line);background:rgba(255,255,255,.04);color:#c9c9dd
-  }
-  .tools button:hover{border-color:rgba(125,123,245,.6);color:#fff}
-  .logbox{margin-top:14px;display:none}
-  .logbox.show{display:block}
-  .logbox summary{cursor:pointer;font-size:11.5px;color:var(--dim);list-style:none;padding:7px 10px;
-    border:1px solid var(--line);border-radius:8px;background:rgba(255,255,255,.03)}
-  .logbox summary::-webkit-details-marker{display:none}
-  .log{
-    margin-top:8px;max-height:200px;overflow:auto;font:11px/1.7 Consolas,"Courier New",monospace;
-    color:#98a2b3;background:rgba(0,0,0,.36);border-radius:8px;padding:10px 12px;
-    white-space:pre-wrap;word-break:break-all
-  }
-  .log .e{color:#fca5a5}
-  .log .s{color:#86efac}
-  .log .w{color:#fcd34d}
-  footer{margin-top:18px;text-align:center;font-size:11px;color:#6f6f86;line-height:1.8}
+  .banner b{color:#ffd27a}
+  .modes{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+  .modes button{flex:1;min-width:180px;padding:8px;border-radius:8px;border:1px solid var(--line);
+    background:#11161c;color:var(--txt);cursor:pointer;font-size:13px}
+  .modes button.active{border-color:var(--acc);color:var(--acc)}
+  .modes button:disabled{opacity:.45;cursor:not-allowed}
+  .modes button,
+    .btn-link {
+      flex: 1;
+      min-width: 140px;
+      padding: 10px 14px;
+      border: 1px solid #444;
+      background: #2a2a2a;
+      color: #e0e0e0;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      text-align: center;
+      text-decoration: none;
+      display: inline-block;
+      transition: background .15s;
+    }
+  .modes button:hover,
+    .btn-link:hover {
+      background: #3a3a3a;
+    }
+  .drop{border:1.5px dashed var(--line);border-radius:10px;padding:26px 14px;text-align:center;cursor:pointer;transition:.15s}
+  .drop:hover,.drop.over{border-color:var(--acc);background:#11161c}
+  .drop .big{font-size:15px}
+  .drop .fmt{color:var(--sub);font-size:11px;margin-top:6px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0}
+  .grid>div{display:flex;flex-direction:column;gap:4px}
+  label{color:var(--sub);font-size:12px}
+  select,input[type=number]{background:#11161c;color:var(--txt);border:1px solid var(--line);
+    border-radius:7px;padding:7px 8px;font-size:13px;width:100%}
+  .go{width:100%;padding:11px;border:0;border-radius:8px;background:var(--acc);color:#04101f;
+    font-weight:600;font-size:14px;cursor:pointer}
+  .go:disabled{opacity:.4;cursor:not-allowed}
+  .hint{color:var(--sub);font-size:12px;margin-top:8px}
+  .list{display:none;flex-direction:column;gap:8px;margin-top:14px}
+  .list.show{display:flex}
+  .item{border:1px solid var(--line);border-radius:8px;padding:10px;background:#11161c}
+  .row1{display:flex;align-items:center;gap:8px}
+  .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .sz{color:var(--sub);font-size:12px}
+  .st{font-size:12px;padding:2px 7px;border-radius:999px;border:1px solid var(--line);color:var(--sub)}
+  .st.run{border-color:var(--warn);color:var(--warn)}
+  .st.ok{border-color:var(--ok);color:var(--ok)}
+  .st.err{border-color:var(--err);color:var(--err)}
+  .bar{height:4px;background:#0b0f14;border-radius:99px;overflow:hidden;margin:8px 0 6px}
+  .bar i{display:block;height:100%;width:0;background:var(--acc);transition:width .2s}
+  .foot{display:flex;align-items:center;gap:12px;font-size:12px;color:var(--sub);flex-wrap:wrap}
+  .foot a{color:var(--acc);text-decoration:none}
+  .item audio{width:100%;height:32px;margin-top:8px;display:none}
+  .tools{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
+  .tools button{background:none;border:1px solid var(--line);color:var(--sub);
+    border-radius:7px;padding:5px 10px;cursor:pointer;font-size:12px}
+  .logbox{margin-top:14px;font-size:12px;color:var(--sub)}
+  .logbox summary{cursor:pointer}
+  .logbox.show summary{color:var(--warn)}
+  .log{background:#0b0f14;border:1px solid var(--line);border-radius:8px;padding:8px;
+    max-height:220px;overflow:auto;margin-top:6px;font:11px/1.5 ui-monospace,Menlo,Consolas,monospace;
+    white-space:pre-wrap;word-break:break-all}
+  .log .w{color:var(--warn)}.log .e{color:var(--err)}.log .s{color:var(--ok)}
+  footer{color:#5b6673;font-size:11px;text-align:center;margin-top:16px}
 </style>
 </head>
 <body>
@@ -131,6 +104,7 @@
     <div class="modes">
       <button class="active" id="mST">🐌 单线程（推荐）</button>
       <button id="mMT">🚀 多线程（更快）</button>
+      <a class="btn-link" href="base.zip" download>⬇ 下载本地运行（Win10+）</a>
     </div>
 
     <div class="drop" id="drop">
@@ -141,8 +115,17 @@
 
     <div class="grid">
       <div>
-        <label>比特率</label>
+        <label>比特率模式</label>
+        <select id="mode_br">
+          <option value="cbr" selected>CBR 固定比特率</option>
+          <option value="abr">ABR 平均比特率</option>
+          <option value="vbr">VBR 可变质量（-q:a）</option>
+        </select>
+      </div>
+      <div>
+        <label>比特率 / 质量</label>
         <select id="br">
+          <option value="64k">64 kbps</option>
           <option value="96k">96 kbps</option>
           <option value="128k" selected>128 kbps</option>
           <option value="160k">160 kbps</option>
@@ -155,7 +138,7 @@
         <label>声道</label>
         <select id="ch">
           <option value="" selected>保持原样</option>
-          <option value="1">单声道</option>
+          <option value="1">单声道（体积约减半）</option>
           <option value="2">立体声</option>
         </select>
       </div>
@@ -165,13 +148,60 @@
           <option value="auto" selected>保持原样</option>
           <option value="44100">44100 Hz</option>
           <option value="48000">48000 Hz</option>
-          <option value="22050">22050 Hz</option>
+          <option value="22050">22050 Hz（小一半）</option>
+          <option value="16000">16000 Hz（语音）</option>
+          <option value="8000">8000 Hz（电话音质）</option>
+        </select>
+      </div>
+      <div>
+        <label>编码效率</label>
+        <select id="quality">
+          <option value="" selected>默认</option>
+          <option value="0">-qscale:a 0（最高质量，体积大）</option>
+          <option value="2">-qscale:a 2（接近透明）</option>
+          <option value="4">-qscale:a 4（推荐）</option>
+          <option value="7">-qscale:a 7（小，音质一般）</option>
+          <option value="9">-qscale:a 9（最小）</option>
+        </select>
+      </div>
+      <div>
+        <label>预设</label>
+        <select id="preset">
+          <option value="" selected>不限制</option>
+          <option value="stroke">语音优化（切掉极低频/极高频）</option>
+          <option value="iphone">iPod/手机兼容 44.1k 立体声</option>
+        </select>
+      </div>
+      <div>
+        <label>音量（归一化）</label>
+        <select id="vol">
+          <option value="" selected>不处理</option>
+          <option value="loudnorm">响度归一化 loudnorm</option>
+          <option value="2">动补增益 2 倍</option>
+          <option value="4">动补增益 4 倍</option>
+          <option value="0.5">衰减到 0.5 倍</option>
+        </select>
+      </div>
+      <div>
+        <label>截取</label>
+        <select id="clip">
+          <option value="" selected>整段</option>
+          <option value="-ss 0 -to 30">前 30 秒</option>
+          <option value="-ss 0 -to 60">前 60 秒</option>
+          <option value="-ss 30 -to 90">30–90 秒</option>
+        </select>
+      </div>
+      <div>
+        <label>首帧容错</label>
+        <select id="probe">
+          <option value="" selected>关闭</option>
+          <option value="8" selected>-probesize 8M（乱码/时长异常时开）</option>
         </select>
       </div>
     </div>
 
     <button class="go" id="go" disabled>开始转换</button>
-    <div class="hint" id="hint">首次转换需要把 32MB 核心编译进浏览器内存，约 5–20 秒；之后换文件秒开。</div>
+    <div class="hint" id="hint">首次转换需要把 32MB 核心编译进浏览器内存，约 5–20 秒；之后换文件秒开。本页只用内置核心（core / core-mt），不请求任何 CDN。</div>
 
     <div class="list" id="list"></div>
     <div class="tools" id="tools" style="display:none">
@@ -184,7 +214,7 @@
     </details>
   </div>
 
-  <footer>ffmpeg.wasm 0.12.15 · ffmpeg core 0.12.10 · 本地核心优先，npmmirror 兜底</footer>
+  <footer>ffmpeg.wasm 0.12.15 · ffmpeg core 0.12.10 · 核心全部内置，离线可用</footer>
 </div>
 
 <script type="module">
@@ -196,11 +226,12 @@ const listEl = $('list'), goBtn = $('go'), logEl = $('log'), logbox = $('logbox'
 const mST = $('mST'), mMT = $('mMT'), tools = $('tools');
 
 const BASE = new URL('.', location.href).href;
-const CORE_MT_VER = '0.12.10';
+const MT_THREADS = navigator.hardwareConcurrency ? Math.min(4, Math.max(1, navigator.hardwareConcurrency - 1)) : 2;
 
 let mode = 'st';
 let engine = null;
 let engineSource = '';
+let engineThreads = 1;
 let enginePromise = null;
 let running = false;
 let progressTarget = null;
@@ -217,47 +248,31 @@ function log(msg, cls) {
   if (cls === 'e') logbox.open = true;
 }
 
-/* ---------------- 核心来源 ---------------- */
+/* ---------------- 核心来源：只用随包内置文件 ---------------- */
 function sources(which) {
+  const ua = navigator.userAgent;
+  const mtScriptReady = typeof SharedArrayBuffer !== 'undefined';
   if (which === 'mt') {
-    return [
-      {
-        label: '本地 core-mt',
-        coreURL: BASE + 'core-mt/ffmpeg-core.js',
-        wasmURL: BASE + 'core-mt/ffmpeg-core.wasm',
-        workerURL: BASE + 'core-mt/ffmpeg-core.worker.js',
-      },
-      {
-        label: 'npmmirror core-mt',
-        coreURL: `https://registry.npmmirror.com/@ffmpeg/core-mt/${CORE_MT_VER}/files/dist/esm/ffmpeg-core.js`,
-        wasmURL: `https://registry.npmmirror.com/@ffmpeg/core-mt/${CORE_MT_VER}/files/dist/esm/ffmpeg-core.wasm`,
-        workerURL: `https://registry.npmmirror.com/@ffmpeg/core-mt/${CORE_MT_VER}/files/dist/esm/ffmpeg-core.worker.js`,
-      },
-      {
-        label: 'jsdelivr core-mt',
-        coreURL: `https://fastly.jsdelivr.net/npm/@ffmpeg/core-mt@${CORE_MT_VER}/dist/esm/ffmpeg-core.js`,
-        wasmURL: `https://fastly.jsdelivr.net/npm/@ffmpeg/core-mt@${CORE_MT_VER}/dist/esm/ffmpeg-core.wasm`,
-        workerURL: `https://fastly.jsdelivr.net/npm/@ffmpeg/core-mt@${CORE_MT_VER}/dist/esm/ffmpeg-core.worker.js`,
-      },
-    ];
+    return [{
+      label: '本地 core-mt（' + MT_THREADS + ' 线程）',
+      coreURL: BASE + 'core-mt/ffmpeg-core.js',
+      wasmURL: BASE + 'core-mt/ffmpeg-core.wasm',
+      workerURL: BASE + 'core-mt/ffmpeg-core.worker.js',
+      threads: MT_THREADS,
+      skip: (!mtScriptReady)
+        ? '当前浏览器脚本环境没有暴露 SharedArrayBuffer（Safari / 部分安卓浏览器常见），多线程核心无法启动'
+        : (/Firefox\/\d+/i.test(ua) && !/Seamonkey/i.test(ua)
+            ? 'Firefox 即使带 COOP/COEP 也不稳定支持多线程 ffmpeg.wasm，建议用单线程'
+            : ''),
+    }];
   }
-  return [
-    {
-      label: '本地 core',
-      coreURL: BASE + 'core/ffmpeg-core.js',
-      wasmURL: BASE + 'core/ffmpeg-core.wasm',
-    },
-    {
-      label: 'npmmirror 镜像',
-      coreURL: 'https://registry.npmmirror.com/@ffmpeg/core/0.12.10/files/dist/esm/ffmpeg-core.js',
-      wasmURL: 'https://registry.npmmirror.com/@ffmpeg/core/0.12.10/files/dist/esm/ffmpeg-core.wasm',
-    },
-    {
-      label: 'jsdelivr 镜像',
-      coreURL: 'https://fastly.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/esm/ffmpeg-core.js',
-      wasmURL: 'https://fastly.jsdelivr.net/npm/@ffmpeg/core@0.12.10/dist/esm/ffmpeg-core.wasm',
-    },
-  ];
+  return [{
+    label: '本地 core',
+    coreURL: BASE + 'core/ffmpeg-core.js',
+    wasmURL: BASE + 'core/ffmpeg-core.wasm',
+    threads: 1,
+    skip: '',
+  }];
 }
 
 function setBadge(kind, text) {
@@ -277,6 +292,7 @@ function destroyEngine() {
 async function buildEngine(which) {
   let lastErr = null;
   for (const s of sources(which)) {
+    if (s.skip) { log('跳过 ' + s.label + '：' + s.skip, 'w'); lastErr = new Error(s.skip); continue; }
     setBadge('loading', '加载核心 · ' + s.label);
     log('尝试核心：' + s.label, 'w');
     const ff = new FFmpeg();
@@ -289,6 +305,7 @@ async function buildEngine(which) {
       if (!ff.loaded) throw new Error('core 未报告 loaded');
       engine = ff;
       engineSource = s.label;
+      engineThreads = s.threads || 1;
       setBadge('ok', '引擎就绪 · ' + s.label);
       log('核心加载成功：' + s.label, 's');
       return ff;
@@ -299,7 +316,7 @@ async function buildEngine(which) {
     }
   }
   setBadge('err', '引擎加载失败');
-  throw lastErr || new Error('所有核心来源均加载失败');
+  throw lastErr || new Error('内置核心加载失败');
 }
 
 function ensureEngine() {
@@ -311,11 +328,12 @@ function ensureEngine() {
 }
 
 /* ---------------- 进度 ---------------- */
-function onProgress({ progress }) {
+function onProgress({ progress, time }) {
   if (!progressTarget) return;
-  const p = Number.isFinite(progress) ? Math.min(0.999, Math.max(0, progress)) : 0;
+  const p = Number.isFinite(progress) ? Math.min(1, Math.max(0, progress)) : 0;
   progressTarget.pct = p * 100;
-  progressTarget.text = '转码中 ' + Math.round(p * 100) + '%';
+  progressTarget.text = '转码中 ' + Math.round(p * 100) + '%' +
+    (Number.isFinite(time) && time > 0 ? '（已处理 ' + (time / 1e6).toFixed(1) + ' 秒音频）' : '');
   paint(progressTarget);
 }
 
@@ -380,6 +398,7 @@ function paint(item) {
     item.audio = au;
     item.el.appendChild(au);
   }
+  if (item.audio) item.audio.style.display = (item.state === 'ok' && item.url) ? 'block' : 'none';
 }
 
 function addFiles(files) {
@@ -421,10 +440,28 @@ async function convertItem(ff, item) {
   try { await ff.deleteFile(outName); } catch (_) {}
   await ff.writeFile(inName, buf);
 
-  const args = ['-i', inName, '-vn', '-map', '0:a:0', '-c:a', 'libmp3lame', '-b:a', $('br').value];
+  const brMode = $('mode_br').value;
+  const brVal = $('br').value;
+  const args = ['-hide_banner', '-nostdin', '-loglevel', 'info'];
+  if ($('probe').value) args.push('-probesize', $('probe').value + 'M', '-analyzeduration', $('probe').value + 'M');
+  if ($('clip').value) args.push(...$('clip').value.split(/\s+/).filter(Boolean));
+  args.push('-i', inName, '-vn', '-map', '0:a:0', '-c:a', 'libmp3lame', '-threads', String(engineThreads || 1));
+  if (brMode === 'vbr') {
+    const q = ({ '64k': 7, '96k': 5, '128k': 4, '160k': 3, '192k': 2, '256k': 1, '320k': 0 })[brVal] ?? 4;
+    args.push('-qscale:a', String(q));
+  } else {
+    args.push('-b:a', brVal);
+    if (brMode === 'abr') args.push('-abr', '1');
+  }
+  if ($('quality').value) args.push('-qscale:a', $('quality').value);
   if ($('ch').value) args.push('-ac', $('ch').value);
   if ($('sr').value !== 'auto') args.push('-ar', $('sr').value);
-  args.push('-id3v2_version', '3', outName);
+  if ($('preset').value) args.push('-preset', $('preset').value);
+  if ($('vol').value) {
+    if ($('vol').value === 'loudnorm') args.push('-af', 'loudnorm=I=-16:TP=-1.5:LRA=11');
+    else args.push('-af', 'volume=' + $('vol').value);
+  }
+  args.push('-id3v2_version', '3', '-y', outName);
 
   log('ffmpeg ' + args.join(' '), 'w');
   item.text = '转码中 0%';
@@ -455,6 +492,10 @@ async function convertItem(ff, item) {
   item.text = fmtSize(item.size) + ' → ' + fmtSize(blob.size);
   paint(item);
   log('完成：' + item.name + '（' + fmtSize(blob.size) + '）', 's');
+  if (blob.size > item.size * 0.98) {
+    log('提示：输出体积几乎没变小。若源文件本来就是 128k/192k MP3 或 AAC，重新按 128k 编码不会变小甚至会变大；' +
+        '想更小请选「单声道」或更低采样率，或把比特率降到 64k。若时长明显不对，请打开「首帧容错」重试。', 'w');
+  }
 }
 
 async function runQueue() {
@@ -538,12 +579,13 @@ function switchMode(m) {
   const mtReady = typeof SharedArrayBuffer !== 'undefined' && window.crossOriginIsolated === true;
   if (!mtReady) {
     mMT.disabled = true;
-    mMT.textContent = '🚀 多线程（需 COOP/COEP，当前不可用）';
+    mMT.textContent = '🚀 多线程（COOP/COEP）';
     mMT.title = '多线程核心要求页面处于 cross-origin isolated 状态，用包内 server.ps1 启动时才会开启。';
   }
   log('页面就绪 · 协议 ' + location.protocol + ' · crossOriginIsolated=' + (window.crossOriginIsolated === true), 'w');
   if (!mtReady) log('多线程不可用：未处于 cross-origin isolated（用启动.bat 打开可开启）', 'w');
 })();
 </script>
+<script src="./lib/jszip.min.js" defer></script>
 </body>
 </html>
