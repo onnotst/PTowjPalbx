@@ -6,99 +6,139 @@
 <title>文件索引</title>
 <style>
 :root{
-  --bg:#f4f6f9; --card:#ffffff; --line:#e6e8ec; --txt:#1f2937; --sub:#6b7280;
-  --acc:#2563eb; --accbg:#eef4ff;
+  --bg:#f4f6f9; --card:#fff; --line:#e6eaf0; --txt:#1f2937; --sub:#6b7280;
+  --acc:#2563eb; --accbg:#eff6ff; --radius:10px;
 }
-*{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--txt);font-family:system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif;padding:18px}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--txt);padding:18px;
+  font-family:system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif}
+a{color:inherit}
 .wrap{max-width:1180px;margin:0 auto}
-.card{background:var(--card);border:1px solid var(--line);border-radius:10px;box-shadow:0 1px 3px #0000000a}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
 
-.head{padding:18px 20px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
-.head h1{font-size:20px;font-weight:600;display:flex;align-items:center;gap:8px}
-.head h1 .dot{width:8px;height:8px;border-radius:50%;background:var(--acc)}
-.meta{font-size:12px;color:var(--sub);line-height:1.8}
-.ghost{border:1px solid var(--line);background:#fff;color:var(--txt);border-radius:7px;padding:7px 12px;font-size:13px;cursor:pointer}
-.ghost:hover{border-color:#cbd5e1;background:#fafafa}
+/* header */
+.head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.head h1{font-size:19px;font-weight:650;margin:0;display:flex;align-items:center;gap:9px}
+.head .mark{width:30px;height:30px;border-radius:8px;background:var(--accbg);
+  display:flex;align-items:center;justify-content:center;color:var(--acc)}
+.ghost{border:1px solid var(--line);background:#fff;color:var(--txt);border-radius:8px;
+  padding:7px 12px;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.ghost:hover{border-color:#cbd5e1;background:#fafbff}
+.ghost:disabled{opacity:.55;cursor:default}
 
-.tools{padding:14px 20px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;border-top:1px solid var(--line)}
-.search{position:relative;flex:1 1 320px;min-width:200px}
-.search input{width:100%;padding:10px 34px 10px 36px;border:1px solid var(--line);border-radius:8px;font-size:14px;outline:none;background:#fff}
-.search input:focus{border-color:var(--acc);box-shadow:0 0 0 3px #2563eb1a}
-.search .ico{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:13px;opacity:.6}
-.search .clr{position:absolute;right:8px;top:50%;transform:translateY(-50%);border:0;background:none;color:#9ca3af;cursor:pointer;font-size:15px;padding:4px 6px;display:none}
-select{border:1px solid var(--line);border-radius:8px;padding:9px 10px;font-size:13px;background:#fff;color:var(--txt);outline:none;cursor:pointer}
+/* toolbar */
+.bar{display:flex;gap:10px;align-items:center;padding:12px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.search{position:relative;flex:1 1 320px;min-width:220px}
+.search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:#9ca3af}
+.search input{width:100%;padding:9px 34px 9px 34px;border:1px solid var(--line);border-radius:8px;
+  font-size:14px;outline:none;background:#fff;color:var(--txt)}
+.search input:focus{border-color:#bfdbfe;box-shadow:0 0 0 3px rgba(37,99,235,.08)}
+.search .clr{position:absolute;right:8px;top:50%;transform:translateY(-50%);border:0;background:none;
+  color:#9ca3af;cursor:pointer;font-size:15px;padding:4px 6px;display:none;line-height:1}
+select{border:1px solid var(--line);border-radius:8px;padding:9px 10px;font-size:13px;
+  background:#fff;color:var(--txt);outline:none;cursor:pointer}
 
-.chips{padding:0 20px 14px;display:flex;flex-wrap:wrap;gap:6px}
-.chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:4px 10px;font-size:12px;cursor:pointer;color:var(--sub);display:inline-flex;align-items:center;gap:5px}
+/* segmented view switch */
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:#fff;padding:9px 13px;font-size:13px;cursor:pointer;color:var(--sub);
+  display:inline-flex;align-items:center;gap:6px}
+.seg button.on{background:var(--accbg);color:var(--acc);font-weight:600}
+.seg button+button{border-left:1px solid var(--line)}
+
+/* chips */
+.chips{display:flex;gap:7px;flex-wrap:wrap;padding:11px 12px;border-bottom:1px solid var(--line);
+  max-height:104px;overflow:auto}
+.chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:4px 10px;font-size:12px;
+  cursor:pointer;color:var(--sub);display:inline-flex;align-items:center;gap:5px}
 .chip:hover{border-color:#cbd5e1}
 .chip.on{background:var(--accbg);border-color:#bfdbfe;color:var(--acc);font-weight:600}
 .chip b{font-weight:600;color:#9ca3af;font-size:11px}
-.chip.on b{color:#60a5fa}
 
-.stat{padding:10px 20px;border-top:1px solid var(--line);font-size:12px;color:var(--sub);display:flex;gap:14px;flex-wrap:wrap}
+/* crumbs */
+.crumbs{display:flex;gap:4px;align-items:center;padding:10px 12px;font-size:13px;flex-wrap:wrap;
+  border-bottom:1px solid var(--line);color:var(--sub)}
+.crumbs .cp{background:none;border:0;padding:3px 7px;border-radius:6px;cursor:pointer;
+  color:var(--sub);font-size:13px;display:inline-flex;align-items:center;gap:5px}
+.crumbs .cp:hover{background:#f1f5f9;color:var(--txt)}
+.crumbs .cp.cur{color:var(--txt);font-weight:600}
+.crumbs .sep{color:#cbd5e1;font-size:11px}
+
+/* stat */
+.stat{padding:9px 12px;border-bottom:1px solid var(--line);font-size:12px;color:var(--sub);
+  display:flex;gap:14px;flex-wrap:wrap}
 .stat strong{color:var(--txt);font-weight:600}
 
-#list{padding:8px 12px 16px;min-height:140px}
-.row{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px}
-.row:hover{background:#f8fafc}
-.ico{width:38px;height:38px;flex:0 0 38px;border-radius:8px;display:flex;align-items:center;justify-content:center;
-     font-size:10px;font-weight:700;letter-spacing:.5px;color:#fff;background:var(--c,#94a3b8);text-transform:uppercase}
-.nm{flex:1 1 auto;min-width:0}
+/* list */
+#list{padding:8px}
+.file{display:flex;align-items:center;gap:11px;padding:8px 9px;border-radius:8px}
+.file:hover{background:#f8fafc}
+.ico{flex:0 0 auto;width:30px;height:30px;border-radius:8px;display:flex;align-items:center;
+  justify-content:center;color:#0f172a}
+.ico svg{width:18px;height:18px}
+.nm{min-width:0;flex:1 1 auto}
 .nm .t{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .nm .p{font-size:11px;color:var(--sub);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px}
-.mt{flex:0 0 auto;font-size:11px;color:var(--sub);text-align:right;white-space:nowrap;line-height:1.6}
+.mt{flex:0 0 auto;font-size:11px;color:var(--sub);text-align:right;white-space:nowrap;line-height:1.55}
 .acts{flex:0 0 auto;display:flex;gap:6px}
-.acts button{border:1px solid var(--line);background:#fff;border-radius:6px;padding:5px 9px;font-size:12px;cursor:pointer;color:var(--txt)}
-.acts button:hover{border-color:#bfdbfe;color:var(--acc);background:var(--accbg)}
+.acts button{border:1px solid var(--line);background:#fff;border-radius:6px;padding:5px 9px;
+  font-size:12px;cursor:pointer;color:var(--txt)}
+.acts button:hover{border-color:#bfdbfe;background:var(--accbg);color:var(--acc)}
 
-.dir{margin:2px 0}
-.dirhead{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;cursor:pointer;user-select:none}
-.dirhead:hover{background:#f8fafc}
-.caret{font-size:11px;color:#94a3b8;transition:transform .15s;display:inline-block;width:12px;text-align:center}
-.caret.o{transform:rotate(90deg)}
-.dname{font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.dcount{font-size:11px;color:#9ca3af;background:#f1f5f9;border-radius:999px;padding:1px 7px;flex:0 0 auto}
-.dirbody{padding-left:18px;border-left:1px dashed #e9edf2;margin-left:14px}
+/* folder cards */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(238px,1fr));gap:9px;padding:6px}
+.fcard{display:flex;align-items:center;gap:10px;padding:11px 12px;border:1px solid var(--line);
+  border-radius:9px;cursor:pointer;background:#fff;transition:.12s}
+.fcard:hover{border-color:#bfdbfe;background:#f8fbff;transform:translateY(-1px)}
+.fico{flex:0 0 auto;width:34px;height:34px;border-radius:8px;background:#eff6ff;color:#2563eb;
+  display:flex;align-items:center;justify-content:center}
+.fico svg{width:19px;height:19px}
+.fmeta{min-width:0;flex:1 1 auto}
+.fname{font-size:13.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fsub{font-size:11px;color:var(--sub);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.arrow{color:#cbd5e1;flex:0 0 auto}
 
 .empty{padding:44px 20px;text-align:center;color:var(--sub);font-size:13px;line-height:2}
-.err{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;border-radius:10px;padding:18px;font-size:13px;line-height:1.9}
-.err code{background:#fff;border:1px solid #fde3c6;border-radius:4px;padding:2px 6px;font-family:Consolas,monospace;font-size:12px}
-
-.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(12px);background:#111827;color:#fff;
-       font-size:13px;padding:9px 16px;border-radius:999px;opacity:0;pointer-events:none;transition:.2s;z-index:99}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-
-@media (max-width:720px){
+.err{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;border-radius:10px;padding:18px;
+  font-size:13px;line-height:1.9;margin:12px}
+.err code{background:#fff;border:1px solid #fde3c6;border-radius:4px;padding:2px 6px;
+  font-family:Consolas,monospace;font-size:12px}
+.toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,12px);background:#111827;color:#fff;
+  font-size:13px;padding:9px 16px;border-radius:999px;opacity:0;pointer-events:none;transition:.2s;z-index:99}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+@media (max-width:640px){
   body{padding:10px}
-  .head{padding:14px}
-  .tools{padding:12px 14px}
-  .chips{padding:0 14px 12px}
-  .stat{padding:10px 14px}
   .mt{display:none}
-  .ico{width:34px;height:34px;flex-basis:34px}
-  .dirbody{padding-left:12px;margin-left:8px}
   .acts button{padding:5px 7px}
+  .search{flex:1 1 100%}
 }
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="card">
-    <div class="head">
-      <h1><span class="dot"></span>文件索引</h1>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="ghost" id="btnView">平铺模式</button>
-        <button class="ghost" id="btnExpand">全部展开</button>
-        <button class="ghost" id="btnCollapse">全部收起</button>
-        <button class="ghost" id="btnReload">刷新索引</button>
-      </div>
-    </div>
 
-    <div class="tools">
+  <div class="head">
+    <h1>
+      <span class="mark">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round">
+          <path d="M3.5 7.5a2 2 0 0 1 2-2h3.2l1.8 2h7.8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5.5a2 2 0 0 1-2-2z"/>
+        </svg>
+      </span>
+      文件索引
+    </h1>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="ghost" id="btnUp" title="上一级">↑ 上一级</button>
+      <button class="ghost" id="btnReload" title="重新读取配置">↻ 刷新数据</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="bar">
       <div class="search">
-        <span class="ico">🔍</span>
-        <input id="q" type="text" placeholder="搜索文件名或路径…（按 / 聚焦，Esc 清空）" autocomplete="off" spellcheck="false">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>
+        </svg>
+        <input id="q" type="text" placeholder="搜索文件名或路径…（/ 聚焦，Esc 清空）" autocomplete="off" spellcheck="false">
         <button class="clr" id="qClear" title="清空">✕</button>
       </div>
       <select id="sort">
@@ -107,8 +147,13 @@ select{border:1px solid var(--line);border-radius:8px;padding:9px 10px;font-size
         <option value="size">按大小（大→小）</option>
         <option value="ext">按后缀</option>
       </select>
+      <div class="seg" id="seg">
+        <button data-mode="dir" class="on">目录视图</button>
+        <button data-mode="list">列表视图</button>
+      </div>
     </div>
 
+    <div class="crumbs" id="crumbs"></div>
     <div class="chips" id="chips"></div>
     <div class="stat" id="stat"></div>
     <div id="list"></div>
@@ -118,64 +163,174 @@ select{border:1px solid var(--line);border-radius:8px;padding:9px 10px;font-size
 <div class="toast" id="toast"></div>
 
 <script>
-var state = { q:'', sort:'name', exts:new Set(), collapsed:new Set(), flat:false };
+(function(){
+'use strict';
+
+var state = { q:'', sort:'name', exts:new Set(), mode:'dir', r:null, dp:'' };
 var DATA = null;
-var TREE = null;
-var ALL_KEYS = [];
+var ROOTS = [];
+var ROOTMAP = {};
 
-var SORTERS = {
-  name: function(a,b){ return a.p.localeCompare(b.p,'zh'); },
-  date: function(a,b){ return b.m.localeCompare(a.m); },
-  size: function(a,b){ return b.s - a.s; },
-  ext:  function(a,b){ return a.e.localeCompare(b.e) || a.p.localeCompare(b.p,'zh'); }
+/* ---------- 图标 ---------- */
+var GLYPH = {
+  folder:'<path d="M3.5 7.5a2 2 0 0 1 2-2h3.2l1.8 2h7.8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5.5a2 2 0 0 1-2-2z"/>',
+  doc:'<path d="M13.5 3.5H7a1.5 1.5 0 0 0-1.5 1.5v14a1.5 1.5 0 0 0 1.5 1.5h10a1.5 1.5 0 0 0 1.5-1.5V8z"/><path d="M13.5 3.5V8H18"/><path d="M8.5 12h7M8.5 15h7M8.5 18h4.5"/>',
+  text:'<path d="M6 6.5h12M6 10.5h12M6 14.5h12M6 18.5h7.5"/>',
+  image:'<rect x="3.5" y="4.5" width="17" height="15" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="M4.8 17.2l4.5-4.5 3.1 3.1 3-3 4 4"/>',
+  video:'<rect x="3.5" y="5.5" width="17" height="13" rx="2"/><path d="M10.2 9.2l4.6 2.6-4.6 2.6z"/>',
+  audio:'<path d="M4 16.5v-4M8 18.5v-8M12 20V5.5M16 17v-6.5M20 15v-3"/>',
+  code:'<path d="M8.6 8.2L4.6 12l4 3.8M15.4 8.2l4 3.8-4 3.8M13.4 6.2l-2.8 11.6"/>',
+  archive:'<rect x="3.5" y="5" width="17" height="4.6" rx="1.3"/><path d="M5.4 9.6v8.6a1.5 1.5 0 0 0 1.5 1.5h10.2a1.5 1.5 0 0 0 1.5-1.5V9.6"/><path d="M12 11.8v4.2"/>',
+  sheet:'<rect x="3.5" y="4.5" width="17" height="15" rx="1.5"/><path d="M3.5 9.4h17M9.2 4.5v15M14.8 4.5v15"/>',
+  slide:'<rect x="3.5" y="4.5" width="17" height="11" rx="1.5"/><path d="M12 15.5v3.2M8.6 21h6.8"/>',
+  data:'<path d="M9.2 5.2c-1.6 0-2.2.9-2.2 2.1v1.9c0 1.3-.6 2-1.8 2.3 1.2.3 1.8 1 1.8 2.3v1.9c0 1.2.6 2.1 2.2 2.1"/><path d="M14.8 5.2c1.6 0 2.2.9 2.2 2.1v1.9c0 1.3.6 2 1.8 2.3-1.2.3-1.8 1-1.8 2.3v1.9c0 1.2-.6 2.1-2.2 2.1"/>',
+  exe:'<rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M7.8 9.6l3 2.4-3 2.4M12.8 15.2h3.6"/>',
+  font:'<path d="M6.2 18.2l5-11.4 5 11.4M8.6 14.3h6.8"/>',
+  other:'<path d="M13.5 3.5H7a1.5 1.5 0 0 0-1.5 1.5v14a1.5 1.5 0 0 0 1.5 1.5h10a1.5 1.5 0 0 0 1.5-1.5V8z"/><path d="M13.5 3.5V8H18"/><circle cx="12" cy="13.6" r="1"/><circle cx="12" cy="16.8" r="1"/>'
 };
 
-var COLORS = {
-  '.pdf':'#dc2626','.doc':'#2563eb','.docx':'#2563eb','.rtf':'#2563eb',
-  '.xls':'#16a34a','.xlsx':'#16a34a','.csv':'#16a34a',
-  '.ppt':'#ea580c','.pptx':'#ea580c',
-  '.mp4':'#7c3aed','.mkv':'#7c3aed','.avi':'#7c3aed','.mov':'#7c3aed','.wmv':'#7c3aed','.flv':'#7c3aed','.webm':'#7c3aed',
-  '.mp3':'#db2777','.wav':'#db2777','.flac':'#db2777','.aac':'#db2777','.m4a':'#db2777','.ogg':'#db2777',
-  '.jpg':'#0891b2','.jpeg':'#0891b2','.png':'#0891b2','.gif':'#0891b2','.webp':'#0891b2','.bmp':'#0891b2','.svg':'#0891b2',
-  '.zip':'#ca8a04','.rar':'#ca8a04','.7z':'#ca8a04','.tar':'#ca8a04','.gz':'#ca8a04',
-  '.html':'#0ea5e9','.htm':'#0ea5e9','.php':'#6366f1','.js':'#f59e0b','.json':'#f59e0b','.css':'#f59e0b',
-  '.txt':'#475569','.md':'#475569','.log':'#475569',
-  '.exe':'#334155','.msi':'#334155','.apk':'#3b82f6','.ipa':'#3b82f6',
-  '.iso':'#8b5cf6','.dmg':'#8b5cf6'
+var CAT_COLOR = {
+  image:'#0891b2', video:'#7c3aed', audio:'#db2777', archive:'#ca8a04',
+  doc:'#dc2626', text:'#64748b', sheet:'#16a34a', slide:'#ea580c',
+  code:'#f59e0b', data:'#6366f1', exe:'#334155', font:'#0d9488', other:'#94a3b8'
 };
 
+var CAT_EXT = {};
+(function(){
+  function add(cat, list){
+    for (var i=0;i<list.length;i++) CAT_EXT[list[i]] = cat;
+  }
+  add('image', ['jpg','jpeg','png','gif','webp','bmp','svg','ico','tif','tiff','avif','heic','raw']);
+  add('video', ['mp4','mkv','avi','mov','webm','flv','wmv','m4v','mpeg','mpg','ts','rmvb']);
+  add('audio', ['mp3','wav','flac','aac','m4a','ogg','opus','wma','mid','midi']);
+  add('archive', ['zip','rar','7z','tar','gz','bz2','xz','tgz','iso','cab','lz','zst']);
+  add('doc', ['pdf','doc','docx','rtf','odt','pages','wps']);
+  add('text', ['txt','md','markdown','log','ini','conf','cfg','env','nfo']);
+  add('sheet', ['xls','xlsx','csv','ods','tsv']);
+  add('slide', ['ppt','pptx','odp','key']);
+  add('code', ['js','mjs','cjs','ts','jsx','tsx','html','htm','css','scss','sass','less','php','py',
+               'ps1','bat','cmd','sh','bash','zsh','c','h','cpp','cc','hpp','java','kt','go','rs',
+               'rb','swift','lua','sql','vue','xml','yml','yaml','toml']);
+  add('data', ['json','jsonl','ndjson','sqlite','db','parquet','xml']);
+  add('exe', ['exe','msi','apk','ipa','dmg','deb','rpm','bin','elf','so','dll','sys','app']);
+  add('font', ['woff','woff2','ttf','otf','eot']);
+})();
+
+function catOf(e){
+  if (!e) return 'other';
+  var t = String(e).replace(/^\./,'').toLowerCase();
+  return CAT_EXT[t] || 'other';
+}
+
+function hexA(hex, a){
+  var h = hex.replace('#','');
+  return 'rgba(' + parseInt(h.substr(0,2),16) + ',' + parseInt(h.substr(2,2),16) + ','
+       + parseInt(h.substr(4,2),16) + ',' + a + ')';
+}
+
+function icoBox(e, extra){
+  var cat = catOf(e), col = CAT_COLOR[cat] || CAT_COLOR.other;
+  var html = '<span class="ico" style="background:' + hexA(col,.12) + ';color:' + col + (extra||'') + '">'
+           + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"'
+           + ' stroke-linecap="round" stroke-linejoin="round">' + GLYPH[cat] + '</svg></span>';
+  return html;
+}
+
+/* ---------- 小工具 ---------- */
 function esc(s){
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
                   .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
 }
-
+function baseName(p){ var i = p.lastIndexOf('/'); return i < 0 ? p : p.slice(i+1); }
 function fmtSize(n){
   n = Number(n) || 0;
   if (n < 1024) return n + ' B';
-  var u = ['KB','MB','GB','TB','PB'], i = -1;
+  var u = ['KB','MB','GB','TB'], i = -1;
   do { n /= 1024; i++; } while (n >= 1024 && i < u.length - 1);
   return (n >= 100 ? n.toFixed(0) : n.toFixed(1)) + ' ' + u[i];
 }
-
-function extColor(e){
-  if (!e) return '#94a3b8';
-  return COLORS[String(e).toLowerCase()] || '#94a3b8';
-}
-
-function extLabel(e){
-  if (!e) return 'FILE';
-  var t = String(e).replace(/^\./,'').toUpperCase();
-  return t.length > 4 ? t.slice(0,4) : t;
-}
-
-function baseName(p){ var i = p.lastIndexOf('/'); return i < 0 ? p : p.slice(i+1); }
-
 function toast(msg){
   var el = document.getElementById('toast');
   el.textContent = msg;
   el.classList.add('show');
   clearTimeout(el._t);
   el._t = setTimeout(function(){ el.classList.remove('show'); }, 1800);
+}
+function byName(a,b){ return a.name.localeCompare(b.name,'zh'); }
+
+var SORTERS = {
+  name: function(a,b){ return a.p.localeCompare(b.p,'zh'); },
+  date: function(a,b){ return String(b.m||'').localeCompare(String(a.m||'')); },
+  size: function(a,b){ return (b.s||0) - (a.s||0); },
+  ext:  function(a,b){ return String(a.e||'').localeCompare(String(b.e||'')) || a.p.localeCompare(b.p,'zh'); }
+};
+
+/* ---------- 树 ---------- */
+function newDir(name, path){
+  return { name:name, path:path, d:new Map(), f:[], c:-1, sz:0, dc:0 };
+}
+
+function buildTree(){
+  ROOTS = [];
+  ROOTMAP = {};
+
+  var roots = DATA.roots && DATA.roots.length ? DATA.roots : [{ i:0, name:'' }];
+  roots.forEach(function(r, i){
+    var key = (r.i === undefined || r.i === null) ? i : r.i;
+    var node = newDir(r.name || ('root' + i), '');
+    node.i = key;
+    ROOTMAP[key] = node;
+    ROOTS.push(node);
+  });
+
+  function child(node, seg){
+    if (!node.d.has(seg)) node.d.set(seg, newDir(seg, node.path ? node.path + '/' + seg : seg));
+    return node.d.get(seg);
+  }
+
+  DATA.files.forEach(function(f){
+    var root = ROOTMAP[f.r] || ROOTS[0];
+    if (!root) return;
+    var segs = String(f.p).split('/');
+    var node = root;
+    for (var i=0; i<segs.length-1; i++) node = child(node, segs[i]);
+    node.f.push(f);
+  });
+
+  (DATA.dirs || []).forEach(function(d){
+    var root = ROOTMAP[d.r];
+    if (!root) return;
+    var node = root;
+    String(d.p || '').split('/').forEach(function(seg){ if (seg) node = child(node, seg); });
+  });
+
+  function calc(node){
+    var c = node.f.length, sz = 0, dc = node.d.size;
+    node.f.forEach(function(f){ sz += Number(f.s) || 0; });
+    node.d.forEach(function(ch){ calc(ch); c += ch.c; sz += ch.sz; dc += ch.dc; });
+    node.c = c; node.sz = sz; node.dc = dc;
+  }
+
+  ROOTS.forEach(calc);
+}
+
+function currentDir(){
+  if (state.r === null) return null;
+  var node = ROOTMAP[state.r];
+  if (!node) return null;
+  if (!state.dp) return node;
+  var segs = state.dp.split('/');
+  for (var i=0; i<segs.length; i++){
+    node = node.d.get(segs[i]);
+    if (!node) return null;
+  }
+  return node;
+}
+
+function dirTotal(){
+  var n = 0;
+  ROOTS.forEach(function(r){ n += r.dc; });
+  return n;
 }
 
 /* ---------- 数据加载 ---------- */
@@ -184,7 +339,9 @@ function loadScriptFallback(){
     if (window.FILEINDEX) { resolve(window.FILEINDEX); return; }
     var s = document.createElement('script');
     s.src = 'fileindex.js';
-    s.onload = function(){ window.FILEINDEX ? resolve(window.FILEINDEX) : reject(new Error('fileindex.js 内容为空')); };
+    s.onload = function(){
+      window.FILEINDEX ? resolve(window.FILEINDEX) : reject(new Error('fileindex.js 内容为空'));
+    };
     s.onerror = function(){ reject(new Error('fileindex.json 与 fileindex.js 都读取失败')); };
     document.head.appendChild(s);
   });
@@ -197,118 +354,86 @@ function loadData(bust){
     .catch(function(){ return loadScriptFallback(); });
 }
 
-/* ---------- 树 ---------- */
-function buildTree(files){
-  var root = { name:'', dirs:new Map(), files:[] };
-  files.forEach(function(f){
-    var segs = f.p.split('/');
-    var node = root;
-    for (var i = 0; i < segs.length - 1; i++){
-      if (!node.dirs.has(segs[i])) node.dirs.set(segs[i], { name:segs[i], dirs:new Map(), files:[], _c:-1 });
-      node = node.dirs.get(segs[i]);
-    }
-    node.files.push(f);
-  });
-  ALL_KEYS = [];
-  walkKeys(root, '');
-  return root;
-}
-
-function walkKeys(node, prefix){
-  node.dirs.forEach(function(d){
-    var key = prefix ? prefix + '/' + d.name : d.name;
-    ALL_KEYS.push(key);
-    walkKeys(d, key);
-  });
-}
-
-function countFiles(node){
-  if (node._c >= 0) return node._c;
-  var c = node.files.length;
-  node.dirs.forEach(function(d){ c += countFiles(d); });
-  node._c = c;
-  return c;
-}
-
 /* ---------- 渲染 ---------- */
-function currentList(){
+function matches(f){
+  if (state.exts.size && !state.exts.has(f.e)) return false;
   var q = state.q.trim().toLowerCase();
-  var list = DATA.files.filter(function(f){
-    if (state.exts.size && !state.exts.has(f.e)) return false;
-    if (q && f.p.toLowerCase().indexOf(q) < 0) return false;
-    return true;
-  });
-  list.sort(SORTERS[state.sort] || SORTERS.name);
-  return list;
+  if (q){
+    if (f.p.toLowerCase().indexOf(q) < 0 && baseName(f.p).toLowerCase().indexOf(q) < 0) return false;
+  }
+  return true;
+}
+
+function collect(node, out){
+  node.f.forEach(function(f){ out.push(f); });
+  node.d.forEach(function(ch){ collect(ch, out); });
+  return out;
 }
 
 function fileRow(f, showPath){
-  var color = extColor(f.e);
-  var html = '<div class="row" data-u="' + esc(f.u) + '" data-p="' + esc(f.p) + '">';
-  html += '<span class="ico" style="--c:' + color + '">' + esc(extLabel(f.e)) + '</span>';
+  var html = '<div class="file" data-u="' + esc(f.u) + '" data-p="' + esc(f.p) + '">';
+  html += icoBox(f.e);
   html += '<div class="nm"><div class="t">' + esc(baseName(f.p)) + '</div>';
   if (showPath) html += '<div class="p">' + esc(f.p) + '</div>';
   html += '</div>';
-  html += '<div class="mt">' + fmtSize(f.s) + '<br>' + esc((f.m || '').slice(0,10)) + '</div>';
+  html += '<div class="mt">' + fmtSize(f.s) + '<br>' + esc(String(f.m || '').slice(0,10)) + '</div>';
   html += '<div class="acts"><button data-act="open">打开</button><button data-act="copy">复制</button></div>';
   html += '</div>';
   return html;
 }
 
-function renderTree(node, prefix){
-  var html = '';
-  var dirs = Array.from(node.dirs.values()).sort(function(a,b){ return a.name.localeCompare(b.name,'zh'); });
-  dirs.forEach(function(d){
-    var key = prefix ? prefix + '/' + d.name : d.name;
-    var collapsed = state.collapsed.has(key);
-    html += '<div class="dir">';
-    html += '<div class="dirhead" data-key="' + esc(key) + '">';
-    html += '<span class="caret' + (collapsed ? '' : ' o') + '">▸</span>';
-    html += '<span class="dname">' + esc(d.name) + '</span>';
-    html += '<span class="dcount">' + countFiles(d) + '</span>';
-    html += '</div>';
-    html += '<div class="dirbody"' + (collapsed ? ' style="display:none"' : '') + '>';
-    html += renderTree(d, key);
-    html += '</div></div>';
-  });
-
-  var fs = node.files.slice().sort(SORTERS[state.sort] || SORTERS.name);
-  fs.forEach(function(f){ html += fileRow(f, false); });
-  return html;
+function rootCard(r){
+  return '<div class="fcard" data-nav="' + r.i + '|">'
+       + '<span class="fico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"'
+       + ' stroke-linecap="round" stroke-linejoin="round">' + GLYPH.folder + '</svg></span>'
+       + '<div class="fmeta"><div class="fname">' + esc(r.name || '根目录') + '</div>'
+       + '<div class="fsub">' + r.c + ' 个文件 · ' + fmtSize(r.sz) + ' · ' + r.dc + ' 个子目录</div></div>'
+       + '<svg class="arrow" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"'
+       + ' stroke-width="2" stroke-linecap="round"><path d="M9 5l7 7-7 7"/></svg></div>';
 }
 
-function render(){
-  var listEl = document.getElementById('list');
-  var list = currentList();
-  var filtering = state.q.trim() !== '' || state.exts.size > 0;
-
-  renderStat(list.length);
-
-  if (!list.length){
-    listEl.innerHTML = '<div class="empty">没有匹配的文件<br><span style="font-size:12px">换个关键词，或点「全部」清除后缀筛选</span></div>';
-    return;
-  }
-
-  if (state.flat || filtering){
-    listEl.innerHTML = list.map(function(f){ return fileRow(f, true); }).join('');
-  } else {
-    listEl.innerHTML = renderTree(TREE, '');
-  }
+function subCard(dir, rKey){
+  return '<div class="fcard" data-nav="' + rKey + '|' + esc(dir.path) + '">'
+       + '<span class="fico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"'
+       + ' stroke-linecap="round" stroke-linejoin="round">' + GLYPH.folder + '</svg></span>'
+       + '<div class="fmeta"><div class="fname">' + esc(dir.name) + '</div>'
+       + '<div class="fsub">' + dir.c + ' 个文件 · ' + fmtSize(dir.sz)
+       + (dir.dc ? ' · ' + dir.dc + ' 个子目录' : '') + '</div></div>'
+       + '<svg class="arrow" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"'
+       + ' stroke-width="2" stroke-linecap="round"><path d="M9 5l7 7-7 7"/></svg></div>';
 }
 
-function renderStat(shown){
-  var total = DATA.count || DATA.files.length;
-  var bytes = DATA.totalBytes || 0;
-  var roots = (DATA.roots || []).length;
-  var html = '<span>共 <strong>' + total + '</strong> 个文件</span>';
-  html += '<span>合计 <strong>' + fmtSize(bytes) + '</strong></span>';
-  if (shown !== total) html += '<span>当前显示 <strong>' + shown + '</strong> 个</span>';
-  if (roots) html += '<span>根目录 <strong>' + roots + '</strong> 个</span>';
+function renderCrumbs(){
+  var html = '<button class="cp' + (state.r === null ? ' cur' : '') + '" data-nav="root">全部根目录</button>';
+  if (state.r !== null){
+    var root = ROOTMAP[state.r];
+    html += '<span class="sep">›</span><button class="cp' + (state.dp === '' ? ' cur' : '')
+          + '" data-nav="' + state.r + '|">' + esc(root ? root.name : '') + '</button>';
+    if (state.dp){
+      var acc = '';
+      state.dp.split('/').forEach(function(seg){
+        acc = acc ? acc + '/' + seg : seg;
+        html += '<span class="sep">›</span><button class="cp' + (acc === state.dp ? ' cur' : '')
+              + '" data-nav="' + state.r + '|' + esc(acc) + '">' + esc(seg) + '</button>';
+      });
+    }
+  }
+  document.getElementById('crumbs').innerHTML = html;
+  document.getElementById('btnUp').disabled = (state.r === null);
+}
+
+function renderStat(shown, scopeTotal){
+  var html = '<span>文件 <strong>' + (DATA.count || DATA.files.length) + '</strong></span>';
+  html += '<span>合计 <strong>' + fmtSize(DATA.totalBytes || 0) + '</strong></span>';
+  html += '<span>目录 <strong>' + dirTotal() + '</strong></span>';
+  html += '<span>根目录 <strong>' + ROOTS.length + '</strong></span>';
+  if (shown !== (DATA.count || DATA.files.length)){
+    html += '<span>当前显示 <strong>' + shown + '</strong> / ' + scopeTotal + '</span>';
+  }
   if (DATA.generatedAt){
-    var iso = String(DATA.generatedAt).replace(/(\.\d{3})\d+/, '$1');
-    var d = new Date(iso);
+    var d = new Date(String(DATA.generatedAt).replace(/(\.\d{3})\d+/, '$1'));
     if (!isNaN(d.getTime())){
-      html += '<span>索引生成于 <strong>' + d.toLocaleString('zh-CN', { hour12:false }) + '</strong></span>';
+      html += '<span>生成于 <strong>' + d.toLocaleString('zh-CN', { hour12:false }) + '</strong></span>';
     }
   }
   document.getElementById('stat').innerHTML = html;
@@ -317,21 +442,108 @@ function renderStat(shown){
 function renderChips(){
   var counts = new Map();
   DATA.files.forEach(function(f){
-    var e = f.e || '(无后缀)';
+    var e = f.e || '';
     counts.set(e, (counts.get(e) || 0) + 1);
   });
-  var arr = Array.from(counts.entries()).sort(function(a,b){ return b[1] - a[1]; }).slice(0, 18);
+  var arr = Array.from(counts.entries()).sort(function(a,b){ return b[1] - a[1]; }).slice(0, 20);
 
   var html = '<button class="chip' + (state.exts.size === 0 ? ' on' : '') + '" data-ext="">全部</button>';
-  arr.forEach(function(pair){
-    var e = pair[0];
+  arr.forEach(function(p){
+    var e = p[0];
     html += '<button class="chip' + (state.exts.has(e) ? ' on' : '') + '" data-ext="' + esc(e) + '">'
-          + esc(e === '(无后缀)' ? '无后缀' : e) + ' <b>' + pair[1] + '</b></button>';
+          + (e ? esc(e) : '无后缀') + ' <b>' + p[1] + '</b></button>';
   });
   document.getElementById('chips').innerHTML = html;
 }
 
+function render(){
+  var listEl = document.getElementById('list');
+  renderCrumbs();
+
+  var filtering = state.q.trim() !== '' || state.exts.size > 0;
+
+  var scopes = [];
+  if (state.r === null) scopes = ROOTS.slice();
+  else {
+    var cur = currentDir();
+    if (cur) scopes = [cur];
+  }
+
+  var all = [];
+  scopes.forEach(function(n){ collect(n, all); });
+
+  var list = all.filter(matches);
+  list.sort(SORTERS[state.sort] || SORTERS.name);
+  renderStat(list.length, all.length);
+
+  if (!scopes.length){
+    listEl.innerHTML = '<div class="empty">目录不存在或已被移除<br>' +
+      '<span style="font-size:12px">点左上角「全部根目录」回到顶层</span></div>';
+    return;
+  }
+
+  if (state.mode === 'list' || filtering){
+    if (!list.length){
+      listEl.innerHTML = '<div class="empty">没有匹配的文件<br>' +
+        '<span style="font-size:12px">换个关键词，或点「全部」清除后缀筛选</span></div>';
+      return;
+    }
+    listEl.innerHTML = list.map(function(f){ return fileRow(f, true); }).join('');
+    return;
+  }
+
+  var html = '';
+
+  if (state.r === null){
+    html += '<div class="grid">' + ROOTS.map(rootCard).join('') + '</div>';
+    var lvl = [];
+    ROOTS.forEach(function(r){ r.f.forEach(function(f){ lvl.push(f); }); });
+    if (lvl.length){
+      lvl.sort(SORTERS[state.sort] || SORTERS.name);
+      html += '<div style="margin-top:6px">' + lvl.map(function(f){ return fileRow(f, false); }).join('') + '</div>';
+    }
+  } else {
+    var node = currentDir();
+    var subs = Array.from(node.d.values()).sort(byName);
+    if (subs.length){
+      html += '<div class="grid">' + subs.map(function(d){ return subCard(d, state.r); }).join('') + '</div>';
+    }
+    var fs = node.f.slice().sort(SORTERS[state.sort] || SORTERS.name);
+    if (fs.length){
+      html += '<div style="margin-top:' + (subs.length ? '10px' : '2px') + '">'
+            + fs.map(function(f){ return fileRow(f, false); }).join('') + '</div>';
+    }
+    if (!subs.length && !fs.length){
+      html = '<div class="empty">这个目录是空的</div>';
+    }
+  }
+
+  listEl.innerHTML = html;
+}
+
 /* ---------- 交互 ---------- */
+function navigate(key){
+  if (key === 'root'){
+    state.r = null; state.dp = '';
+  } else {
+    var parts = String(key).split('|');
+    state.r = Number(parts[0]);
+    state.dp = parts[1] || '';
+    if (!currentDir()){ state.r = null; state.dp = ''; return; }
+  }
+  window.scrollTo({ top:0, behavior:'smooth' });
+  render();
+}
+
+function init(data){
+  DATA = data || {};
+  if (!DATA.files) DATA.files = [];
+  state.r = null; state.dp = '';
+  buildTree();
+  renderChips();
+  render();
+}
+
 function bind(){
   var q = document.getElementById('q');
   var clearBtn = document.getElementById('qClear');
@@ -344,7 +556,7 @@ function bind(){
   });
 
   clearBtn.addEventListener('click', function(){
-    q.value = ''; q.style.display = 'block'; clearBtn.style.display = 'none';
+    q.value = ''; clearBtn.style.display = 'none';
     state.q = ''; render(); q.focus();
   });
 
@@ -359,6 +571,16 @@ function bind(){
     state.sort = e.target.value; render();
   });
 
+  document.getElementById('seg').addEventListener('click', function(e){
+    var b = e.target.closest('button[data-mode]');
+    if (!b) return;
+    state.mode = b.getAttribute('data-mode');
+    Array.prototype.forEach.call(this.querySelectorAll('button'), function(x){
+      x.classList.toggle('on', x === b);
+    });
+    render();
+  });
+
   document.getElementById('chips').addEventListener('click', function(e){
     var chip = e.target.closest('.chip');
     if (!chip) return;
@@ -370,24 +592,31 @@ function bind(){
     render();
   });
 
-  document.getElementById('list').addEventListener('click', function(e){
-    var head = e.target.closest('.dirhead');
-    if (head){
-      var key = head.getAttribute('data-key');
-      if (state.collapsed.has(key)) state.collapsed.delete(key); else state.collapsed.add(key);
-      var body = head.nextElementSibling;
-      var caret = head.querySelector('.caret');
-      if (body) body.style.display = state.collapsed.has(key) ? 'none' : 'block';
-      if (caret) caret.classList.toggle('o', !state.collapsed.has(key));
-      return;
+  document.getElementById('crumbs').addEventListener('click', function(e){
+    var b = e.target.closest('.cp');
+    if (b) navigate(b.getAttribute('data-nav'));
+  });
+
+  document.getElementById('btnUp').addEventListener('click', function(){
+    if (state.r === null) return;
+    if (!state.dp){ state.r = null; state.dp = ''; }
+    else {
+      var segs = state.dp.split('/');
+      segs.pop();
+      state.dp = segs.join('/');
     }
+    render();
+  });
+
+  document.getElementById('list').addEventListener('click', function(e){
+    var nav = e.target.closest('[data-nav]');
+    if (nav){ navigate(nav.getAttribute('data-nav')); return; }
 
     var btn = e.target.closest('[data-act]');
     if (!btn) return;
-    var row = btn.closest('.row');
+    var row = btn.closest('[data-u]');
     if (!row) return;
-    var rel = row.getAttribute('data-u');
-    var abs = new URL(rel, location.href).href;
+    var abs = new URL(row.getAttribute('data-u'), location.href).href;
 
     if (btn.getAttribute('data-act') === 'open'){
       window.open(abs, '_blank', 'noopener');
@@ -401,77 +630,39 @@ function bind(){
     }
   });
 
-  document.getElementById('btnView').addEventListener('click', function(){
-    state.flat = !state.flat;
-    this.textContent = state.flat ? '树形模式' : '平铺模式';
-    render();
-  });
-
-  document.getElementById('btnExpand').addEventListener('click', function(){
-    state.collapsed.clear(); render();
-  });
-
-  document.getElementById('btnCollapse').addEventListener('click', function(){
-    state.collapsed = new Set(ALL_KEYS); render();
-  });
-
   document.getElementById('btnReload').addEventListener('click', function(){
     var btn = this;
     btn.disabled = true;
-    loadData(true).then(function(d){
-      DATA = normalize(d); TREE = buildTree(DATA.files);
-      renderChips(); render(); toast('索引已刷新');
-    }).catch(function(err){ toast('刷新失败：' + err.message); })
-      .finally(function(){ btn.disabled = false; });
+    loadData(true).then(function(d){ init(d); toast('已刷新'); })
+      .catch(function(err){ showError(err); })
+      .then(function(){ btn.disabled = false; });
   });
 }
 
 function fallbackCopy(text){
   var ta = document.createElement('textarea');
-  ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
-  document.body.appendChild(ta); ta.select();
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
   try { document.execCommand('copy'); toast('已复制链接'); }
-  catch (e) { toast('复制失败，请手动复制'); }
+  catch (e) { toast('复制失败，请手动选中'); }
   document.body.removeChild(ta);
-}
-
-function normalize(d){
-  if (!d || !Array.isArray(d.files)) throw new Error('配置格式不正确');
-  d.files.forEach(function(f){
-    f.p = String(f.p || '').replace(/\\/g, '/');
-    f.u = String(f.u || f.p);
-    f.e = String(f.e || '');
-    f.s = Number(f.s) || 0;
-    f.m = String(f.m || '');
-  });
-  d.count = Number(d.count) || d.files.length;
-  d.totalBytes = Number(d.totalBytes) || d.files.reduce(function(a,f){ return a + f.s; }, 0);
-  return d;
 }
 
 function showError(err){
   document.getElementById('list').innerHTML =
-    '<div class="err">' +
-    '<b>没有读到索引配置</b><br>' +
-    '原因：' + esc(err.message) + '<br><br>' +
-    '请先生成配置：<br><code>powershell -ExecutionPolicy Bypass -File build-fileindex.ps1 -Root "D:\\资料"</code><br><br>' +
-    '然后把生成的 <code>fileindex.json</code> 与 <code>fileindex.js</code> 放到本页面同目录。<br>' +
-    '（走 http 访问时用 json；直接双击打开时自动改用 js）' +
-    '</div>';
-  document.getElementById('stat').innerHTML = '';
+    '<div class="err">读取配置失败：' + esc(err && err.message ? err.message : err) + '<br><br>' +
+    '1) 确认 <code>fileindex.json</code>（或 <code>fileindex.js</code>）与本页在同一目录<br>' +
+    '2) 双击打开 <code>file://</code> 时浏览器可能拦截 fetch，会自动改用 fileindex.js<br>' +
+    '3) 改了数据后点右上「刷新数据」，或加 <code>?t=时间戳</code> 绕过缓存</div>';
 }
 
-function init(){
-  loadData(false).then(function(d){
-    DATA = normalize(d);
-    TREE = buildTree(DATA.files);
-    renderChips();
-    render();
-  }).catch(showError);
-  bind();
-}
+bind();
+loadData(false).then(init).catch(showError);
 
-init();
+})();
 </script>
 </body>
 </html>

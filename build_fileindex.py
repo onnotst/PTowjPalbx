@@ -275,6 +275,7 @@ def scan(cfg, out_dir):
 
     roots_info = []
     files = []
+    dirs_out = []
     skipped_dirs = 0
     started = datetime.now()
 
@@ -300,6 +301,13 @@ def scan(cfg, out_dir):
 
         while stack:
             cur_dir, depth, no_recurse = stack.pop()
+
+            # 记录目录本身（含空目录），供前端做目录视图
+            if depth > 0:
+                dirs_out.append({
+                    "r": idx,
+                    "p": os.path.relpath(cur_dir, base).replace(os.sep, "/"),
+                })
 
             try:
                 entries = list(os.scandir(cur_dir))
@@ -384,6 +392,8 @@ def scan(cfg, out_dir):
         "roots": roots_info,
         "count": len(files),
         "totalBytes": total,
+        "dirCount": len(dirs_out),
+        "dirs": dirs_out,
         "files": files,
     }
     return obj, skipped_dirs
